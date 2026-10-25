@@ -1,367 +1,153 @@
-use std::{collections::VecDeque, ops::Index};
+use std::collections::HashMap;
 
 use slk_tokenstream::TokenStream;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
-pub struct FixedPointDecimal {
-    integer: VecDeque<Digit>,
-    decimal: VecDeque<Digit>,
-
-    unit: UnitType,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum Digit {
-    Zero,
-    One,
-    Two,
-    Three,
-    Four,
-    Five,
-    Six,
-    Seven,
-    Eight,
-    Nine,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum UnitType {
-    Gram,
-    Liter,
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+enum UnitType {
     Second,
     Meter,
-    Unit,
+    Gram,
+    Ampere,
+    Kelvin,
+    Mol,
+    Candela,
 }
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-enum UnitPrefix {
-    Nano,
-    Micro,
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+enum Prefix {
     Milli,
     Centi,
     Deci,
-    None,
+    Null,
     Deca,
     Hecto,
     Kilo,
-    Mega,
-    Giga,
 }
 
-impl FixedPointDecimal {
-    pub fn parse(s: impl Into<String>) -> Option<FixedPointDecimal> {
-        let backer: Box<[_]> = s.into().chars().collect();
-        let mut ts = TokenStream::new(&backer);
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+enum CombSym {
+    Mul,
+    Div,
+}
 
-        let (integer, decimal) = Self::get_parts(&mut ts)?;
+#[derive(Debug, Clone)]
+pub struct TotalExpr {
+    base: f64,
 
-        let unit = Self::parse_suffix(&mut ts);
+    unit_exprs: HashMap<UnitType, UnitExpr>,
+}
 
-        let mut unscaled = FixedPointDecimal {
-            integer,
-            decimal,
-            unit: unit.unit,
-        };
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+pub struct UnitExpr {
+    ty: UnitType,
+    exponent: i64,
+}
 
-        unscaled.apply_unit_prefix(unit.prefix);
-        Some(unscaled)
-    }
+impl UnitExpr {
+    pub fn parse(ts: &mut TokenStream<char>) -> Option<Self> {
+        let cs = CombSym::parse(ts)?;
 
-    fn get_parts(
-        ts: &mut slk_tokenstream::TokenStream<char>,
-    ) -> Option<(VecDeque<Digit>, VecDeque<Digit>)> {
-        let number = Self::parse_float_parts(ts);
+        let unit = UnitType::parse(ts)?;
 
-        let (integer, decimal) = match number {
-            Some((integer, decimal)) => (integer, decimal),
-            None => {
-                let i = Self::parse_int(ts);
-                if i.is_empty() {
-                    return None;
-                }
-                (i, VecDeque::new())
-            }
-        };
+        let mut exponent = parse_exponent(ts);
 
-        Some((integer, decimal))
-    }
-
-    fn parse_float_parts(
-        ts: &mut slk_tokenstream::TokenStream<char>,
-    ) -> Option<(VecDeque<Digit>, VecDeque<Digit>)> {
-        let start = ts.mark();
-        let integer = Self::parse_int(ts);
-
-        let _ = ts.expect(|c| *c == '.', start)?;
-
-        let decimal = Self::parse_int(ts);
-
-        if decimal.is_empty() && integer.is_empty() {
-            return None;
+        if cs == CombSym::Div {
+            exponent = -exponent;
         }
 
-        Some((integer, decimal))
-    }
-
-    fn parse_int(ts: &mut slk_tokenstream::TokenStream<char>) -> VecDeque<Digit> {
-        let mut digits = VecDeque::new();
-
-        while let Some(digit) = ts.consume_if_some(|c| Digit::try_from_char(*c)) {
-            digits.push_back(digit);
-        }
-
-        digits
-    }
-
-    fn parse_suffix(ts: &mut slk_tokenstream::TokenStream<char>) -> PrefixedUnit {
-        let peeked_val = match ts.peek() {
-            Some(v) => v,
-            None => {
-                return PrefixedUnit {
-                    unit: UnitType::Unit,
-                    prefix: UnitPrefix::None,
-                };
-            }
-        };
-        match peeked_val {
-            'm' => {
-                ts.skip();
-                if let Some(unit) = UnitType::try_from_ts(ts) {
-                    ts.skip();
-                    PrefixedUnit {
-                        unit,
-                        prefix: UnitPrefix::Milli,
-                    }
-                } else {
-                    PrefixedUnit {
-                        unit: UnitType::Meter,
-                        prefix: UnitPrefix::None,
-                    }
-                }
-            }
-            _ => {
-                let prefix = UnitPrefix::from_ts(ts);
-                let unit = UnitType::try_from_ts(ts);
-
-                PrefixedUnit {
-                    unit: unit.unwrap_or(UnitType::Unit),
-                    prefix: prefix.unwrap_or(UnitPrefix::None),
-                }
-            }
-        }
-    }
-
-    fn apply_unit_prefix(&mut self, unit_prefix: UnitPrefix) {
-        let amount_to_move = unit_prefix.move_amount();
-
-        if amount_to_move > 0 {
-            self.shift_left(amount_to_move as usize);
-        } else if amount_to_move < 0 {
-            self.shift_right((-amount_to_move) as usize)
-        }
-
-        self.trim_zeros();
-    }
-
-    fn shift_left(&mut self, amount: usize) {
-        for _ in 0..amount {
-            self.integer
-                .push_back(self.decimal.pop_front().unwrap_or(Digit::Zero));
-        }
-    }
-    fn shift_right(&mut self, amount: usize) {
-        for _ in 0..amount {
-            self.decimal
-                .push_front(self.integer.pop_back().unwrap_or(Digit::Zero));
-        }
-    }
-
-    fn trim_zeros(&mut self) {
-        while self.integer.pop_front_if(|c| *c == Digit::Zero).is_some() {}
-        while self.decimal.pop_back_if(|c| *c == Digit::Zero).is_some() {}
-
-        if self.integer.is_empty() {
-            self.integer.push_front(Digit::Zero);
-        }
-
-        if self.decimal.is_empty() {
-            self.decimal.push_front(Digit::Zero);
-        }
-    }
-
-    pub fn decimal<'a>(&'a self) -> NumberSlice<'a> {
-        let (front, back) = self.decimal.as_slices();
-        NumberSlice { front, back }
-    }
-
-    pub fn integer<'a>(&'a self) -> NumberSlice<'a> {
-        let (front, back) = self.integer.as_slices();
-        NumberSlice { front, back }
-    }
-
-    pub fn unit_type(&self) -> UnitType {
-        self.unit
+        Some(Self { ty: unit, exponent })
     }
 }
 
-impl Digit {
-    fn try_from_char(c: char) -> Option<Self> {
-        let q = match c {
-            '0' => Self::Zero,
-            '1' => Self::One,
-            '2' => Self::Two,
-            '3' => Self::Three,
-            '4' => Self::Four,
-            '5' => Self::Five,
-            '6' => Self::Six,
-            '7' => Self::Seven,
-            '8' => Self::Eight,
-            '9' => Self::Nine,
-
+impl CombSym {
+    fn parse(ts: &mut TokenStream<char>) -> Option<Self> {
+        ts.skip_while(|c| c.is_whitespace());
+        let r = match *ts.peek()? {
+            '*' => Self::Mul,
+            '/' => Self::Div,
             _ => return None,
         };
-        Some(q)
-    }
-
-    pub fn to_char(&self) -> char {
-        match self {
-            Digit::Zero => '0',
-            Digit::One => '1',
-            Digit::Two => '2',
-            Digit::Three => '3',
-            Digit::Four => '4',
-            Digit::Five => '5',
-            Digit::Six => '6',
-            Digit::Seven => '7',
-            Digit::Eight => '8',
-            Digit::Nine => '9',
-        }
+        ts.skip();
+        Some(r)
     }
 }
 
 impl UnitType {
-    fn try_from_ts(ts: &mut TokenStream<char>) -> Option<Self> {
-        let v = match ts.peek()? {
-            'g' => Self::Gram,
-            'l' => Self::Liter,
+    fn parse(ts: &mut TokenStream<char>) -> Option<Self> {
+        ts.skip_while(|c| c.is_whitespace());
+        let start = ts.mark();
+        let r = match *ts.peek()? {
             's' => Self::Second,
-            'm' => Self::Meter,
-            _ => return None,
-        };
-        ts.advance(1);
-        Some(v)
-    }
+            'm' => {
+                ts.advance(1);
+                match ts.peek_if(|c| *c == 'o') {
+                    Some(_) => {
+                        ts.advance(1);
+                        let _ = ts.peek_if(|c| *c == 'l')?;
 
-    pub fn to_type_string(self) -> &'static str {
-        match self {
-            UnitType::Gram => "Gram",
-            UnitType::Liter => "Liter",
-            UnitType::Second => "Second",
-            UnitType::Meter => "Meter",
-            UnitType::Unit => "Unit",
-        }
-    }
-}
-
-impl UnitPrefix {
-    fn from_ts(ts: &mut TokenStream<char>) -> Option<Self> {
-        let v = match ts.peek()? {
-            'n' => Self::Nano,
-            'u' => Self::Micro,
-            'm' => Self::Milli,
-            'c' => Self::Centi,
-            'd' => {
-                if Some(&'a') == ts.peek_offset(1) {
-                    ts.advance(1);
-                    Self::Deca
-                } else {
-                    Self::Deci
+                        Self::Mol
+                    }
+                    None => {
+                        ts.rewind();
+                        Self::Meter
+                    }
                 }
             }
-            'h' => Self::Hecto,
-            'k' => Self::Kilo,
-            'M' => Self::Mega,
-            'G' => Self::Giga,
+            'g' => Self::Gram,
+            'A' => Self::Ampere,
+            'K' => Self::Kelvin,
+            'c' => {
+                ts.skip();
+                let _ = ts.expect(|c| *c == 'd', start)?;
+                Self::Candela
+            }
+
             _ => return None,
         };
+        ts.skip();
 
-        ts.advance(1);
-        Some(v)
+        Some(r)
     }
+}
 
-    fn move_amount(&self) -> i32 {
-        match self {
-            UnitPrefix::None => 0,
-            UnitPrefix::Nano => -9,
-            UnitPrefix::Micro => -6,
-            UnitPrefix::Milli => -3,
-            UnitPrefix::Centi => -2,
-            UnitPrefix::Deci => -1,
-            UnitPrefix::Deca => 1,
-            UnitPrefix::Hecto => 2,
-            UnitPrefix::Kilo => 3,
-            UnitPrefix::Mega => 6,
-            UnitPrefix::Giga => 9,
+fn parse_exponent(ts: &mut TokenStream<char>) -> i64 {
+    ts.skip_while(|c| c.is_whitespace());
+    match ts.consume_if(|c| *c == '^') {
+        Some(_) => {
+            let start = ts.mark();
+            ts.consume_while(|c| c.is_numeric());
+            let end = ts.mark();
+
+            let chars: String = ts.slice_from_marks(start, end).iter().collect();
+            
+            chars.parse::<i64>().unwrap()
         }
+        None => 0,
     }
 }
 
-pub struct NumberSlice<'a> {
-    front: &'a [Digit],
-    back: &'a [Digit],
-}
+impl TotalExpr {
+    pub fn parse(s: impl Into<String>) -> Option<Self> {
+        let backer: Box<[_]> = s.into().chars().collect();
 
-impl<'a> Index<usize> for NumberSlice<'a> {
-    type Output = Digit;
+        let mut ts = TokenStream::new(&backer);
 
-    fn index(&self, index: usize) -> &Self::Output {
-        if index < self.front.len() {
-            &self.front[index]
-        } else {
-            &self.back[index - self.front.len()]
+        ts.skip_while(|c| c.is_whitespace());
+
+        let start = ts.mark();
+        ts.skip_while(|c| c.is_numeric());
+        let end = ts.mark();
+
+        let numbas: String = ts.slice_from_marks(start, end).iter().collect();
+
+        let base = numbas.parse::<f64>().ok()?;
+        let mut unit_exprs = HashMap::new();
+        while let Some(expr) = UnitExpr::parse(&mut ts) {
+            ts.skip_while(|c| c.is_whitespace());
+            if unit_exprs.insert(expr.ty, expr).is_some() {
+                return None;
+            }
         }
-    }
-}
 
-impl<'a> NumberSlice<'a> {
-    fn len(&self) -> usize {
-        self.front.len() + self.back.len()
-    }
-}
-
-struct PrefixedUnit {
-    unit: UnitType,
-    prefix: UnitPrefix,
-}
-
-pub struct NumberSliceIter<'a> {
-    number_slice: &'a NumberSlice<'a>,
-    idx: usize,
-}
-
-impl<'a> IntoIterator for &'a NumberSlice<'a> {
-    type Item = Digit;
-
-    type IntoIter = NumberSliceIter<'a>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        NumberSliceIter {
-            number_slice: self,
-            idx: 0,
-        }
-    }
-}
-
-impl<'a> Iterator for NumberSliceIter<'a> {
-    type Item = Digit;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.idx >= self.number_slice.len() {
-            None
-        } else {
-            let v = Some(self.number_slice[self.idx]);
-            self.idx += 1;
-            v
-        }
+        Some(Self { base, unit_exprs })
     }
 }
