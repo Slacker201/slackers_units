@@ -165,6 +165,7 @@ dependencies = [
  "fixed",
  "serde",
  "si_unit_parser",
+ "typenum",
 ]
 
 [[package]]

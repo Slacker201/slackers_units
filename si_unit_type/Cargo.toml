@@ -11,6 +11,7 @@ fastnum = "0.7.5"
 fixed = "1.31.0"
 serde = "1.0.229"
 si_unit_parser = { version = "0.1.1", path = "./../si_unit_parser" }
+typenum = "1.20.1"
 
 
 [features]
