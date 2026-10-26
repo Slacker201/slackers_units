@@ -12,3 +12,5 @@ pub trait Backer:
     + Clone
 {
 }
+
+impl Backer for f64 {}

@@ -6,6 +6,8 @@ use std::{
 
 use typenum::{Diff, Integer, P1, Sum, Z0};
 
+use crate::unit::unit_system::{Metric, UnitSystem};
+
 #[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub struct UnitVector<
     Time: Integer,
@@ -15,16 +17,10 @@ pub struct UnitVector<
     Temperature: Integer,
     Amount: Integer,
     Lumenosity: Integer,
+    System: UnitSystem,
 > {
-    _pd: PhantomData<(
-        Time,
-        Distance,
-        Mass,
-        ElectricCurrent,
-        Temperature,
-        Amount,
-        Lumenosity,
-    )>,
+    _pd1: PhantomData<(Time, Distance, Mass, ElectricCurrent)>,
+    _pd2: PhantomData<(Temperature, Amount, Lumenosity, System)>,
 }
 
 impl<
@@ -49,7 +45,9 @@ impl<
     L1: Integer + Add<L2, Output = L3>,
     L2: Integer,
     L3: Integer,
-> Mul<UnitVector<T2, D2, M2, E2, Te2, A2, L2>> for UnitVector<T1, D1, M1, E1, Te1, A1, L1>
+    System: UnitSystem,
+> Mul<UnitVector<T2, D2, M2, E2, Te2, A2, L2, System>>
+    for UnitVector<T1, D1, M1, E1, Te1, A1, L1, System>
 {
     type Output = UnitVector<
         Sum<T1, T2>,
@@ -59,9 +57,10 @@ impl<
         Sum<Te1, Te2>,
         Sum<A1, A2>,
         Sum<L1, L2>,
+        System,
     >;
 
-    fn mul(self, _rhs: UnitVector<T2, D2, M2, E2, Te2, A2, L2>) -> Self::Output {
+    fn mul(self, _rhs: UnitVector<T2, D2, M2, E2, Te2, A2, L2, System>) -> Self::Output {
         Self::Output::default()
     }
 }
@@ -88,7 +87,9 @@ impl<
     L1: Integer + Sub<L2, Output = L3>,
     L2: Integer,
     L3: Integer,
-> Div<UnitVector<T2, D2, M2, E2, Te2, A2, L2>> for UnitVector<T1, D1, M1, E1, Te1, A1, L1>
+    System: UnitSystem,
+> Div<UnitVector<T2, D2, M2, E2, Te2, A2, L2, System>>
+    for UnitVector<T1, D1, M1, E1, Te1, A1, L1, System>
 {
     type Output = UnitVector<
         Diff<T1, T2>,
@@ -98,21 +99,22 @@ impl<
         Diff<Te1, Te2>,
         Diff<A1, A2>,
         Diff<L1, L2>,
+        System,
     >;
 
-    fn div(self, _rhs: UnitVector<T2, D2, M2, E2, Te2, A2, L2>) -> Self::Output {
+    fn div(self, _rhs: UnitVector<T2, D2, M2, E2, Te2, A2, L2, System>) -> Self::Output {
         Self::Output::default()
     }
 }
 
-pub type Time = UnitVector<P1, Z0, Z0, Z0, Z0, Z0, Z0>;
-pub type Distance = UnitVector<Z0, P1, Z0, Z0, Z0, Z0, Z0>;
-pub type Mass = UnitVector<Z0, Z0, P1, Z0, Z0, Z0, Z0>;
-pub type ElectricCurrent = UnitVector<Z0, Z0, Z0, P1, Z0, Z0, Z0>;
-pub type Temperature = UnitVector<Z0, Z0, Z0, Z0, P1, Z0, Z0>;
-pub type Amount = UnitVector<Z0, Z0, Z0, Z0, Z0, P1, Z0>;
-pub type Lumenosity = UnitVector<Z0, Z0, Z0, Z0, Z0, Z0, P1>;
-pub type Null = UnitVector<Z0, Z0, Z0, Z0, Z0, Z0, Z0>;
+pub type Second = UnitVector<P1, Z0, Z0, Z0, Z0, Z0, Z0, Metric>;
+pub type Meter = UnitVector<Z0, P1, Z0, Z0, Z0, Z0, Z0, Metric>;
+pub type Gram = UnitVector<Z0, Z0, P1, Z0, Z0, Z0, Z0, Metric>;
+pub type Ampere = UnitVector<Z0, Z0, Z0, P1, Z0, Z0, Z0, Metric>;
+pub type Kelvin = UnitVector<Z0, Z0, Z0, Z0, P1, Z0, Z0, Metric>;
+pub type Mole = UnitVector<Z0, Z0, Z0, Z0, Z0, P1, Z0, Metric>;
+pub type Candela = UnitVector<Z0, Z0, Z0, Z0, Z0, Z0, P1, Metric>;
+pub type MetricNull = UnitVector<Z0, Z0, Z0, Z0, Z0, Z0, Z0, Metric>;
 
 pub trait Uv {}
 impl<
@@ -123,7 +125,9 @@ impl<
     Temperature: Integer,
     Amount: Integer,
     Lumenosity: Integer,
-> Uv for UnitVector<Time, Distance, Mass, ElectricCurrent, Temperature, Amount, Lumenosity>
+    System: UnitSystem,
+> Uv
+    for UnitVector<Time, Distance, Mass, ElectricCurrent, Temperature, Amount, Lumenosity, System>
 {
 }
 
@@ -135,7 +139,9 @@ impl<
     Temperature: Integer,
     Amount: Integer,
     Lumenosity: Integer,
-> Display for UnitVector<Time, Distance, Mass, ElectricCurrent, Temperature, Amount, Lumenosity>
+    System: UnitSystem,
+> Display
+    for UnitVector<Time, Distance, Mass, ElectricCurrent, Temperature, Amount, Lumenosity, System>
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let powers = [
@@ -148,42 +154,86 @@ impl<
             Lumenosity::I64,
         ];
 
-        let abbreviations = ["s", "m", "kg", "A", "K", "mol", "cd"];
+        let abbreviations = [
+            System::TIME_SUFFIX,
+            System::DISTANCE_SUFFIX,
+            System::MASS_SUFFIX,
+            System::ELECTRIC_CURRENT_SUFFIX,
+            System::TEMPERATURE_SUFFIX,
+            System::AMOUNT_SUFFIX,
+            System::LUMENOSITY_SUFFIX,
+        ];
 
-        let mut combined: Box<[(_, _)]> = powers.into_iter().zip(abbreviations).collect();
+        let combined: Box<[(_, _)]> = powers.into_iter().zip(abbreviations).collect();
 
-        combined.sort_by_key(|a| core::cmp::Reverse(a.0));
+        let mut positive = vec![];
+        let mut negative = vec![];
 
-        let mut wrote_abbrev = false;
+        for (power, t) in combined {
+            if power < 0 {
+                negative.push((power, t));
+            } else {
+                positive.push((power.abs(), t));
+            }
+        }
 
-        for (pow, abbrev) in combined {
-            if pow == 0 {
+        positive.sort_by_key(|a| std::cmp::Reverse(a.0));
+        negative.sort_by_key(|a| std::cmp::Reverse(a.0));
+
+        let mut top_string = String::new();
+
+        let mut positive_abbrev = false;
+
+        for (power, name) in positive {
+            if power == 0 {
                 continue;
             }
 
-            if pow == 1 {
-                if wrote_abbrev {
-                    write!(f, "*{abbrev}")?;
-                } else {
-                    write!(f, "{abbrev}")?;
-                }
+            if positive_abbrev {
+                top_string.push('*');
             } else {
-                if pow < 0 {
-                    if pow == -1 {
-                        write!(f, "/{abbrev}")?;
-                    } else {
-                        write!(f, "/{abbrev}^{}", pow.abs())?;
-                    }
-                } else {
-                    if wrote_abbrev {
-                        write!(f, "*{abbrev}^{pow}")?;
-                    } else {
-                        write!(f, "{abbrev}^{pow}")?;
-                    }
-                }
+                positive_abbrev = true;
             }
-            wrote_abbrev = true;
+
+            if power == 1 {
+                top_string.push_str(name);
+            } else {
+                top_string.push_str(name);
+                top_string.push('^');
+                top_string.push_str(&power.to_string());
+            }
         }
-        Ok(())
+
+        let mut negative_abbrev = false;
+        let mut bottom_string = String::new();
+
+        for (power, name) in negative {
+            if negative_abbrev {
+                bottom_string.push('*');
+            } else {
+                negative_abbrev = true;
+            }
+
+            if power == 1 {
+                bottom_string.push_str(name);
+            } else {
+                bottom_string.push_str(name);
+                bottom_string.push('^');
+                bottom_string.push_str(&power.to_string());
+            }
+        }
+
+        match (!top_string.is_empty(), !bottom_string.is_empty()) {
+            (false, false) => Ok(()),
+            (true, false) => {
+                write!(f, "{top_string}")
+            }
+            (false, true) => {
+                write!(f, "/({bottom_string})")
+            }
+            (true, true) => {
+                write!(f, "*({top_string}/{bottom_string})")
+            }
+        }
     }
 }
