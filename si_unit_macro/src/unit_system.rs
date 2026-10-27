@@ -29,58 +29,58 @@ pub(crate) enum Digit {
 
 #[derive(Debug, Clone, Default)]
 pub(crate) struct Number {
-    integer: VecDeque<Digit>,
-    decimal: VecDeque<Digit>,
+    pub integer: VecDeque<Digit>,
+    pub decimal: VecDeque<Digit>,
 }
 
 #[allow(unused)]
 #[derive(Debug, Clone, Default)]
 pub(crate) struct TypeIdentifier {
-    raw: String,
+    pub raw: String,
 }
 
 #[allow(unused)]
 #[derive(Debug, Clone, Default)]
 pub(crate) struct Expression {
-    units: Box<[(TypeIdentifier, i64)]>,
-    multiplier: Number,
+    pub units: Box<[(TypeIdentifier, i64)]>,
+    pub multiplier: Number,
 }
 
 #[allow(unused)]
 #[derive(Debug, Clone, Default)]
 pub(crate) struct Conversion {
-    from: Expression,
-    to: Expression,
+    pub from: Expression,
+    pub to: Expression,
 }
 
 #[allow(unused)]
 #[derive(Debug, Clone, Default)]
 pub(crate) struct Conversions {
-    conversions: Box<[Conversion]>,
+    pub conversions: Box<[Conversion]>,
 }
 
 #[allow(unused)]
 #[derive(Debug, Clone, Default)]
 pub(crate) struct UnitDeclaration {
-    unit: TypeIdentifier,
-    prefixable: bool,
-    abbreviation: String,
-    conversions: Conversions,
+    pub unit: TypeIdentifier,
+    pub prefixable: bool,
+    pub abbreviation: String,
+    pub conversions: Conversions,
 }
 
 #[allow(unused)]
 #[derive(Debug, Clone, Default)]
 pub(crate) struct PrefixDeclaration {
-    prefix: TypeIdentifier,
-    abbreviation: String,
-    multiplier: Number,
+    pub prefix: TypeIdentifier,
+    pub abbreviation: String,
+    pub multiplier: Number,
 }
 
 #[allow(unused)]
 #[derive(Debug, Clone, Default)]
 pub(crate) struct System {
-    units: Box<[UnitDeclaration]>,
-    prefixes: Box<[PrefixDeclaration]>,
+    pub units: Box<[UnitDeclaration]>,
+    pub prefixes: Box<[PrefixDeclaration]>,
 
-    base_types: [TypeIdentifier; 7],
+    pub base_types: [TypeIdentifier; 7],
 }

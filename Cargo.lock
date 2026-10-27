@@ -199,21 +199,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "si_unit_parser"
-version = "0.1.1"
-dependencies = [
- "fixed",
- "slk-tokenstream",
-]
-
-[[package]]
-name = "si_unit_parser_macros"
+name = "si_unit_macros"
 version = "0.1.0"
 dependencies = [
  "phf",
  "proc-macro2",
  "quote",
  "syn 3.0.9",
+]
+
+[[package]]
+name = "si_unit_parser"
+version = "0.1.1"
+dependencies = [
+ "fixed",
+ "slk-tokenstream",
 ]
 
 [[package]]
