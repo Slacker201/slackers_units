@@ -232,7 +232,7 @@ impl<
                 write!(f, "/({bottom_string})")
             }
             (true, true) => {
-                write!(f, "*({top_string}/{bottom_string})")
+                write!(f, "*({top_string}/{bottom_string})") //TODO make it print better
             }
         }
     }
