@@ -47,7 +47,6 @@ impl Parse for BaseTypeKind {
     }
 }
 
-
 impl Display for BaseTypeKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let v = match self {

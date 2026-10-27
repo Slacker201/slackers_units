@@ -1,13 +1,12 @@
 mod base_type_kind;
-mod digit;
-mod number;
-mod type_identifier;
-mod expression;
 mod conversions;
-mod unit_declaration;
+mod digit;
+mod expression;
+mod number;
 mod prefix_declaration;
 mod system;
-
+mod type_identifier;
+mod unit_declaration;
 
 mod kw {
     syn::custom_keyword!(unit);
@@ -15,4 +14,5 @@ mod kw {
     syn::custom_keyword!(prefixable);
     syn::custom_keyword!(abbrev);
     syn::custom_keyword!(multiplier);
+    syn::custom_keyword!(conversions);
 }

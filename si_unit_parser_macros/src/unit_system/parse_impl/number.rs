@@ -18,7 +18,7 @@ impl Parse for Number {
             }
         } else if input.peek(LitInt) {
             let lit_int = input.parse::<LitInt>().unwrap();
-            
+
             if !lit_int.suffix().is_empty() {
                 // TODO verify that unsuffixed ints in userland do not have i32 suffix
                 Err(Error::new(input.span(), "Do not add a suffix"))
@@ -32,7 +32,7 @@ impl Parse for Number {
 }
 
 impl Number {
-    fn parse_str(s: &str, span: Span) -> syn::Result<Self>{
+    fn parse_str(s: &str, span: Span) -> syn::Result<Self> {
         let mut integer = VecDeque::new();
         let mut decimal = VecDeque::new();
 
@@ -43,13 +43,12 @@ impl Number {
                 current_vec = &mut decimal;
                 continue;
             }
-            current_vec.push_front(Digit::from_char(c).ok_or_else(|| {
-                Error::new(span, format!("Somehow got a non-integer digit"))
-            })?);
+            current_vec.push_front(
+                Digit::from_char(c)
+                    .ok_or_else(|| Error::new(span, format!("Somehow got a non-integer digit")))?,
+            );
         }
-        Ok(
-            Self { integer, decimal }
-        )
+        Ok(Self { integer, decimal })
     }
 
     pub(crate) fn to_i64(&self) -> Result<i64, std::num::ParseIntError> {
@@ -64,19 +63,19 @@ impl Display for Number {
         match (self.integer.is_empty(), self.decimal.is_empty()) {
             (true, true) => {
                 write!(f, "0")
-            },
+            }
             (true, false) => {
                 let (first, second) = self.decimal.as_slices();
                 let mut j: String = first.iter().map(|c| c.to_string()).collect();
                 j.extend(second.iter().map(|c| c.to_string()));
                 write!(f, "0.{j}")
-            },
+            }
             (false, true) => {
                 let (first, second) = self.integer.as_slices();
                 let mut j: String = first.iter().map(|c| c.to_string()).collect();
                 j.extend(second.iter().map(|c| c.to_string()));
                 write!(f, "{j}")
-            },
+            }
             (false, false) => {
                 let (first, second) = self.integer.as_slices();
                 let mut int: String = first.iter().map(|c| c.to_string()).collect();
@@ -85,7 +84,7 @@ impl Display for Number {
                 let mut dec: String = first.iter().map(|c| c.to_string()).collect();
                 dec.extend(second.iter().map(|c| c.to_string()));
                 write!(f, "{int}.{dec}")
-            },
+            }
         }
     }
 }

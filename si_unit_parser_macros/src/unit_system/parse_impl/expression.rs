@@ -2,8 +2,6 @@ use syn::{Error, Token, parse::Parse};
 
 use crate::unit_system::{Expression, Number, TypeIdentifier};
 
-
-
 impl Parse for Expression {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let multiplier = Number::parse(input)?;
@@ -15,7 +13,7 @@ impl Parse for Expression {
                 Ok(t) => t,
                 Err(_) => {
                     break;
-                },
+                }
             };
 
             let exponent = match input.parse::<Token![^]>() {
@@ -40,19 +38,16 @@ impl Parse for Expression {
                         }
                     })?;
                     the_i64
-                },
-                Err(_) => {
-                    0
-                },
+                }
+                Err(_) => 0,
             };
 
             units.push((t, exponent));
         }
 
-
-
-        Ok(
-            Self { units: units.into_boxed_slice(), multiplier }
-        )
+        Ok(Self {
+            units: units.into_boxed_slice(),
+            multiplier,
+        })
     }
 }

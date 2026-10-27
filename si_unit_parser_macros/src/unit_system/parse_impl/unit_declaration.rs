@@ -2,9 +2,6 @@ use syn::{LitBool, LitStr, Token, braced, parse::Parse};
 
 use crate::unit_system::{Conversions, TypeIdentifier, UnitDeclaration};
 
-
-
-
 impl Parse for UnitDeclaration {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let _ = input.parse::<super::kw::unit>()?;
@@ -25,9 +22,12 @@ impl Parse for UnitDeclaration {
         let _ = content.parse::<Token![;]>()?;
 
         let conversions = content.parse::<Conversions>()?;
-        
-        Ok(
-            Self { unit, prefixable, abbreviation, conversions }
-        )
+
+        Ok(Self {
+            unit,
+            prefixable,
+            abbreviation,
+            conversions,
+        })
     }
 }
