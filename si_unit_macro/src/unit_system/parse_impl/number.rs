@@ -48,7 +48,7 @@ impl Number {
                     .ok_or_else(|| Error::new(span, format!("Somehow got a non-integer digit")))?,
             );
         }
-        Ok(Self { integer, decimal })
+        Ok(Self { integer, decimal, span })
     }
 
     pub(crate) fn to_i64(&self) -> Result<i64, std::num::ParseIntError> {

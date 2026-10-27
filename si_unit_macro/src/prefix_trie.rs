@@ -1,4 +1,4 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use proc_macro2::TokenStream;
 use quote::quote;
 

@@ -1,14 +1,8 @@
-use std::{array::from_fn, collections::HashSet};
-
-use proc_macro2::Span;
 use syn::{Error, Token, parse::Parse};
 
 use crate::{
-    System,
-    unit_system::{BaseTypeKind, PrefixDeclaration, TypeIdentifier, UnitDeclaration},
+    System, unit_system::{BaseTypeDeclaration, BaseTypeKind, PrefixDeclaration, TypeIdentifier, UnitDeclaration},
 };
-
-const EXPRECTED_ERROR_MESSAGE: &str = "\"time\", \"distance\", \"mass\", \"electric_current\", \"temperature\", \"amount\", and \"luminous_intensity\"";
 
 impl Parse for System {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
@@ -16,9 +10,13 @@ impl Parse for System {
         let mut prefix_declarations = Vec::new();
         let mut base_types = vec![];
 
+        let start_span = input.span();
+        let mut end_span = input.span();
+
         loop {
             match input.parse::<UnitDeclaration>() {
                 Ok(v) => {
+                    end_span = v.span;
                     unit_declarations.push(v);
                     continue;
                 }
@@ -27,6 +25,7 @@ impl Parse for System {
 
             match input.parse::<PrefixDeclaration>() {
                 Ok(v) => {
+                    end_span = v.span;
                     prefix_declarations.push(v);
                     continue;
                 }
@@ -35,6 +34,7 @@ impl Parse for System {
 
             match input.parse::<BaseTypeDeclaration>() {
                 Ok(v) => {
+                    end_span = v.span;
                     base_types.push(v);
                     continue;
                 }
@@ -51,59 +51,13 @@ impl Parse for System {
             break;
         }
 
-        if base_types.len() > 7 {
-            return Err(Error::new(
-                base_types[7].span,
-                format!(
-                    "Expected exactly 7 base type declarations, found {}",
-                    base_types.len()
-                ),
-            ));
-        }
-
-        if base_types.len() < 7 {
-            return Err(Error::new(
-                input.span(),
-                format!(
-                    "Expected exactly 7 base type declarations, found {}",
-                    base_types.len()
-                ),
-            ));
-        }
-
-        let mut seen = HashSet::new();
-
-        for base in &base_types {
-            let duplicate = seen.insert(base.base_type_kind);
-
-            if !duplicate {
-                return Err(Error::new(
-                    base.span,
-                    format!(
-                        "Found duplicate {} declarations. Please declare each of {EXPRECTED_ERROR_MESSAGE}",
-                        base.base_type_kind
-                    ),
-                ));
-            }
-        }
-
-        let base_types: [_; 7] =
-            from_fn(|i| core::mem::replace(&mut base_types[i].ty, TypeIdentifier::default()));
-
         Ok(Self {
+            span: start_span.join(end_span).unwrap_or(input.span()),
             units: unit_declarations.into_boxed_slice(),
             prefixes: prefix_declarations.into_boxed_slice(),
-            base_types,
+            base_types: base_types.into_boxed_slice(),
         })
     }
-}
-
-struct BaseTypeDeclaration {
-    base_type_kind: BaseTypeKind,
-
-    ty: TypeIdentifier,
-
-    span: Span,
 }
 
 impl Parse for BaseTypeDeclaration {

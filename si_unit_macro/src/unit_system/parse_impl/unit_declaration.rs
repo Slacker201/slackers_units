@@ -4,7 +4,7 @@ use crate::unit_system::{Conversions, TypeIdentifier, UnitDeclaration};
 
 impl Parse for UnitDeclaration {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let _ = input.parse::<super::kw::unit>()?;
+        let start_span = input.parse::<super::kw::unit>()?.span;
 
         let unit = input.parse::<TypeIdentifier>()?;
 
@@ -24,6 +24,8 @@ impl Parse for UnitDeclaration {
         let conversions = content.parse::<Conversions>()?;
 
         Ok(Self {
+            span: start_span.join(conversions.span).unwrap_or(input.span()),
+
             unit,
             prefixable,
             abbreviation,

@@ -1,9 +1,10 @@
 use std::collections::VecDeque;
 
+use proc_macro2::Span;
+
 mod parse_impl;
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) enum BaseTypeKind {
-    #[default]
     Time,
     Distance,
     Mass,
@@ -12,9 +13,8 @@ pub(crate) enum BaseTypeKind {
     Amount,
     LuminousIntensity,
 }
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum Digit {
-    #[default]
     Zero,
     One,
     Two,
@@ -27,60 +27,84 @@ pub(crate) enum Digit {
     Nine,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub(crate) struct Number {
     pub integer: VecDeque<Digit>,
     pub decimal: VecDeque<Digit>,
+    
+    pub span: Span,
 }
 
 #[allow(unused)]
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub(crate) struct TypeIdentifier {
     pub raw: String,
+    
+    pub span: Span,
 }
 
 #[allow(unused)]
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub(crate) struct Expression {
     pub units: Box<[(TypeIdentifier, i64)]>,
     pub multiplier: Number,
+    
+    pub span: Span,
 }
 
 #[allow(unused)]
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub(crate) struct Conversion {
     pub from: Expression,
     pub to: Expression,
+    
+    pub span: Span,
 }
 
 #[allow(unused)]
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub(crate) struct Conversions {
     pub conversions: Box<[Conversion]>,
+    
+    pub span: Span,
 }
 
 #[allow(unused)]
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub(crate) struct UnitDeclaration {
     pub unit: TypeIdentifier,
     pub prefixable: bool,
     pub abbreviation: String,
     pub conversions: Conversions,
+    
+    pub span: Span,
 }
 
 #[allow(unused)]
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub(crate) struct PrefixDeclaration {
     pub prefix: TypeIdentifier,
     pub abbreviation: String,
     pub multiplier: Number,
+    
+    pub span: Span,
 }
 
 #[allow(unused)]
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
+pub(crate) struct BaseTypeDeclaration {
+    pub base_type_kind: BaseTypeKind,
+    pub ty: TypeIdentifier,
+
+    pub span: Span,
+}
+
+#[allow(unused)]
+#[derive(Debug, Clone)]
 pub(crate) struct System {
     pub units: Box<[UnitDeclaration]>,
     pub prefixes: Box<[PrefixDeclaration]>,
-
-    pub base_types: [TypeIdentifier; 7],
+    pub base_types: Box<[BaseTypeDeclaration]>,
+    
+    pub span: Span,
 }

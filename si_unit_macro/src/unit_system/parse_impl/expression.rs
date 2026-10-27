@@ -8,6 +8,8 @@ impl Parse for Expression {
 
         let mut units = vec![];
 
+        let mut final_span = input.span();
+
         loop {
             let t = match TypeIdentifier::parse(input) {
                 Ok(t) => t,
@@ -37,17 +39,19 @@ impl Parse for Expression {
                             _ => todo!(),
                         }
                     })?;
-                    the_i64
+                    (the_i64, num.span)
                 }
-                Err(_) => 0,
+                Err(_) => (0, t.span),
             };
-
-            units.push((t, exponent));
+            final_span = exponent.1;
+            units.push((t, exponent.0));
         }
 
         Ok(Self {
+            span: multiplier.span.join(final_span).unwrap_or(input.span()),
             units: units.into_boxed_slice(),
             multiplier,
+
         })
     }
 }

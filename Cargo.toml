@@ -14,7 +14,7 @@ si_unit_macro = { version = "0.1.3", path = "./si_unit_macro" }
 
 [workspace]
 resolver = "3"
-members = ["si_unit_parser", "si_unit_macro", "si_unit_type", "si_unit_parser_macros"]
+members = ["si_unit_parser", "si_unit_macro", "si_unit_type"]
 
 
 [features]
