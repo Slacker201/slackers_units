@@ -1,4 +1,4 @@
-use syn::{Error, Token, parse::Parse};
+use syn::{Error, Ident, Token, parse::Parse};
 
 use crate::{
     System,
@@ -29,7 +29,7 @@ impl Parse for System {
                 prefix_declarations.push(i);
                 continue;
             }
-            if input.peek(super::kw::unit) {
+            if input.peek(Ident) {
                 let i = input.parse::<BaseTypeDeclaration>()?;
                 end_span = i.span;
                 base_types.push(i);
