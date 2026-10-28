@@ -20,10 +20,27 @@ pub(crate) fn system_impl(ts: TokenStream) -> TokenStream {
         }
     }
 
-    let mut prefix_trie = PrefixTrie::new();
-    prefix_trie.add_word("str");
+    let mut unit_prefix_trie = PrefixTrie::new();
+    let mut prefix_prefix_trie = PrefixTrie::new();
 
-    let _ = prefix_trie.to_const_map();
+    for abbrev in sys.units.iter().map(|unit| &unit.abbreviation) {
+        unit_prefix_trie.add_word(&abbrev.raw);
+    }
 
-    quote! {}
+    for abbrev in sys.prefixes.iter().map(|prefix| &prefix.abbreviation) {
+        prefix_prefix_trie.add_word(&abbrev.raw);
+    }
+
+    let unit_prefix_trie_map = unit_prefix_trie.to_const_map();
+    let prefix_prefix_trie_map = prefix_prefix_trie.to_const_map();
+
+
+    let trie_decl = quote! {
+        const __UNIT_PREFIX_TRIE__: phf::Map<char, ConstTrie> = #unit_prefix_trie_map;
+        const __PREFIX_PREFIX_TRIE__: phf::Map<char, ConstTrie> = #prefix_prefix_trie_map;
+    };
+
+    quote! {
+        #trie_decl
+    }
 }
