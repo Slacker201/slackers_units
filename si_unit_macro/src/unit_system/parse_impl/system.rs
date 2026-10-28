@@ -3,7 +3,7 @@ use syn::{Error, Ident, Token, parse::Parse};
 use crate::{
     System,
     unit_system::{
-        BaseTypeDeclaration, BaseTypeKind, PrefixDeclaration, TypeIdentifier, UnitDeclaration,
+        BaseTypeDeclaration, PrefixDeclaration, TypeIdentifier, UnitDeclaration,
     },
 };
 
@@ -57,15 +57,12 @@ impl Parse for System {
 
 impl Parse for BaseTypeDeclaration {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let start_span = input.span();
-        let base_type_kind = input.parse::<BaseTypeKind>().unwrap();
+        let start_span = input.parse::<super::kw::basetype>()?.span;
         let _ = input.parse::<Token![:]>()?;
-        let end_span = input.span();
         let ty = input.parse::<TypeIdentifier>()?;
-        let _ = input.parse::<Token![;]>()?;
+        let end_span = input.parse::<Token![;]>()?.span;
 
         Ok(Self {
-            base_type_kind,
             ty,
             span: start_span.join(end_span).unwrap_or(input.span()),
         })

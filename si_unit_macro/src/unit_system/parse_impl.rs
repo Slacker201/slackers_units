@@ -1,4 +1,3 @@
-mod base_type_kind;
 mod conversions;
 mod digit;
 mod expression;
@@ -15,4 +14,5 @@ mod kw {
     syn::custom_keyword!(abbrev);
     syn::custom_keyword!(multiplier);
     syn::custom_keyword!(conversions);
+    syn::custom_keyword!(basetype);
 }

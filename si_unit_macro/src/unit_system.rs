@@ -3,16 +3,6 @@ use std::{collections::VecDeque, hash::Hash};
 use proc_macro2::Span;
 
 mod parse_impl;
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub(crate) enum BaseTypeKind {
-    Time,
-    Distance,
-    Mass,
-    ElectricCurrent,
-    Temperature,
-    Amount,
-    LuminousIntensity,
-}
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum Digit {
     Zero,
@@ -93,7 +83,6 @@ pub(crate) struct PrefixDeclaration {
 #[allow(unused)]
 #[derive(Debug, Clone)]
 pub(crate) struct BaseTypeDeclaration {
-    pub base_type_kind: BaseTypeKind,
     pub ty: TypeIdentifier,
 
     pub span: Span,
