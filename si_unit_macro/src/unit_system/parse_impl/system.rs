@@ -1,7 +1,10 @@
 use syn::{Error, Token, parse::Parse};
 
 use crate::{
-    System, unit_system::{BaseTypeDeclaration, BaseTypeKind, PrefixDeclaration, TypeIdentifier, UnitDeclaration},
+    System,
+    unit_system::{
+        BaseTypeDeclaration, BaseTypeKind, PrefixDeclaration, TypeIdentifier, UnitDeclaration,
+    },
 };
 
 impl Parse for System {
@@ -14,41 +17,33 @@ impl Parse for System {
         let mut end_span = input.span();
 
         loop {
-            match input.parse::<UnitDeclaration>() {
-                Ok(v) => {
-                    end_span = v.span;
-                    unit_declarations.push(v);
-                    continue;
-                }
-                Err(_) => {}
+            if input.peek(super::kw::unit) {
+                let i = input.parse::<UnitDeclaration>()?;
+                end_span = i.span;
+                unit_declarations.push(i);
+                continue;
             }
-
-            match input.parse::<PrefixDeclaration>() {
-                Ok(v) => {
-                    end_span = v.span;
-                    prefix_declarations.push(v);
-                    continue;
-                }
-                Err(_) => {}
+            if input.peek(super::kw::prefix) {
+                let i = input.parse::<PrefixDeclaration>()?;
+                end_span = i.span;
+                prefix_declarations.push(i);
+                continue;
             }
-
-            match input.parse::<BaseTypeDeclaration>() {
-                Ok(v) => {
-                    end_span = v.span;
-                    base_types.push(v);
-                    continue;
-                }
-                Err(_) => {}
+            if input.peek(super::kw::unit) {
+                let i = input.parse::<BaseTypeDeclaration>()?;
+                end_span = i.span;
+                base_types.push(i);
+                continue;
             }
 
             if !input.is_empty() {
                 return Err(Error::new(
                     input.span(),
-                    format!("Expected end of input, found {}", input.to_string()),
+                    format!("Expected end of input, got {}", input),
                 ));
+            } else {
+                break;
             }
-
-            break;
         }
 
         Ok(Self {
@@ -63,7 +58,7 @@ impl Parse for System {
 impl Parse for BaseTypeDeclaration {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let start_span = input.span();
-        let base_type_kind = input.parse::<BaseTypeKind>()?;
+        let base_type_kind = input.parse::<BaseTypeKind>().unwrap();
         let _ = input.parse::<Token![:]>()?;
         let end_span = input.span();
         let ty = input.parse::<TypeIdentifier>()?;

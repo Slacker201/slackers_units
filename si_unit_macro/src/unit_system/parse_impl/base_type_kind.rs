@@ -30,16 +30,13 @@ impl Parse for BaseTypeKind {
                         ident.span(),
                         format!(
                             "Expected {EXPRECTED_ERROR_MESSAGE}, got {}, did you mean {fixed_ident}?",
-                            ident.to_string()
+                            ident
                         ),
                     ));
                 }
                 return Err(Error::new(
                     ident.span(),
-                    format!(
-                        "Expected {EXPRECTED_ERROR_MESSAGE}, got {}.",
-                        ident.to_string()
-                    ),
+                    format!("Expected {EXPRECTED_ERROR_MESSAGE}, got {}.", ident),
                 ));
             }
         };

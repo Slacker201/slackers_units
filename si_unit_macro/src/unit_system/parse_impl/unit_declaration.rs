@@ -1,6 +1,6 @@
-use syn::{LitBool, LitStr, Token, braced, parse::Parse};
+use syn::{LitBool, Token, braced, parse::Parse};
 
-use crate::unit_system::{Conversions, TypeIdentifier, UnitDeclaration};
+use crate::unit_system::{Abbreviation, Conversions, TypeIdentifier, UnitDeclaration};
 
 impl Parse for UnitDeclaration {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
@@ -11,25 +11,39 @@ impl Parse for UnitDeclaration {
         let content;
         braced!(content in input);
 
-        let _ = content.parse::<super::kw::prefixable>()?;
-        let _ = content.parse::<Token![:]>()?;
-        let prefixable = content.parse::<LitBool>()?.value;
+        let prefixable = content.parse::<Prefixable>()?;
         let _ = content.parse::<Token![;]>()?;
 
-        let _ = content.parse::<super::kw::abbrev>()?;
-        let _ = content.parse::<Token![:]>()?;
-        let abbreviation = content.parse::<LitStr>()?.value();
-        let _ = content.parse::<Token![;]>()?;
+        let abbreviation = content.parse::<Abbreviation>()?;
 
-        let conversions = content.parse::<Conversions>()?;
+        let conversions = content.parse::<Conversions>().unwrap_or(Conversions {
+            conversions: Box::new([]),
+            span: content.span(),
+        });
 
         Ok(Self {
             span: start_span.join(conversions.span).unwrap_or(input.span()),
 
             unit,
-            prefixable,
+            prefixable: prefixable.prefixable,
             abbreviation,
             conversions,
+        })
+    }
+}
+
+struct Prefixable {
+    prefixable: bool,
+}
+
+impl Parse for Prefixable {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let _ = input.parse::<super::kw::prefixable>()?;
+        let _ = input.parse::<Token![:]>()?;
+        let b = input.parse::<LitBool>()?;
+
+        Ok(Self {
+            prefixable: b.value(),
         })
     }
 }

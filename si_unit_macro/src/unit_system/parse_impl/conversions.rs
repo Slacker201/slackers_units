@@ -9,7 +9,11 @@ impl Parse for Conversion {
         let to = input.parse::<Expression>()?;
         let end_span = input.parse::<Token![;]>()?.span;
 
-        Ok(Self { span: from.span.join(end_span).unwrap_or(input.span()), from, to,  })
+        Ok(Self {
+            span: from.span.join(end_span).unwrap_or(input.span()),
+            from,
+            to,
+        })
     }
 }
 
@@ -30,7 +34,7 @@ impl Parse for Conversions {
 
         Ok(Self {
             conversions: conversions.into_boxed_slice(),
-            span: start_span.join(final_span).unwrap_or(input.span())
+            span: start_span.join(final_span).unwrap_or(input.span()),
         })
     }
 }

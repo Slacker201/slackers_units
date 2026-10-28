@@ -10,14 +10,7 @@ impl Parse for Expression {
 
         let mut final_span = input.span();
 
-        loop {
-            let t = match TypeIdentifier::parse(input) {
-                Ok(t) => t,
-                Err(_) => {
-                    break;
-                }
-            };
-
+        while let Ok(t) = TypeIdentifier::parse(input) {
             let exponent = match input.parse::<Token![^]>() {
                 Ok(_) => {
                     let num = Number::parse(input)?;
@@ -51,7 +44,6 @@ impl Parse for Expression {
             span: multiplier.span.join(final_span).unwrap_or(input.span()),
             units: units.into_boxed_slice(),
             multiplier,
-
         })
     }
 }

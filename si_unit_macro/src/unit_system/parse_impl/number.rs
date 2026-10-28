@@ -45,10 +45,14 @@ impl Number {
             }
             current_vec.push_front(
                 Digit::from_char(c)
-                    .ok_or_else(|| Error::new(span, format!("Somehow got a non-integer digit")))?,
+                    .ok_or_else(|| Error::new(span, "Somehow got a non-integer digit"))?,
             );
         }
-        Ok(Self { integer, decimal, span })
+        Ok(Self {
+            integer,
+            decimal,
+            span,
+        })
     }
 
     pub(crate) fn to_i64(&self) -> Result<i64, std::num::ParseIntError> {

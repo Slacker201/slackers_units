@@ -1,7 +1,6 @@
-use std::collections::{HashMap};
 use proc_macro2::TokenStream;
 use quote::quote;
-
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct PrefixTrie {
@@ -46,7 +45,7 @@ impl PrefixTrieNode {
         let item = self
             .items
             .entry(latest_char)
-            .or_insert_with(|| PrefixTrieNode::new());
+            .or_insert_with(PrefixTrieNode::new);
         let s = &s[1..];
         if s.is_empty() {
             self.is_terminal = true;
@@ -56,23 +55,26 @@ impl PrefixTrieNode {
     }
 
     pub fn to_const_map(&self) -> TokenStream {
-        let ts: Vec<_> = self.items.iter().map(|(k, v)| {
-            if v.items.is_empty() {
-                quote! {
-                    #k => ConstTrie::Leaf,
+        let ts: Vec<_> = self
+            .items
+            .iter()
+            .map(|(k, v)| {
+                if v.items.is_empty() {
+                    quote! {
+                        #k => ConstTrie::Leaf,
+                    }
+                } else {
+                    let v_items = v.to_const_map();
+                    let is_terminal = v.is_terminal;
+                    quote! {
+                        #k => ConstTrie::Trie {
+                            is_terminal: #is_terminal,
+                            map: #v_items,
+                        },
+                    }
                 }
-            } else {
-                let v_items = v.to_const_map();
-                let is_terminal = v.is_terminal;
-                quote! {
-                    #k => ConstTrie::Trie {
-                        is_terminal: #is_terminal,
-                        map: #v_items,
-                    },
-                }
-            }
-        }).collect();
-
+            })
+            .collect();
 
         quote! {
             phf::phf_map!(

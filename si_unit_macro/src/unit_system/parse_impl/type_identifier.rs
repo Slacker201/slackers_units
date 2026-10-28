@@ -8,7 +8,7 @@ impl Parse for TypeIdentifier {
         let raw = ident.to_string();
         Ok(Self {
             raw,
-            span: ident.span()
+            span: ident.span(),
         })
     }
 }

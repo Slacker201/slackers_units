@@ -1,6 +1,6 @@
 use syn::{LitStr, Token, braced, parse::Parse};
 
-use crate::unit_system::{Number, PrefixDeclaration, TypeIdentifier};
+use crate::unit_system::{Abbreviation, Number, PrefixDeclaration, TypeIdentifier};
 
 impl Parse for PrefixDeclaration {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
@@ -11,10 +11,7 @@ impl Parse for PrefixDeclaration {
         let content;
         braced!(content in input);
 
-        let _ = content.parse::<super::kw::abbrev>()?;
-        let _ = content.parse::<Token![:]>()?;
-        let abbreviation = content.parse::<LitStr>()?.value();
-        let _ = content.parse::<Token![;]>()?;
+        let abbreviation = content.parse::<Abbreviation>()?;
 
         let _ = content.parse::<super::kw::multiplier>()?;
         let _ = content.parse::<Token![:]>()?;
@@ -26,7 +23,21 @@ impl Parse for PrefixDeclaration {
             abbreviation,
             multiplier,
 
-            span: start_span.join(end_span).unwrap_or(input.span())
+            span: start_span.join(end_span).unwrap_or(input.span()),
+        })
+    }
+}
+
+impl Parse for Abbreviation {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let _ = input.parse::<super::kw::abbrev>()?;
+        let _ = input.parse::<Token![:]>()?;
+        let abbreviation = input.parse::<LitStr>()?;
+        let _ = input.parse::<Token![;]>()?;
+
+        Ok(Self {
+            raw: abbreviation.value(),
+            span: abbreviation.span(),
         })
     }
 }
