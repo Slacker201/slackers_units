@@ -8,6 +8,7 @@ impl System {
     pub(crate) fn validate(&self) -> syn::Result<()> {
         self.validate_no_duplicate_type()?;
         self.validate_no_duplicate_abbreviations()?;
+        self.validate_sufficient_base_types()?;
         Ok(())
     }
 
@@ -55,6 +56,17 @@ impl System {
             }
         }
 
+        Ok(())
+    }
+
+    fn validate_sufficient_base_types(&self) -> syn::Result<()> {
+        if self.base_types.len() < 1 {
+            return Err(
+                Error::new(self.span, 
+                    "Found no base types, please add at least 1"
+                )
+            );
+        }
         Ok(())
     }
 }
