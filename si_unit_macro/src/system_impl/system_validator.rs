@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use syn::Error;
 
@@ -7,7 +7,7 @@ use crate::System;
 impl System {
     pub(crate) fn validate(&self) -> syn::Result<()> {
         self.validate_no_duplicate_type()?;
-
+        self.validate_no_duplicate_abbreviations()?;
         Ok(())
     }
 
@@ -31,6 +31,30 @@ impl System {
                 return Err(err_1);
             }
         }
+        Ok(())
+    }
+
+    fn validate_no_duplicate_abbreviations(&self) -> syn::Result<()> {
+        let mut seen_unit_abbrev = HashSet::new();
+        for abbrev in self.units.iter().map(|unit| &unit.abbreviation) {
+            if !seen_unit_abbrev.insert(abbrev) {
+                return Err(Error::new(
+                    abbrev.span,
+                    format!("Found duplicate unit abbreviation {}", abbrev.raw),
+                ));
+            }
+        }
+
+        let mut seen_prefix_abbrev = HashSet::new();
+        for abbrev in self.prefixes.iter().map(|prefix| &prefix.abbreviation) {
+            if !seen_prefix_abbrev.insert(abbrev) {
+                return Err(Error::new(
+                    abbrev.span,
+                    format!("Found duplicate prefix abbreviation {}", abbrev.raw),
+                ));
+            }
+        }
+
         Ok(())
     }
 }
