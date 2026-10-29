@@ -131,16 +131,20 @@ impl ValidatedSystem {
         #[allow(clippy::boxed_local)] prefix_abbrev: Box<[&str]>,
         prefix_ident: &[Ident],
     ) -> TokenStream {
+
+        let unit_type_count = unit_ident.len();
+        let prefix_count = prefix_ident.len();
+
         quote! {
             impl crate::UnitType {
                 fn parse(mut input: Vec<u8>) -> Result<Self, ::slackers_si_units::ParseError> {
-                    const UNIT_TYPES: [(&'static str, crate::UnitType); 1] =
+                    const UNIT_TYPES: [(&'static str, crate::UnitType); #unit_type_count] =
                         [
                             #(
                                 (
                                     #unit_abbrev,
                                     crate::UnitType::#unit_ident
-                                )
+                                ),
                             )*
                         ];
 
@@ -158,13 +162,13 @@ impl ValidatedSystem {
 
             impl crate::Prefix {
                 fn parse(mut input: Vec<u8>) -> Result<Self, ::slackers_si_units::ParseError> {
-                    const PREFIX_TYPES: [(&'static str, crate::Prefix); 1] =
+                    const PREFIX_TYPES: [(&'static str, crate::Prefix); #prefix_count] =
                         [
                             #(
                                 (
                                     #prefix_abbrev,
                                     crate::Prefix::#prefix_ident
-                                )
+                                ),
                             )*
                         ];
 
