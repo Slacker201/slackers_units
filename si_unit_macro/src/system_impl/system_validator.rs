@@ -60,12 +60,11 @@ impl System {
     }
 
     fn validate_sufficient_base_types(&self) -> syn::Result<()> {
-        if self.base_types.len() < 1 {
-            return Err(
-                Error::new(self.span, 
-                    "Found no base types, please add at least 1"
-                )
-            );
+        if self.base_types.is_empty() {
+            return Err(Error::new(
+                self.span,
+                "Found no base types, please add at least 1",
+            ));
         }
         Ok(())
     }

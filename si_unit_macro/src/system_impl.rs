@@ -34,10 +34,9 @@ pub(crate) fn system_impl(ts: TokenStream) -> TokenStream {
     let unit_prefix_trie_map = unit_prefix_trie.to_const_map();
     let prefix_prefix_trie_map = prefix_prefix_trie.to_const_map();
 
-
     let trie_decl = quote! {
-        const __UNIT_PREFIX_TRIE__: phf::Map<char, ConstTrie> = #unit_prefix_trie_map;
-        const __PREFIX_PREFIX_TRIE__: phf::Map<char, ConstTrie> = #prefix_prefix_trie_map;
+        const __UNIT_PREFIX_TRIE__: ::slackers_si_units::Map<u8, ::slackers_si_units::ConstTrie> = #unit_prefix_trie_map;
+        const __PREFIX_PREFIX_TRIE__: ::slackers_si_units::Map<u8, ::slackers_si_units::ConstTrie> = #prefix_prefix_trie_map;
     };
 
     quote! {

@@ -2,9 +2,7 @@ use syn::{Error, Ident, Token, parse::Parse};
 
 use crate::{
     System,
-    unit_system::{
-        BaseTypeDeclaration, PrefixDeclaration, TypeIdentifier, UnitDeclaration,
-    },
+    unit_system::{BaseTypeDeclaration, PrefixDeclaration, TypeIdentifier, UnitDeclaration},
 };
 
 impl Parse for System {

@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::ToTokens;
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -9,7 +9,7 @@ pub struct PrefixTrie {
 
 #[derive(Debug)]
 struct PrefixTrieNode {
-    items: HashMap<char, PrefixTrieNode>,
+    items: HashMap<u8, PrefixTrieNode>,
     is_terminal: bool,
 }
 
@@ -21,7 +21,8 @@ impl PrefixTrie {
     }
 
     pub fn add_word(&mut self, word: &str) {
-        self.root.add_word(word);
+        let slice = word.as_bytes();
+        self.root.add_word(slice);
     }
 
     pub fn to_const_map(&self) -> TokenStream {
@@ -36,15 +37,15 @@ impl PrefixTrieNode {
             is_terminal: false,
         }
     }
-    pub fn add_word(&mut self, s: &str) {
-        let latest_char = if let Some(latest_char) = s.chars().next() {
-            latest_char
+    pub fn add_word(&mut self, s: &[u8]) {
+        let latest_byte = if let Some(latest_byte) = s.first() {
+            latest_byte
         } else {
             return;
         };
         let item = self
             .items
-            .entry(latest_char)
+            .entry(*latest_byte)
             .or_insert_with(PrefixTrieNode::new);
         let s = &s[1..];
         if s.is_empty() {
@@ -55,34 +56,31 @@ impl PrefixTrieNode {
     }
 
     pub fn to_const_map(&self) -> TokenStream {
-        let ts: Vec<_> = self
-            .items
-            .iter()
-            .map(|(k, v)| {
-                if v.items.is_empty() {
-                    quote! {
-                        #k => ConstTrie::Leaf,
-                    }
-                } else {
-                    let v_items = v.to_const_map();
-                    let is_terminal = v.is_terminal;
-                    quote! {
-                        #k => ConstTrie::Trie {
-                            is_terminal: #is_terminal,
-                            map: #v_items,
-                        },
-                    }
-                }
-            })
-            .collect();
+        let mut q = phf_codegen::Map::new();
 
-        quote! {
-            phf::phf_map!(
-                #(
-                    #ts
-                )*
-            )
+        for (key, value) in self.items.iter().map(|(k, v)| {
+            if v.items.is_empty() {
+                (*k, "::slackers_si_units::ConstTrie::Leaf".to_string())
+            } else {
+                let v_items = v.to_const_map();
+                let is_terminal = v.is_terminal;
+                (
+                    *k,
+                    format!(
+                        "::slackers_si_units::ConstTrie::Node {{
+                            is_terminal: {is_terminal},
+                            node: {v_items},
+                }},"
+                    ),
+                )
+            }
+        }) {
+            q.entry(key, value);
         }
+
+        q.phf_path("::slackers_si_units");
+
+        q.build().into_token_stream()
     }
 }
 
