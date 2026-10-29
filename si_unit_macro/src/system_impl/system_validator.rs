@@ -10,6 +10,7 @@ impl System {
         self.validate_no_duplicate_type()?;
         self.validate_no_duplicate_abbreviations()?;
         self.validate_sufficient_base_types()?;
+        self.validate_no_none_prefix()?;
 
         let unit_idents = self
             .units
@@ -87,5 +88,18 @@ impl System {
             ));
         }
         Ok(())
+    }
+
+    fn validate_no_none_prefix(&self) -> syn::Result<()> {
+        if let Some(v) = self.prefixes.iter().find(|c| {
+            c.prefix.raw == "None"
+        }) {
+            Err(
+                Error::new(
+                    v.span, "Cannot have a type named `None`")
+            )
+        } else {
+            Ok(())
+        }
     }
 }
