@@ -1,0 +1,15 @@
+use syn::Ident;
+
+use crate::unit_system::{BaseTypeDeclaration, PrefixDeclaration, UnitDeclaration};
+
+mod generator;
+
+pub(crate) struct ValidatedSystem {
+    pub units: Box<[UnitDeclaration]>,
+    pub prefixes: Box<[PrefixDeclaration]>,
+
+    pub unit_enum_names: Box<[Ident]>,
+    pub prefix_enum_names: Box<[Ident]>,
+    #[allow(unused)]
+    pub base_types: Box<[BaseTypeDeclaration]>,
+}

@@ -1,15 +1,35 @@
 use std::collections::{HashMap, HashSet};
 
+use quote::format_ident;
 use syn::Error;
 
-use crate::System;
+use crate::{System, validated_system::ValidatedSystem};
 
 impl System {
-    pub(crate) fn validate(&self) -> syn::Result<()> {
+    pub(crate) fn validate(self) -> syn::Result<ValidatedSystem> {
         self.validate_no_duplicate_type()?;
         self.validate_no_duplicate_abbreviations()?;
         self.validate_sufficient_base_types()?;
-        Ok(())
+
+        let unit_idents = self
+            .units
+            .iter()
+            .map(|c| format_ident!("{}", c.unit.raw))
+            .collect();
+
+        let prefix_idents = self
+            .prefixes
+            .iter()
+            .map(|c| format_ident!("{}", c.prefix.raw))
+            .collect();
+
+        Ok(ValidatedSystem {
+            units: self.units,
+            base_types: self.base_types,
+            prefixes: self.prefixes,
+            unit_enum_names: unit_idents,
+            prefix_enum_names: prefix_idents,
+        })
     }
 
     fn validate_no_duplicate_type(&self) -> syn::Result<()> {

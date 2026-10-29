@@ -83,39 +83,3 @@ impl PrefixTrieNode {
         q.build().into_token_stream()
     }
 }
-
-/*
-TODO put in parser crate
-
-trait FindLongest {
-    fn find_longest(&self, s: &str, we_are_terminal: bool) -> Option<VecDeque<char>>;
-}
-
-impl FindLongest for Map<char, ConstTrie> {
-    fn find_longest(&self, s: &str, we_are_terminal: bool) -> Option<VecDeque<char>> {
-        let c= s.chars().next()?;
-
-        if let Some(n) = self.get(&c) {
-            match n {
-                ConstTrie::Leaf => {
-                    Some(VecDeque::from_iter([c]))
-                },
-                ConstTrie::Trie { is_terminal, map } => {
-                    if let Some(mut s) = map.find_longest(&s[1..], *is_terminal) {
-                        s.push_front(c);
-                        Some(s)
-                    } else {
-                        if we_are_terminal {
-                            Some(VecDeque::from_iter([c]))
-                        } else {
-                            None
-                        }
-                    }
-                },
-            }
-        } else {
-            Some(VecDeque::from_iter([c]))
-        }
-    }
-}
-*/

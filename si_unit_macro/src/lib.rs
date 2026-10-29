@@ -6,6 +6,8 @@ mod prefix_trie;
 mod system_impl;
 mod unit_system;
 
+mod validated_system;
+
 #[proc_macro]
 pub fn system(ts: TokenStream) -> TokenStream {
     system_impl::system_impl(ts.into()).into()
