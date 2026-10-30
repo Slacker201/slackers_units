@@ -11,7 +11,6 @@ impl Parse for Number {
             let lit_float = input.parse::<LitFloat>().unwrap();
 
             if !lit_float.suffix().is_empty() {
-                // TODO verify that unsuffixed floats in userland do not have f64 suffix
                 Err(Error::new(input.span(), "Do not add a suffix"))
             } else {
                 Self::parse_str(lit_float.base10_digits(), lit_float.span())
@@ -20,7 +19,6 @@ impl Parse for Number {
             let lit_int = input.parse::<LitInt>().unwrap();
 
             if !lit_int.suffix().is_empty() {
-                // TODO verify that unsuffixed ints in userland do not have i32 suffix
                 Err(Error::new(input.span(), "Do not add a suffix"))
             } else {
                 Self::parse_str(lit_int.base10_digits(), lit_int.span())
@@ -53,12 +51,6 @@ impl Number {
             decimal,
             span,
         })
-    }
-
-    pub(crate) fn to_i64(&self) -> Result<i64, std::num::ParseIntError> {
-        let str_ver = self.to_string();
-
-        str_ver.parse::<i64>()
     }
 }
 

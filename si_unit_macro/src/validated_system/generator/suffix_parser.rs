@@ -4,7 +4,6 @@ use syn::Ident;
 
 use crate::{prefix_trie::PrefixTrie, validated_system::ValidatedSystem};
 
-
 impl ValidatedSystem {
     pub(crate) fn generate_suffix_parser(&self) -> TokenStream {
         let mut unit_prefix_trie = PrefixTrie::new();
@@ -131,7 +130,6 @@ impl ValidatedSystem {
         #[allow(clippy::boxed_local)] prefix_abbrev: Box<[&str]>,
         prefix_ident: &[Ident],
     ) -> TokenStream {
-
         let unit_type_count = unit_ident.len();
         let prefix_count = prefix_ident.len();
 

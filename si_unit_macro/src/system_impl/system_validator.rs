@@ -91,13 +91,8 @@ impl System {
     }
 
     fn validate_no_none_prefix(&self) -> syn::Result<()> {
-        if let Some(v) = self.prefixes.iter().find(|c| {
-            c.prefix.raw == "None"
-        }) {
-            Err(
-                Error::new(
-                    v.span, "Cannot have a type named `None`")
-            )
+        if let Some(v) = self.prefixes.iter().find(|c| c.prefix.raw == "None") {
+            Err(Error::new(v.span, "Cannot have a type named `None`"))
         } else {
             Ok(())
         }

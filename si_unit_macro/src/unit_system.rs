@@ -2,6 +2,8 @@ use std::{collections::VecDeque, hash::Hash};
 
 use proc_macro2::Span;
 
+use crate::unit_system::parse_impl::expression::MulExpr;
+
 mod parse_impl;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum Digit {
@@ -17,6 +19,7 @@ pub(crate) enum Digit {
     Nine,
 }
 
+#[allow(unused)]
 #[derive(Debug, Clone)]
 pub(crate) struct Number {
     pub integer: VecDeque<Digit>,
@@ -36,8 +39,7 @@ pub(crate) struct TypeIdentifier {
 #[allow(unused)]
 #[derive(Debug, Clone)]
 pub(crate) struct Expression {
-    pub units: Box<[(TypeIdentifier, i64)]>,
-    pub multiplier: Number,
+    pub expr: MulExpr,
 
     pub span: Span,
 }

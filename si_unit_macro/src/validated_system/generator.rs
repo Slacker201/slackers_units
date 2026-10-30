@@ -1,6 +1,2 @@
-
-
-
-
-mod suffix_parser;
 mod enums;
+mod suffix_parser;

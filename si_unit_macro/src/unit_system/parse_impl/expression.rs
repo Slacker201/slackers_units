@@ -1,49 +1,170 @@
-use syn::{Error, Token, parse::Parse};
+use std::fmt::Debug;
 
-use crate::unit_system::{Expression, Number, TypeIdentifier};
+use syn::{Error, Ident, LitFloat, LitInt, Token, parenthesized, parse::Parse};
+
+use crate::unit_system::Expression;
 
 impl Parse for Expression {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let multiplier = Number::parse(input)?;
+        let q = input.parse::<MulExpr>()?;
+        eprintln!("{:?}", q);
+        Err(Error::new(input.span(), "test"))
+    }
+}
+#[allow(unused)]
+#[derive(Debug, Clone)]
+pub enum MulExpr {
+    Pow { p_expr: PowerExpr },
+    Mul { lhs: PowerExpr, rhs: PowerExpr },
+    Div { lhs: PowerExpr, rhs: PowerExpr },
+}
+#[derive(Clone)]
+pub enum PowerExpr {
+    Atom { atom: Atom },
+    Expr { atom: Atom, num: LitInt },
+}
+#[allow(unused)]
+#[derive(Debug, Clone)]
+pub enum Atom {
+    Item { item: Item },
+    MulExpr { expr: Box<MulExpr> },
+}
+#[derive(Clone)]
+pub enum Item {
+    SuffixedFloat { value: LitFloat, suffix: String },
+    SuffixedInt { value: LitInt, suffix: String },
+    Unit { value: Ident },
+}
 
-        let mut units = vec![];
-
-        let mut final_span = input.span();
-
-        while let Ok(t) = TypeIdentifier::parse(input) {
-            let exponent = match input.parse::<Token![^]>() {
-                Ok(_) => {
-                    let num = Number::parse(input)?;
-                    let the_i64 = num.to_i64().map_err(|e| {
-                        match e.kind() {
-                            std::num::IntErrorKind::Empty => {
-                                Error::new(input.span(), format!("failed to convert {num} into an integer because it was somehow empty????????"))
-                            },
-                            std::num::IntErrorKind::InvalidDigit => {
-                                Error::new(input.span(), format!("failed to convert {num} into an integer because it somehow had an invalid character????"))
-                            },
-                            std::num::IntErrorKind::PosOverflow => {
-                                Error::new(input.span(), format!("{num} is too large for an i64"))
-                            },
-                            std::num::IntErrorKind::NegOverflow => {
-                                Error::new(input.span(), format!("{num} is too small for an i64"))
-                            },
-                            std::num::IntErrorKind::Zero => unreachable!(),
-                            _ => todo!(),
-                        }
-                    })?;
-                    (the_i64, num.span)
-                }
-                Err(_) => (0, t.span),
-            };
-            final_span = exponent.1;
-            units.push((t, exponent.0));
+impl Debug for Item {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::SuffixedFloat { value, suffix } => f
+                .debug_struct("SuffixedFloat")
+                .field("value", &value.to_string())
+                .field("suffix", suffix)
+                .finish(),
+            Self::SuffixedInt { value, suffix } => f
+                .debug_struct("SuffixedInt")
+                .field("value", &value.to_string())
+                .field("suffix", suffix)
+                .finish(),
+            Self::Unit { value } => f.debug_struct("Unit").field("value", value).finish(),
         }
+    }
+}
 
-        Ok(Self {
-            span: multiplier.span.join(final_span).unwrap_or(input.span()),
-            units: units.into_boxed_slice(),
-            multiplier,
-        })
+impl Debug for PowerExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Atom { atom } => f.debug_struct("Atom").field("atom", atom).finish(),
+            Self::Expr { atom, num } => f
+                .debug_struct("Expr")
+                .field("atom", atom)
+                .field("num", &num.to_string())
+                .finish(),
+        }
+    }
+}
+
+impl Parse for Item {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        if input.peek(LitFloat) {
+            let value = input.parse::<LitFloat>()?;
+            let suffix = value.suffix().to_string();
+            Ok(Self::SuffixedFloat { value, suffix })
+        } else if input.peek(LitInt) {
+            let value = input.parse::<LitInt>()?;
+            let suffix = value.suffix().to_string();
+            Ok(Self::SuffixedInt { value, suffix })
+        } else if input.peek(Ident) {
+            Ok(Self::Unit {
+                value: input.parse()?,
+            })
+        } else {
+            Err(Error::new(
+                input.span(),
+                "Failed to find LitFloat, LitInt, or Identifier",
+            ))
+        }
+    }
+}
+
+impl Parse for PowerExpr {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let item = input.parse::<Item>()?;
+        if input.peek(Token![^]) {
+            let _ = input.parse::<Token![^]>()?;
+            let number = input.parse::<Item>()?;
+
+            let (num, s) = match number {
+                Item::SuffixedInt { value, suffix } => (value, suffix),
+                Item::Unit { value } => {
+                    return Err(Error::new(
+                        value.span(),
+                        "Only unitless integers are allowed as a power",
+                    ));
+                }
+                Item::SuffixedFloat { value, suffix: _ } => {
+                    return Err(Error::new(
+                        value.span(),
+                        "Only unitless integers are allowed as a power",
+                    ));
+                }
+            };
+
+            if !s.is_empty() {
+                Err(Error::new(
+                    num.span(),
+                    "Only unitless integers are allowed as a power",
+                ))
+            } else {
+                Ok(PowerExpr::Expr {
+                    atom: Atom::Item { item },
+                    num,
+                })
+            }
+        } else {
+            Ok(PowerExpr::Atom {
+                atom: Atom::Item { item },
+            })
+        }
+    }
+}
+
+impl Parse for MulExpr {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let p_expr = input.parse::<PowerExpr>()?;
+
+        if input.peek(Token![*]) {
+            let _ = input.parse::<Token![*]>()?;
+
+            let rhs = input.parse::<PowerExpr>()?;
+            Ok(MulExpr::Mul { lhs: p_expr, rhs })
+        } else if input.peek(Token![/]) {
+            let _ = input.parse::<Token![/]>()?;
+
+            let rhs = input.parse::<PowerExpr>()?;
+            Ok(MulExpr::Div { lhs: p_expr, rhs })
+        } else {
+            Ok(Self::Pow { p_expr })
+        }
+    }
+}
+
+impl Parse for Atom {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let fork = input.fork();
+
+        if let Ok(item) = input.parse::<Item>() {
+            Ok(Self::Item { item })
+        } else {
+            let content;
+            parenthesized!(content in fork);
+
+            Ok(Self::MulExpr {
+                expr: Box::new(content.parse::<MulExpr>()?),
+            })
+        }
     }
 }
