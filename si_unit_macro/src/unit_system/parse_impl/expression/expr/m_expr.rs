@@ -3,9 +3,6 @@ use syn::{Error, Token, parse::Parse};
 
 use crate::unit_system::parse_impl::expression::expr::{MExpr, MOp, PExpr};
 
-
-
-
 impl Parse for MExpr {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let first = input.parse::<PExpr>()?;
@@ -23,9 +20,11 @@ impl Parse for MExpr {
             }
         }
 
-        Ok(
-            Self { first, next: next.into_boxed_slice(), span: start_span.join(next_span).unwrap_or(start_span) }
-        )
+        Ok(Self {
+            first,
+            next: next.into_boxed_slice(),
+            span: start_span.join(next_span).unwrap_or(start_span),
+        })
     }
 }
 
@@ -38,16 +37,10 @@ impl Parse for MOp {
             input.parse::<Token![/]>()?;
             Ok(Self::Div)
         } else {
-            Err(
-                Error::new(
-                    input.span(), 
-                    "Expected `*` or `/`"
-                )
-            )
+            Err(Error::new(input.span(), "Expected `*` or `/`"))
         }
     }
 }
-
 
 impl MExpr {
     pub(crate) fn span(&self) -> Span {
@@ -58,13 +51,10 @@ impl MExpr {
         if let Some(s) = self.first.contains_power() {
             return Some(s);
         }
-        if let Some(v) = self.next.iter()
+        self.next
+            .iter()
             .map(|(_, p_expr)| p_expr.contains_power())
-            .find(|c| c.is_some()).flatten() {
-                return Some(v);
-            } else {
-                return None;
-            }
-
+            .find(|c| c.is_some())
+            .flatten()
     }
 }

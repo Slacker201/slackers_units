@@ -1,10 +1,9 @@
 use proc_macro2::Span;
 use syn::{Ident, LitFloat, LitInt};
 
+mod atom;
 mod m_expr;
 mod p_expr;
-mod atom;
-
 
 #[allow(unused)]
 #[derive(Debug, Clone)]
@@ -17,7 +16,7 @@ enum PExpr {
         atom: Atom,
         amount: LitInt,
         span: Span,
-    }
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -36,25 +35,13 @@ enum MOp {
 
 #[derive(Debug, Clone)]
 enum Atom {
-    Item {
-        item: Item,
-        span: Span,
-    },
-    Parenthesized {
-        m_expr: Box<MExpr>,
-        span: Span,
-    }
+    Item { item: Item, span: Span },
+    Parenthesized { m_expr: Box<MExpr>, span: Span },
 }
 
 #[derive(Debug, Clone)]
 enum Item {
-    LitInt {
-        value: LitInt,
-    },
-    LitFloat {
-        value: LitFloat,
-    },
-    Unit {
-        value: Ident,
-    }
+    LitInt { value: LitInt },
+    LitFloat { value: LitFloat },
+    Unit { value: Ident },
 }
