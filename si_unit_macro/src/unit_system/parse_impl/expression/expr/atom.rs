@@ -50,7 +50,7 @@ impl Parse for Atom {
 
 impl Atom {
     #[allow(unused)]
-    pub(crate) fn suffix<'a>(&'a self) -> Option<Cow<'a, str>> {
+    pub(crate) fn suffix(&self) -> Option<Cow<'_, str>> {
         match self {
             Atom::Item { item, span: _ } => match item {
                 Item::LitInt { value } => Some(Cow::Borrowed(value.suffix())),
@@ -63,8 +63,7 @@ impl Atom {
 
     pub(crate) fn span(&self) -> Span {
         match self {
-            Atom::Item { item: _, span } => *span,
-            Atom::Parenthesized { m_expr: _, span } => *span,
+            Atom::Item { item: _, span } | Atom::Parenthesized { m_expr: _, span } => *span,
         }
     }
 

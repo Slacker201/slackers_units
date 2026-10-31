@@ -6,35 +6,14 @@ use crate::{prefix_trie::PrefixTrie, validated_system::ValidatedSystem};
 
 impl ValidatedSystem {
     pub(crate) fn generate_suffix_parser(&self) -> TokenStream {
-        let mut unit_prefix_trie = PrefixTrie::new();
-        let mut prefix_prefix_trie = PrefixTrie::new();
-
-        let mut unit_root = false;
-
-        for abbrev in self.units.iter().map(|unit| &unit.abbreviation) {
-            if abbrev.raw.len() == 1 {
-                unit_root = true;
-            }
-            unit_prefix_trie.add_word(&abbrev.raw);
-        }
-
-        let mut prefix_root = false;
-
-        for abbrev in self.prefixes.iter().map(|prefix| &prefix.abbreviation) {
-            if abbrev.raw.len() == 1 {
-                prefix_root = true;
-            }
-            prefix_prefix_trie.add_word(&abbrev.raw);
-        }
-
-        let unit_prefix_trie_map = unit_prefix_trie.to_const_map();
-        let prefix_prefix_trie_map = prefix_prefix_trie.to_const_map();
+        let (unit_prefix_trie_map, prefix_prefix_trie_map, unit_root, prefix_root) =
+            self.generate_trie_maps();
 
         let unit_abbrev = self
             .units
             .iter()
             .map(|unit| &unit.abbreviation.raw as &str)
-            .collect();
+            .collect::<Box<[_]>>();
 
         let unit_ident = &self.unit_enum_names;
 
@@ -42,12 +21,12 @@ impl ValidatedSystem {
             .prefixes
             .iter()
             .map(|prefix| &prefix.abbreviation.raw as &str)
-            .collect();
+            .collect::<Box<[_]>>();
 
         let prefix_ident = &self.prefix_enum_names;
 
         let prefix_type_parsers =
-            Self::generate_type_parsers(unit_abbrev, unit_ident, prefix_abbrev, prefix_ident);
+            Self::generate_type_parsers(&unit_abbrev, unit_ident, &prefix_abbrev, prefix_ident);
 
         quote! {
             const __UNIT_PREFIX_TRIE__: ::slackers_si_units::Map<u8, ::slackers_si_units::ConstTrie> =
@@ -124,10 +103,40 @@ impl ValidatedSystem {
         }
     }
 
+    fn generate_trie_maps(&self) -> (TokenStream, TokenStream, bool, bool) {
+        let mut unit_prefix_trie = PrefixTrie::new();
+        let mut prefix_prefix_trie = PrefixTrie::new();
+
+        let mut unit_root = false;
+
+        for abbrev in self.units.iter().map(|unit| &unit.abbreviation) {
+            if abbrev.raw.len() == 1 {
+                unit_root = true;
+            }
+            unit_prefix_trie.add_word(&abbrev.raw);
+        }
+
+        let mut prefix_root = false;
+
+        for abbrev in self.prefixes.iter().map(|prefix| &prefix.abbreviation) {
+            if abbrev.raw.len() == 1 {
+                prefix_root = true;
+            }
+            prefix_prefix_trie.add_word(&abbrev.raw);
+        }
+
+        (
+            unit_prefix_trie.to_const_map(),
+            prefix_prefix_trie.to_const_map(),
+            unit_root,
+            prefix_root,
+        )
+    }
+
     fn generate_type_parsers(
-        #[allow(clippy::boxed_local)] unit_abbrev: Box<[&str]>,
+        #[allow(clippy::boxed_local)] unit_abbrev: &[&str],
         unit_ident: &[Ident],
-        #[allow(clippy::boxed_local)] prefix_abbrev: Box<[&str]>,
+        #[allow(clippy::boxed_local)] prefix_abbrev: &[&str],
         prefix_ident: &[Ident],
     ) -> TokenStream {
         let unit_type_count = unit_ident.len();

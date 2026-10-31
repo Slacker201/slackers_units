@@ -35,8 +35,8 @@ impl Parse for PExpr {
 impl PExpr {
     pub(crate) fn span(&self) -> Span {
         match self {
-            PExpr::Atom { atom: _, span } => *span,
-            PExpr::Pow {
+            PExpr::Atom { atom: _, span }
+            | PExpr::Pow {
                 atom: _,
                 amount: _,
                 span,

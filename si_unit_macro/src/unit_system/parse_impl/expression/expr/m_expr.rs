@@ -57,7 +57,7 @@ impl MExpr {
         self.next
             .iter()
             .map(|(_, p_expr)| p_expr.contains_power())
-            .find(|c| c.is_some())
+            .find(Option::is_some)
             .flatten()
     }
 

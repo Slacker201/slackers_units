@@ -34,14 +34,13 @@ impl Parse for System {
                 continue;
             }
 
-            if !input.is_empty() {
-                return Err(Error::new(
-                    input.span(),
-                    format!("Expected end of input, got {}", input),
-                ));
-            } else {
+            if input.is_empty() {
                 break;
             }
+            return Err(Error::new(
+                input.span(),
+                format!("Expected end of input, got {input}"),
+            ));
         }
 
         Ok(Self {

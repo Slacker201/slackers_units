@@ -38,9 +38,7 @@ impl PrefixTrieNode {
         }
     }
     pub fn add_word(&mut self, s: &[u8]) {
-        let latest_byte = if let Some(latest_byte) = s.first() {
-            latest_byte
-        } else {
+        let Some(latest_byte) = s.first() else {
             return;
         };
         let item = self
