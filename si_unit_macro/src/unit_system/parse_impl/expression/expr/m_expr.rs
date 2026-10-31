@@ -1,7 +1,10 @@
 use proc_macro2::Span;
 use syn::{Error, Token, parse::Parse};
 
-use crate::unit_system::parse_impl::expression::expr::{MExpr, MOp, PExpr};
+use crate::{
+    system_impl::system_validator::validator_utils::AcceptOnlyOne,
+    unit_system::parse_impl::expression::expr::{MExpr, MOp, PExpr},
+};
 
 impl Parse for MExpr {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
@@ -56,5 +59,42 @@ impl MExpr {
             .map(|(_, p_expr)| p_expr.contains_power())
             .find(|c| c.is_some())
             .flatten()
+    }
+
+    pub(crate) fn contains_two_units(&self) -> AcceptOnlyOne<Span> {
+        let mut count = 0;
+        let v = self.first.contains_two_units();
+        if v.is_one() {
+            count += 1;
+        } else if v.is_two() {
+            count += 2;
+        }
+        if count >= 2 {
+            return v;
+        }
+
+        for (_, expr) in &self.next {
+            match expr.contains_two_units() {
+                AcceptOnlyOne::None => {}
+                AcceptOnlyOne::One => {
+                    count += 1;
+                    if count >= 2 {
+                        return AcceptOnlyOne::Two(expr.span());
+                    }
+                }
+                AcceptOnlyOne::Two(s) => {
+                    count += 2;
+                    if count >= 2 {
+                        return AcceptOnlyOne::Two(s);
+                    }
+                }
+            }
+        }
+
+        match count {
+            0 => AcceptOnlyOne::None,
+            1 => AcceptOnlyOne::One,
+            _ => AcceptOnlyOne::Two(self.first.span()),
+        }
     }
 }

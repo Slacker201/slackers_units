@@ -3,7 +3,10 @@ use std::borrow::Cow;
 use proc_macro2::Span;
 use syn::{Ident, LitFloat, LitInt, parenthesized, parse::Parse};
 
-use crate::unit_system::parse_impl::expression::expr::{Atom, Item, MExpr};
+use crate::{
+    system_impl::system_validator::validator_utils::AcceptOnlyOne,
+    unit_system::parse_impl::expression::expr::{Atom, Item, MExpr},
+};
 
 impl Parse for Atom {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
@@ -65,10 +68,33 @@ impl Atom {
         }
     }
 
-    pub fn contains_power(&self) -> Option<Span> {
+    pub(crate) fn contains_power(&self) -> Option<Span> {
         match self {
             Atom::Item { item: _, span: _ } => None,
             Atom::Parenthesized { m_expr, span: _ } => m_expr.contains_power(),
+        }
+    }
+
+    pub(crate) fn contains_two_units(&self) -> AcceptOnlyOne<Span> {
+        match self {
+            Atom::Item { item, span: _ } => match item {
+                Item::LitInt { value } => {
+                    if value.suffix().is_empty() {
+                        AcceptOnlyOne::None
+                    } else {
+                        AcceptOnlyOne::One
+                    }
+                }
+                Item::LitFloat { value } => {
+                    if value.suffix().is_empty() {
+                        AcceptOnlyOne::None
+                    } else {
+                        AcceptOnlyOne::One
+                    }
+                }
+                Item::Unit { value: _ } => AcceptOnlyOne::One,
+            },
+            Atom::Parenthesized { m_expr, span: _ } => m_expr.contains_two_units(),
         }
     }
 }

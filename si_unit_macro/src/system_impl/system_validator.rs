@@ -5,13 +5,32 @@ use syn::Error;
 
 use crate::{System, validated_system::ValidatedSystem};
 
+pub(crate) mod validator_utils;
+
+macro_rules! validate_convesion_subset {
+    ($v: expr) => {
+        if let Some(s) = $v.contains_power() {
+            return Err(Error::new(
+                s,
+                "Exponent conversions are not supported at this time",
+            ));
+        }
+        if $v.contains_two_units().is_two() {
+            return Err(Error::new(
+                $v.span(),
+                "Exponent conversions are not supported at this time",
+            ));
+        }
+    };
+}
+
 impl System {
     pub(crate) fn validate(self) -> syn::Result<ValidatedSystem> {
         self.validate_no_duplicate_type()?;
         self.validate_no_duplicate_abbreviations()?;
         self.validate_sufficient_base_types()?;
         self.validate_no_none_prefix()?;
-        self.validate_all_conversions_contain_no_power()?;
+        self.validate_conversion_expr_subset()?;
 
         let unit_idents = self
             .units
@@ -100,33 +119,12 @@ impl System {
     }
 
     // TODO remove once a = b^2 is supported
-    fn validate_all_conversions_contain_no_power(&self) -> syn::Result<()> {
-        if let Some(span) = self
-            .units
-            .iter()
-            .map(|c| {
-                c.conversions
-                    .conversions
-                    .iter()
-                    .map(|c| c.from.expr.contains_power())
-                    .chain(
-                        c.conversions
-                            .conversions
-                            .iter()
-                            .map(|c| c.to.expr.contains_power()),
-                    )
-                    .find(|c| c.is_some())
-            })
-            .find(|c| c.flatten().is_some())
-            .flatten()
-            .flatten()
-        {
-            Err(Error::new(
-                span,
-                "Exponent conversions are not supported at this time",
-            ))
-        } else {
-            Ok(())
+    fn validate_conversion_expr_subset(&self) -> syn::Result<()> {
+        for conversion in self.units.iter().flat_map(|c| &c.conversions.conversions) {
+            validate_convesion_subset!(conversion.from.expr);
+            validate_convesion_subset!(conversion.to.expr);
         }
+
+        Ok(())
     }
 }

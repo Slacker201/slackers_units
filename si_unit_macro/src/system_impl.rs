@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 
 use crate::System;
-mod system_validator;
+pub(crate) mod system_validator;
 
 pub(crate) fn system_impl(ts: TokenStream) -> TokenStream {
     let sys = match syn::parse2::<System>(ts) {

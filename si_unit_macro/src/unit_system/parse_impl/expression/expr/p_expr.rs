@@ -1,7 +1,10 @@
 use proc_macro2::Span;
 use syn::{Error, LitInt, Token, parse::Parse};
 
-use crate::unit_system::parse_impl::expression::expr::{Atom, PExpr};
+use crate::{
+    system_impl::system_validator::validator_utils::AcceptOnlyOne,
+    unit_system::parse_impl::expression::expr::{Atom, PExpr},
+};
 
 impl Parse for PExpr {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
@@ -46,9 +49,20 @@ impl PExpr {
             PExpr::Atom { atom, span: _ } => atom.contains_power(),
             PExpr::Pow {
                 atom: _,
+                amount,
+                span: _,
+            } => Some(amount.span()),
+        }
+    }
+
+    pub(crate) fn contains_two_units(&self) -> AcceptOnlyOne<Span> {
+        match self {
+            PExpr::Atom { atom, span: _ } => atom.contains_two_units(),
+            PExpr::Pow {
+                atom: _,
                 amount: _,
                 span,
-            } => Some(*span),
+            } => AcceptOnlyOne::Two(*span),
         }
     }
 }

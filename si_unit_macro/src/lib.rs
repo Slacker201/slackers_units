@@ -3,7 +3,7 @@ use proc_macro::TokenStream;
 use crate::unit_system::System;
 
 mod prefix_trie;
-mod system_impl;
+pub(crate) mod system_impl;
 mod unit_system;
 
 mod validated_system;
