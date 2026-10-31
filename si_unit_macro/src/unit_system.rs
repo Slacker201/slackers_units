@@ -2,7 +2,8 @@ use std::{collections::VecDeque, hash::Hash};
 
 use proc_macro2::Span;
 
-use crate::unit_system::parse_impl::expression::MulExpr;
+use crate::unit_system::parse_impl::expression::expr::MExpr;
+
 
 mod parse_impl;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -39,7 +40,7 @@ pub(crate) struct TypeIdentifier {
 #[allow(unused)]
 #[derive(Debug, Clone)]
 pub(crate) struct Expression {
-    pub expr: MulExpr,
+    pub expr: MExpr,
 
     pub span: Span,
 }

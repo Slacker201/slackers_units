@@ -11,6 +11,7 @@ impl System {
         self.validate_no_duplicate_abbreviations()?;
         self.validate_sufficient_base_types()?;
         self.validate_no_none_prefix()?;
+        self.validate_all_conversions_contain_no_power()?;
 
         let unit_idents = self
             .units
@@ -96,5 +97,25 @@ impl System {
         } else {
             Ok(())
         }
+    }
+
+    // TODO remove once a = b^2 is supported
+    fn validate_all_conversions_contain_no_power(&self) -> syn::Result<()> {
+        if let Some(span) = self.units.iter()
+            .map(|c| {
+                c.conversions.conversions.iter().map(|c| c.from.expr.contains_power())
+                    .chain(c.conversions.conversions.iter().map(|c| c.to.expr.contains_power()))
+                    .find(|c| c.is_some())
+            }).find(|c| c.flatten().is_some()).flatten().flatten() {
+                return 
+                Err(
+                    Error::new(
+                        span, 
+                        "Exponent conversions are not supported at this time"
+                    )
+                );
+            } else {
+                Ok(())
+            }
     }
 }

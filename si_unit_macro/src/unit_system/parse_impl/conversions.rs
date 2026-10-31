@@ -4,9 +4,12 @@ use crate::unit_system::{Conversion, Conversions, Expression};
 
 impl Parse for Conversion {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        eprintln!("Parsing expr 1");
         let from = input.parse::<Expression>()?;
         let _ = input.parse::<Token![:]>();
+        eprintln!("Parsing expr 2");
         let to = input.parse::<Expression>()?;
+        eprintln!("Parsed expr 2");
         let end_span = input.parse::<Token![;]>()?.span;
 
         Ok(Self {
