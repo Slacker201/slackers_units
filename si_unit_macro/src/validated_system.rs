@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use syn::Ident;
 
 use crate::unit_system::{BaseTypeDeclaration, PrefixDeclaration, UnitDeclaration};
@@ -12,4 +14,5 @@ pub(crate) struct ValidatedSystem {
     pub prefix_enum_names: Box<[Ident]>,
     #[allow(unused)]
     pub base_types: Box<[BaseTypeDeclaration]>,
+    pub base_type_mapping: HashMap<String, usize>,
 }

@@ -32,6 +32,7 @@ impl System {
         self.validate_no_none_prefix()?;
         self.validate_no_conversions()?;
         self.validate_conversion_expr_subset()?;
+        let base_type_mapping = self.validate_all_bases_match_units()?;
 
         let unit_idents = self
             .units
@@ -51,6 +52,7 @@ impl System {
             prefixes: self.prefixes,
             unit_enum_names: unit_idents,
             prefix_enum_names: prefix_idents,
+            base_type_mapping,
         })
     }
 
@@ -130,15 +132,42 @@ impl System {
     }
 
     fn validate_no_conversions(&self) -> syn::Result<()> {
-        if let Some(v) = self.units.iter().flat_map(|c| &c.conversions.conversions).next() {
-            return Err(
-                Error::new(
-                    v.span, 
-                    "Conversions are not supported at this time"
-                )
-            );
+        if let Some(v) = self
+            .units
+            .iter()
+            .flat_map(|c| &c.conversions.conversions)
+            .next()
+        {
+            return Err(Error::new(
+                v.span,
+                "Conversions are not supported at this time",
+            ));
         }
 
         Ok(())
+    }
+
+    fn validate_all_bases_match_units(&self) -> syn::Result<HashMap<String, usize>> {
+        let mut bases = HashMap::with_capacity(self.base_types.len());
+
+        for base in &self.base_types {
+            if let Some((idx, _)) = self
+                .units
+                .iter()
+                .enumerate()
+                .find(|(_, unit_decl)| unit_decl.unit.raw == base.ty.raw)
+            {
+                bases.insert(base.ty.raw.clone(), idx);
+            } else {
+                return Err(Error::new(
+                    base.ty.span,
+                    format!(
+                        "Please declare the type `{}` to use it as a base type",
+                        base.ty.raw
+                    ),
+                ));
+            }
+        }
+        Ok(bases)
     }
 }

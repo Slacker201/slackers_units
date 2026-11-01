@@ -21,9 +21,11 @@ pub(crate) fn system_impl(ts: TokenStream) -> TokenStream {
 
     let suffix_parser = vs.generate_suffix_parser();
     let unit_prefix_enums = vs.generate_unit_prefix_enums();
+    let conversion_table = vs.translation_table();
 
     quote! {
         #unit_prefix_enums
         #suffix_parser
+        #conversion_table
     }
 }
