@@ -30,6 +30,7 @@ impl System {
         self.validate_no_duplicate_abbreviations()?;
         self.validate_sufficient_base_types()?;
         self.validate_no_none_prefix()?;
+        self.validate_no_conversions()?;
         self.validate_conversion_expr_subset()?;
 
         let unit_idents = self
@@ -123,6 +124,19 @@ impl System {
         for conversion in self.units.iter().flat_map(|c| &c.conversions.conversions) {
             validate_convesion_subset!(conversion.from.expr);
             validate_convesion_subset!(conversion.to.expr);
+        }
+
+        Ok(())
+    }
+
+    fn validate_no_conversions(&self) -> syn::Result<()> {
+        if let Some(v) = self.units.iter().flat_map(|c| &c.conversions.conversions).next() {
+            return Err(
+                Error::new(
+                    v.span, 
+                    "Conversions are not supported at this time"
+                )
+            );
         }
 
         Ok(())
