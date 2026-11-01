@@ -50,7 +50,6 @@ macro_rules! generate_normal_op {
     };
 }
 
-
 impl ValidatedSystem {
     pub(crate) fn generate_units(&self) -> TokenStream {
         let dv_names = &self.dimensional_vector_names;
@@ -79,14 +78,19 @@ impl ValidatedSystem {
     }
 
     fn get_arith_types(&self) -> (Vec<Ident>, Vec<Ident>, Vec<Ident>, &[Ident]) {
-        let (result, (op1, op2)): (Vec<_>, (Vec<_>, Vec<_>)) = self.dimensional_vector_names.iter()
+        let (result, (op1, op2)): (Vec<_>, (Vec<_>, Vec<_>)) = self
+            .dimensional_vector_names
+            .iter()
             .map(|v| {
                 (
                     format_ident!("Result_{v}"),
-                    (format_ident!("Operand_One_{v}"),
-                    format_ident!("Operand_Two_{v}"),)
+                    (
+                        format_ident!("Operand_One_{v}"),
+                        format_ident!("Operand_Two_{v}"),
+                    ),
                 )
-            }).unzip();
+            })
+            .unzip();
 
         let pd_names = &self.dimensional_phantom_data_names;
 
