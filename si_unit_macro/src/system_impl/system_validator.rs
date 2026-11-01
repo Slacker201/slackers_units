@@ -46,6 +46,16 @@ impl System {
             .map(|c| format_ident!("{}", c.prefix.raw))
             .collect();
 
+        let (dimensional_vector_names, dimensional_phantom_data_names): (Vec<_>, Vec<_>) = (0
+            ..self.base_types.len())
+            .map(|v| {
+                (
+                    format_ident!("V{}", v),
+                    format_ident!("__phantom_data_v{}__", v),
+                )
+            })
+            .unzip();
+
         Ok(ValidatedSystem {
             units: self.units,
             base_types: self.base_types,
@@ -53,6 +63,8 @@ impl System {
             unit_enum_names: unit_idents,
             prefix_enum_names: prefix_idents,
             base_type_mapping,
+            dimensional_vector_names: dimensional_vector_names.into_boxed_slice(),
+            dimensional_phantom_data_names: dimensional_phantom_data_names.into_boxed_slice(),
         })
     }
 

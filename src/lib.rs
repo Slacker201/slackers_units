@@ -1,6 +1,6 @@
 pub use si_unit_macro::system;
 pub use phf::Map;
-
+pub use typenum::Integer;
 
 pub enum ConstTrie {
     Leaf,

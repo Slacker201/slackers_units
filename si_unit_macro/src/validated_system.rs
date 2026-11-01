@@ -15,4 +15,6 @@ pub(crate) struct ValidatedSystem {
     #[allow(unused)]
     pub base_types: Box<[BaseTypeDeclaration]>,
     pub base_type_mapping: HashMap<String, usize>,
+    pub dimensional_vector_names: Box<[Ident]>,
+    pub dimensional_phantom_data_names: Box<[Ident]>,
 }
