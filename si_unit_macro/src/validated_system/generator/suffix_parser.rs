@@ -59,7 +59,14 @@ impl ValidatedSystem {
                                                 remainder.into(),
                                             ))
                                         } else {
-                                            Ok((crate::Prefix::parse(prefix)?, crate::UnitType::parse(unit)?))
+                                            let new_unit = crate::UnitType::parse(unit.clone())?;
+                                            if new_unit.is_prefixable() {
+                                                Ok((crate::Prefix::parse(prefix)?, new_unit))
+                                            } else {
+                                                Err(
+                                                    ::slackers_si_units::ParseError::PrefixedUnsupportedUnit(unit.into())
+                                                )
+                                            }
                                         }
                                     }
                                     Err(e) => {

@@ -18,7 +18,8 @@ pub enum ParseError {
     NotPresent,
     UnknownUnit(Box<[u8]>),
     UnknownPrefix(Box<[u8]>),
-    TrailingJunk(Box<[u8]>)
+    TrailingJunk(Box<[u8]>),
+    PrefixedUnsupportedUnit(Box<[u8]>),
 }
 
 impl FindFirst for Map<u8, ConstTrie> {
