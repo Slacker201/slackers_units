@@ -23,11 +23,13 @@ pub(crate) fn system_impl(ts: TokenStream) -> TokenStream {
     let unit_prefix_enums = vs.generate_unit_prefix_enums();
     let conversion_table = vs.translation_table();
     let unit_impl = vs.generate_units();
+    let unit_macro_redef = vs.generate_unit_macro();
 
     quote! {
         #unit_prefix_enums
         #suffix_parser
         #conversion_table
         #unit_impl
+        #unit_macro_redef
     }
 }

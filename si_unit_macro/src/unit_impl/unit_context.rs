@@ -3,6 +3,7 @@ use syn::{Ident, LitFloat, LitInt, Token, braced, bracketed, parenthesized, pars
 
 
 #[derive(Debug)]
+#[allow(unused)]
 pub(crate) struct UnitContext {
     pub(crate) units: Box<[UnitPiece]>,
     pub(crate) prefixes: Box<[PrefixPiece]>,
@@ -40,6 +41,7 @@ impl Parse for UnitContext {
     }
 }
 #[derive(Debug)]
+#[allow(unused)]
 pub(crate) struct UnitPiece {
     pub(crate) abbrev: String,
     pub(crate) vector: Box<[i64]>,
@@ -66,9 +68,9 @@ impl Parse for UnitPiece {
 }
 
 #[derive(Debug)]
+#[allow(unused)]
 pub(crate) struct PrefixPiece {
     pub(crate) abbrev: String,
-    #[allow(unused)]
     pub(crate) multiplier: D512,
 }
 

@@ -34,7 +34,7 @@ impl PrefixTrie {
     pub fn to_const_map(&self) -> TokenStream {
         self.root.to_const_map()
     }
-
+    #[allow(unused)]
     pub fn find_longest<'a>(&self, s: &'a [u8]) -> Option<(Vec<u8>, &'a [u8])> {
         self.root.find_longest(s)
     }

@@ -16,6 +16,6 @@ pub fn system(ts: TokenStream) -> TokenStream {
 }
 
 #[proc_macro]
-pub fn unit(ts: TokenStream) -> TokenStream {
+pub fn __unit_impl__(ts: TokenStream) -> TokenStream {
     unit_impl::unit_impl(ts.into()).into()
 }

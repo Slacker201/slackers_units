@@ -1,6 +1,6 @@
 pub use si_unit_macro::{
     system,
-    unit,
+    __unit_impl__,
 };
 
 pub use phf::Map;
