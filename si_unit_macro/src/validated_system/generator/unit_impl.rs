@@ -59,6 +59,7 @@ impl ValidatedSystem {
         let div_impl = self.generate_div_impl();
         let add_impl = self.generate_add_impl();
         let sub_impl = self.generate_sub_impl();
+        let new_impl = self.generate_new();
 
         quote! {
             pub(crate) struct Unit<#(#dv_names,)*> where
@@ -74,6 +75,7 @@ impl ValidatedSystem {
             #div_impl
             #add_impl
             #sub_impl
+            #new_impl
         }
     }
 
@@ -127,5 +129,29 @@ impl ValidatedSystem {
         generate_normal_op!(
             result, pd_names, Sub, sub, -
         )
+    }
+
+    fn generate_new(&self) -> TokenStream {
+        let (result, _, _, pd_names) = self.get_arith_types();
+        quote! {
+            impl<
+            #(
+                #result: ::slackers_si_units::Integer,
+            )*
+            > Unit<
+                #(
+                    #result,
+                )*
+            > {
+                pub(crate) fn new(value: f64) -> Self {
+                    Self {
+                        #(
+                            #pd_names: core::marker::PhantomData,
+                        )*
+                        value
+                    }
+                }
+            }
+        }
     }
 }
