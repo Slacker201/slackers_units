@@ -2,7 +2,7 @@ pub use si_unit_macro::{
     system,
     __unit_impl__,
 };
-
+pub mod fastnum;
 pub use phf::Map;
 pub use typenum::Integer;
 pub use typenum::consts::*;

@@ -60,6 +60,7 @@ impl ValidatedSystem {
         let add_impl = self.generate_add_impl();
         let sub_impl = self.generate_sub_impl();
         let new_impl = self.generate_new();
+        let debug_impl = self.generate_debug_impl();
 
         quote! {
             pub(crate) struct Unit<#(#dv_names,)*> where
@@ -76,6 +77,7 @@ impl ValidatedSystem {
             #add_impl
             #sub_impl
             #new_impl
+            #debug_impl
         }
     }
 
@@ -150,6 +152,29 @@ impl ValidatedSystem {
                         )*
                         value
                     }
+                }
+            }
+        }
+    }
+
+    fn generate_debug_impl(&self) -> TokenStream {
+
+        let (result, _, _, _) = self.get_arith_types();
+
+        quote! {
+            impl<
+                #(
+                    #result: core::fmt::Debug + ::slackers_si_units::Integer,
+                )*
+            > core::fmt::Debug for Unit<
+                #(
+                    #result,
+                )*
+            > {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    f.debug_struct(
+                        "Unit"
+                    ).field("value", &self.value).finish()
                 }
             }
         }
