@@ -158,7 +158,6 @@ impl ValidatedSystem {
     }
 
     fn generate_debug_impl(&self) -> TokenStream {
-
         let (result, _, _, _) = self.get_arith_types();
 
         quote! {

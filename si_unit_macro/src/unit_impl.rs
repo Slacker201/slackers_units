@@ -4,7 +4,10 @@ use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 use syn::parse::Parse;
 
-use crate::{prefix_trie::PrefixTrie, unit_impl::{unit_context::UnitContext, unit_str_parser::ParsedUnit}};
+use crate::{
+    prefix_trie::PrefixTrie,
+    unit_impl::{unit_context::UnitContext, unit_str_parser::ParsedUnit},
+};
 
 pub(crate) mod unit_context;
 mod unit_str_parser;
@@ -26,7 +29,7 @@ pub(crate) fn unit_impl(tokens: TokenStream) -> TokenStream {
 }
 
 #[derive(Debug)]
-struct UnitImpl{
+struct UnitImpl {
     parsed_unit: ParsedUnit,
 }
 
@@ -42,7 +45,11 @@ impl Parse for UnitImpl {
 
         let mut len = 0;
 
-        for (abbrev, vector) in uc.units.iter().map(|piece| (&piece.abbrev as &str, &piece.vector)) {
+        for (abbrev, vector) in uc
+            .units
+            .iter()
+            .map(|piece| (&piece.abbrev as &str, &piece.vector as &[_]))
+        {
             if len == 0 {
                 len = vector.len();
             }
@@ -50,19 +57,24 @@ impl Parse for UnitImpl {
             unit_lookup_table.insert(abbrev, vector);
         }
 
-        for (abbrev, multiplier) in uc.prefixes.iter().map(|piece| (&piece.abbrev as &str, piece.multiplier)) {
+        for (abbrev, multiplier) in uc
+            .prefixes
+            .iter()
+            .map(|piece| (&piece.abbrev as &str, piece.multiplier))
+        {
             prefix_trie.add_word(abbrev);
             prefix_lookup_table.insert(abbrev, multiplier);
         }
 
-        let pu = ParsedUnit::parse(input, &unit_trie, &prefix_trie, &unit_lookup_table, &prefix_lookup_table, len as i64)?;
+        let pu = ParsedUnit::parse(
+            input,
+            &unit_trie,
+            &prefix_trie,
+            &unit_lookup_table,
+            &prefix_lookup_table,
+            len.cast_signed() as i64,
+        )?;
 
-        eprintln!("{:?}", pu);
-        
-        Ok(
-            Self {
-                parsed_unit: pu
-            }
-        )
+        Ok(Self { parsed_unit: pu })
     }
 }
