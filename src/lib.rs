@@ -1,4 +1,4 @@
-pub use si_unit_macro::{__unit_impl__, system};
+pub use slackers_unit_macro::{__unit_impl__, system};
 pub mod fastnum;
 pub use phf::Map;
 pub use typenum::Integer;
