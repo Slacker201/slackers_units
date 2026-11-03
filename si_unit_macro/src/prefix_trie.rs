@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct PrefixTrie {
@@ -51,10 +51,7 @@ impl PrefixTrieNode {
         let Some(latest_byte) = s.first() else {
             return;
         };
-        let item = self
-            .items
-            .entry(*latest_byte)
-            .or_insert(TrieNode::Leaf);
+        let item = self.items.entry(*latest_byte).or_insert(TrieNode::Leaf);
         let s = &s[1..];
         if s.is_empty() {
             self.is_terminal = true;
@@ -68,23 +65,20 @@ impl PrefixTrieNode {
     pub fn to_const_map(&self) -> TokenStream {
         let mut q = phf_codegen::Map::new();
 
-        for (key, value) in self.items.iter().map(|(k, v)| {
-            match v {
-                TrieNode::Leaf => {(*k, "::slackers_si_units::ConstTrie::Leaf".to_string())
-                },
-                TrieNode::Node(prefix_trie_node) => {
-                    let v_items = prefix_trie_node.to_const_map();
-                    let is_terminal = prefix_trie_node.is_terminal;
-                    (
-                        *k,
-                        format!(
-                            "::slackers_si_units::ConstTrie::Node {{
+        for (key, value) in self.items.iter().map(|(k, v)| match v {
+            TrieNode::Leaf => (*k, "::slackers_si_units::ConstTrie::Leaf".to_string()),
+            TrieNode::Node(prefix_trie_node) => {
+                let v_items = prefix_trie_node.to_const_map();
+                let is_terminal = prefix_trie_node.is_terminal;
+                (
+                    *k,
+                    format!(
+                        "::slackers_si_units::ConstTrie::Node {{
                                 is_terminal: {is_terminal},
                                 node: {v_items},
                             }},"
-                        ),
-                    )
-                },
+                    ),
+                )
             }
         }) {
             q.entry(key, value);
@@ -99,36 +93,17 @@ impl PrefixTrieNode {
         let first_byte = bytes.first()?;
 
         match self.items.get(first_byte)? {
-            TrieNode::Leaf => {
-                Some(
-                    (
-                        vec![*first_byte],
-                        &bytes[1..],
-                    )
-                )
-            },
-            TrieNode::Node(node) => {
-                match node.find_longest(&bytes[1..]) {
-                    Some((mut found_bytes, remainder)) => {
-                        found_bytes.push(*first_byte);
-                        Some(
-                            (
-                                found_bytes,
-                                remainder
-                            )
-                        )
-                    },
-                    None => {
-                        if self.is_terminal {
-                            Some(
-                                (
-                                    vec![*first_byte],
-                                    &bytes[1..],
-                                )
-                            )
-                        } else {
-                            None
-                        }
+            TrieNode::Leaf => Some((vec![*first_byte], &bytes[1..])),
+            TrieNode::Node(node) => match node.find_longest(&bytes[1..]) {
+                Some((mut found_bytes, remainder)) => {
+                    found_bytes.push(*first_byte);
+                    Some((found_bytes, remainder))
+                }
+                None => {
+                    if self.is_terminal {
+                        Some((vec![*first_byte], &bytes[1..]))
+                    } else {
+                        None
                     }
                 }
             },

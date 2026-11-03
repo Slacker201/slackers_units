@@ -1,5 +1,4 @@
 pub(crate) mod conversions;
-pub(crate) mod digit;
 pub(crate) mod expression;
 pub(crate) mod number;
 pub(crate) mod prefix_declaration;

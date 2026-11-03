@@ -17,4 +17,5 @@ pub(crate) struct ValidatedSystem {
     pub base_type_mapping: HashMap<String, usize>,
     pub dimensional_vector_names: Box<[Ident]>,
     pub dimensional_phantom_data_names: Box<[Ident]>,
+    pub base_types_raw_vectors: Box<[Box<[i64]>]>,
 }

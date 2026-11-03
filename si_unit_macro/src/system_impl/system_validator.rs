@@ -56,6 +56,14 @@ impl System {
             })
             .unzip();
 
+        let base_types_raw_vectors = (0..self.base_types.len())
+            .map(|vector_index| {
+                (0..self.base_types.len())
+                    .map(|index| i64::from(index == vector_index))
+                    .collect()
+            })
+            .collect();
+
         Ok(ValidatedSystem {
             units: self.units,
             base_types: self.base_types,
@@ -65,6 +73,7 @@ impl System {
             base_type_mapping,
             dimensional_vector_names: dimensional_vector_names.into_boxed_slice(),
             dimensional_phantom_data_names: dimensional_phantom_data_names.into_boxed_slice(),
+            base_types_raw_vectors,
         })
     }
 

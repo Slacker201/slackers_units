@@ -1,6 +1,5 @@
 use fastnum::{D512, decimal::Decimal};
-use syn::{Ident, LitFloat, LitInt, Token, braced, bracketed, parenthesized, parse::Parse, punctuated::Punctuated};
-
+use syn::{Error, Ident, LitInt, Token, braced, bracketed, parse::Parse, punctuated::Punctuated};
 
 #[derive(Debug)]
 #[allow(unused)]
@@ -11,33 +10,21 @@ pub(crate) struct UnitContext {
 
 impl Parse for UnitContext {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        input.parse::<Token![const]>()?;
-        input.parse::<Token![_]>()?;
-        input.parse::<Token![:]>()?;
-        let _unused;
-        parenthesized!(_unused in input);
-        input.parse::<Token![=]>()?;
-
-
-
-        let content;
-        braced!(content in input);
-        
-        let units = Punctuated::<UnitPiece, Token![,]>::parse_separated_nonempty(&content)?.into_iter().collect();
-        if content.peek(Token![,]) {
-            let _ = content.parse::<Token![,]>();
-        }
-
-        let prefixes = if content.peek(Token![~]) {
-            let _ = content.parse::<Token![~]>()?;
-            Punctuated::<PrefixPiece, Token![,]>::parse_terminated(&content)?.into_iter().collect()
-        } else {
-            Box::default()
-        };
-
-        Ok(
-            Self { units, prefixes }
-        )
+        let unit_pieces;
+        let prefix_pieces;
+        braced!(unit_pieces in input);
+        braced!(prefix_pieces in input);
+        let units: Vec<_> = Punctuated::<UnitPiece, Token![,]>::parse_terminated(&unit_pieces)?
+            .into_iter()
+            .collect();
+        let prefixes: Vec<_> =
+            Punctuated::<PrefixPiece, Token![,]>::parse_terminated(&prefix_pieces)?
+                .into_iter()
+                .collect();
+        Ok(Self {
+            units: units.into_boxed_slice(),
+            prefixes: prefixes.into_boxed_slice(),
+        })
     }
 }
 #[derive(Debug)]
@@ -55,15 +42,12 @@ impl Parse for UnitPiece {
         let content;
         bracketed!(content in input);
 
-        let vector = Punctuated::<LitInt, Token![,]>::parse_terminated(&content)?.into_iter()
-            .map(|litint| {
-                litint.base10_parse::<i64>()
-            })
+        let vector = Punctuated::<LitInt, Token![,]>::parse_terminated(&content)?
+            .into_iter()
+            .map(|litint| litint.base10_parse::<i64>())
             .collect::<Result<_, _>>()?;
 
-        Ok(
-            Self { abbrev, vector }
-        )
+        Ok(Self { abbrev, vector })
     }
 }
 
@@ -79,12 +63,46 @@ impl Parse for PrefixPiece {
         let abbrev = input.parse::<Ident>()?.to_string();
         let _ = input.parse::<Token![=]>()?;
         let _ = input.parse::<Token![>]>()?;
+        let bracketed_stuff;
+        bracketed!(bracketed_stuff in input);
+        let start_span = bracketed_stuff.span();
+        let mut last_span = start_span;
+        let mult_bytes: Box<[_]> =
+            Punctuated::<LitInt, Token![,]>::parse_terminated(&bracketed_stuff)?
+                .iter()
+                .map(|value| {
+                    last_span = value.span();
+                    value.base10_parse::<u8>()
+                })
+                .collect::<Result<_, _>>()?;
+        let span = start_span.join(last_span).unwrap_or(start_span);
 
-        let multiplier = input.parse::<LitFloat>().and_then(|litfloat| litfloat.base10_parse::<Decimal<8>>())?;
+        if mult_bytes.len() != size_of::<Decimal<8>>() {
+            return Err(Error::new(
+                span,
+                format!(
+                    "Expected vector of len {}, got len {}",
+                    size_of::<Decimal<8>>(),
+                    mult_bytes.len()
+                ),
+            ));
+        }
 
+        let multiplier = slice_to_dec8(&mult_bytes);
 
-        Ok(
-            Self { abbrev, multiplier }
-        )
+        Ok(PrefixPiece { abbrev, multiplier })
     }
+}
+
+fn slice_to_dec8(slice: &[u8]) -> Decimal<8> {
+    let dec = Decimal::default();
+    assert_eq!(slice.len(), size_of::<Decimal<8>>());
+    unsafe {
+        core::ptr::copy_nonoverlapping(
+            slice.as_ptr(),
+            std::ptr::from_ref(&dec).cast::<u8>().cast_mut(),
+            size_of::<Decimal<8>>(),
+        );
+    }
+    dec
 }
