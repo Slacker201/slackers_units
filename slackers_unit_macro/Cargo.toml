@@ -2,8 +2,8 @@
 name = "slackers_unit_macro"
 version = "0.1.0"
 edition = "2024"
-repository = "https://github.com/Slacker201/slackers_si_units"
-description = "The macros for slackers_si_units"
+repository = "https://https://github.com/Slacker201/slackers_units/tree/main/slackers_unit_macro"
+description = "The macros for slackers_units"
 license = "MIT"
 
 [dependencies]
