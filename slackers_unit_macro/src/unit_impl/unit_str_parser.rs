@@ -48,11 +48,13 @@ impl ParsedUnit {
 
         let unit_vector = suffix
             .and_then(|suffix| unit_lookup_table.get(&suffix as &str))
-            .map(|v| Box::from(*v))
-            .unwrap_or((0..dimension_count).into_iter().map(|_| 0).collect());
+            .map_or((0..dimension_count).into_iter().map(|_| 0).collect(), |v| Box::from(*v));
         let prefix_multi = prefix
+            .clone()
             .and_then(|prefix| prefix_lookup_table.get(&prefix as &str).copied())
-            .unwrap_or(Decimal::from_i32(1));
+            .unwrap_or_else(|| {
+                Decimal::from_i32(1)
+            });
 
         Ok(Self {
             value: num,
@@ -100,12 +102,10 @@ impl ParsedUnit {
                             unit.reverse();
                             let actual_unit = String::from_utf8_lossy(&unit).into_owned();
                             return Ok((Some(prefix), Some(actual_unit)));
-                        } else {
-                            return Err(Error::new(span, "Failed to parse {suffix}"));
                         }
-                    } else {
-                        pstate = PState::ParsingUnit { all_bytes }
-                    }
+                        return Err(Error::new(span, "Failed to parse {suffix}"));
+                    } 
+                    pstate = PState::ParsingUnit { all_bytes }
                 }
                 PState::ParsingUnit { all_bytes } => {
                     if let Some((mut unit, remainder)) = utrie.find_longest(all_bytes)
@@ -150,17 +150,17 @@ impl ToTokens for DecWrapper {
 
         let sign_toks = if sign == Sign::Minus {
             quote! {
-                ::slackers_si_units::fastnum::decimal::Sign::Minus
+                ::slackers_units::fastnum::decimal::Sign::Minus
             }
         } else {
             quote! {
-                ::slackers_si_units::fastnum::decimal::Sign::Plus
+                ::slackers_units::fastnum::decimal::Sign::Plus
             }
         };
 
         tokens.extend(quote! {
             {
-                let uint = ::slackers_si_units::fastnum::bint::UInt::<8>::from_digits(
+                let uint = ::slackers_units::fastnum::bint::UInt::<8>::from_digits(
                     [
                         #(
                             #digits,
@@ -168,11 +168,11 @@ impl ToTokens for DecWrapper {
                     ]
                 );
 
-                ::slackers_si_units::fastnum::decimal::Decimal::<8>::from_parts(
+                ::slackers_units::fastnum::decimal::Decimal::<8>::from_parts(
                     uint,
                     #exp,
                     #sign_toks,
-                    ::slackers_si_units::fastnum::decimal::Context::default()
+                    ::slackers_units::fastnum::decimal::Context::default()
                 )
             }
         });
@@ -181,16 +181,33 @@ impl ToTokens for DecWrapper {
 
 impl ToTokens for ParsedUnit {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let r = DecWrapper(self.value.value);
-        let unit_vec = self.modifiers.iter().fold(vec![], |mut a, b| {
-            if a.len() != b.2.len() {
-                a.resize(b.2.len(), 0);
-            }
-            for (idx, q) in b.2.iter().enumerate() {
-                a[idx] += *q;
-            }
-            a
-        });
+        let mut value = self.value.value;
+        let unit_vec = self.modifiers.iter().fold(
+            vec![],
+            |mut a, (operation, multiplier, vector, group_power)| {
+                if a.len() != vector.len() {
+                    a.resize(vector.len(), 0);
+                }
+                for (idx, q) in vector.iter().enumerate() {
+                    if *operation == ModOp::Multiply {
+                        a[idx] += *q * group_power;
+                    } else {
+                        a[idx] -= *q * group_power;
+                    }
+                }
+
+                value *= multiplier.powi(i32::try_from(*group_power).unwrap_or({
+                    if *group_power < 0 {
+                        i32::MIN
+                    } else {
+                        i32::MAX
+                    }
+                }));
+                a
+            },
+        );
+
+        let r = DecWrapper(value);
 
         let dvec = DimensionArray(unit_vec.into_boxed_slice());
 
@@ -220,7 +237,7 @@ impl ToTokens for DimensionArray {
 
         tokens.extend(quote! {
             #(
-                ::slackers_si_units::#idents,
+                ::slackers_units::#idents,
             )*
         });
     }
