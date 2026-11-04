@@ -213,7 +213,7 @@ impl ToTokens for ParsedUnit {
 
         tokens.extend(quote! {
             {
-                crate::Unit::<#dvec>::new(
+                crate::Unit::<_, #dvec>::new(
                     #r.to_f64()
                 )
             }

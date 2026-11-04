@@ -8,15 +8,19 @@ macro_rules! generate_dimensional_op {
     ($result: ident, $op1: ident, $op2: ident, $pd_names: ident, $operation: ident, $fn_name: ident, $op_sym: tt) => {
         quote! {
             impl<
+                B: ::slackers_units::backer_trait::Backer,
             #(
                 #$result: ::slackers_units::Integer,
                 #$op1: ::slackers_units::Integer + core::ops::$operation<#$op2, Output = #$result>,
                 #$op2: ::slackers_units::Integer,
-            )*> core::ops::$operation<Unit<#(#$op2,)*>> for Unit<#(#$op1,)*> {
-                type Output = Unit<#(#$result,)*>;
+            )*> core::ops::$operation<Unit<
+                B,
+                #(#$op2,)*>> for Unit<B,#(#$op1,)*> {
+                type Output = Unit<B,#(#$result,)*>;
 
-                fn $fn_name(self, other: Unit<#(#$op2,)*>) -> Self::Output {
+                fn $fn_name(self, other: Unit<B,#(#$op2,)*>) -> Self::Output {
                     Self::Output {
+                        __phantom_data_backer__: core::marker::PhantomData,
                         #(
                             #$pd_names: core::marker::PhantomData,
                         )*
@@ -32,13 +36,15 @@ macro_rules! generate_normal_op {
     ($result: ident, $pd_names: ident, $operation: ident, $fn_name: ident, $op_sym: tt) => {
         quote! {
             impl<
+                B: ::slackers_units::backer_trait::Backer,
             #(
                 #$result: ::slackers_units::Integer,
-            )*> core::ops::$operation<Self> for Unit<#(#$result,)*> {
+            )*> core::ops::$operation<Self> for Unit<B, #(#$result,)*> {
                 type Output = Self;
 
                 fn $fn_name(self, other: Self) -> Self::Output {
                     Self::Output {
+                        __phantom_data_backer__: core::marker::PhantomData,
                         #(
                             #$pd_names: core::marker::PhantomData,
                         )*
@@ -63,12 +69,14 @@ impl ValidatedSystem {
         let debug_impl = self.generate_debug_impl();
 
         quote! {
-            pub(crate) struct Unit<#(#dv_names,)*> where
+            pub(crate) struct Unit<B, #(#dv_names,)*> where
+                B: ::slackers_units::backer_trait::Backer,
                 #(
                     #dv_names: ::slackers_units::Integer,
                 )*
             {
                 #(#dv_pd_names: std::marker::PhantomData<#dv_names>,)*
+                __phantom_data_backer__: std::marker::PhantomData<B>,
                 value: f64,
             }
 
@@ -137,16 +145,19 @@ impl ValidatedSystem {
         let (result, _, _, pd_names) = self.get_arith_types();
         quote! {
             impl<
+                B: ::slackers_units::backer_trait::Backer,
             #(
                 #result: ::slackers_units::Integer,
             )*
             > Unit<
+            B,
                 #(
                     #result,
                 )*
             > {
                 pub(crate) fn new(value: f64) -> Self {
                     Self {
+                        __phantom_data_backer__: std::marker::PhantomData,
                         #(
                             #pd_names: core::marker::PhantomData,
                         )*
@@ -162,10 +173,12 @@ impl ValidatedSystem {
 
         quote! {
             impl<
+                B: ::slackers_units::backer_trait::Backer,
                 #(
                     #result: core::fmt::Debug + ::slackers_units::Integer,
                 )*
             > core::fmt::Debug for Unit<
+            B,
                 #(
                     #result,
                 )*

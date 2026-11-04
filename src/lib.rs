@@ -4,6 +4,8 @@ pub use phf::Map;
 pub use typenum::Integer;
 pub use typenum::consts::*;
 
+pub mod backer_trait;
+
 pub enum ConstTrie {
     Leaf,
     Node {
