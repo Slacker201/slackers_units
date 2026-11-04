@@ -15,7 +15,7 @@ impl ValidatedSystem {
             #[macro_export]
             macro_rules! unit {
                 ($ ($data : tt) *) => {
-                    ::slackers_si_units::__unit_impl__!(
+                    ::slackers_units::__unit_impl__!(
                         #unit_context
                         $($data)*
                     )

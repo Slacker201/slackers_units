@@ -66,14 +66,14 @@ impl PrefixTrieNode {
         let mut q = phf_codegen::Map::new();
 
         for (key, value) in self.items.iter().map(|(k, v)| match v {
-            TrieNode::Leaf => (*k, "::slackers_si_units::ConstTrie::Leaf".to_string()),
+            TrieNode::Leaf => (*k, "::slackers_units::ConstTrie::Leaf".to_string()),
             TrieNode::Node(prefix_trie_node) => {
                 let v_items = prefix_trie_node.to_const_map();
                 let is_terminal = prefix_trie_node.is_terminal;
                 (
                     *k,
                     format!(
-                        "::slackers_si_units::ConstTrie::Node {{
+                        "::slackers_units::ConstTrie::Node {{
                                 is_terminal: {is_terminal},
                                 node: {v_items},
                             }},"
@@ -84,7 +84,7 @@ impl PrefixTrieNode {
             q.entry(key, value);
         }
 
-        q.phf_path("::slackers_si_units");
+        q.phf_path("::slackers_units");
 
         q.build().into_token_stream()
     }

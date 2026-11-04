@@ -9,9 +9,9 @@ macro_rules! generate_dimensional_op {
         quote! {
             impl<
             #(
-                #$result: slackers_si_units::Integer,
-                #$op1: slackers_si_units::Integer + core::ops::$operation<#$op2, Output = #$result>,
-                #$op2: slackers_si_units::Integer,
+                #$result: ::slackers_units::Integer,
+                #$op1: ::slackers_units::Integer + core::ops::$operation<#$op2, Output = #$result>,
+                #$op2: ::slackers_units::Integer,
             )*> core::ops::$operation<Unit<#(#$op2,)*>> for Unit<#(#$op1,)*> {
                 type Output = Unit<#(#$result,)*>;
 
@@ -33,7 +33,7 @@ macro_rules! generate_normal_op {
         quote! {
             impl<
             #(
-                #$result: slackers_si_units::Integer,
+                #$result: ::slackers_units::Integer,
             )*> core::ops::$operation<Self> for Unit<#(#$result,)*> {
                 type Output = Self;
 
@@ -65,7 +65,7 @@ impl ValidatedSystem {
         quote! {
             pub(crate) struct Unit<#(#dv_names,)*> where
                 #(
-                    #dv_names: slackers_si_units::Integer,
+                    #dv_names: ::slackers_units::Integer,
                 )*
             {
                 #(#dv_pd_names: std::marker::PhantomData<#dv_names>,)*
@@ -138,7 +138,7 @@ impl ValidatedSystem {
         quote! {
             impl<
             #(
-                #result: ::slackers_si_units::Integer,
+                #result: ::slackers_units::Integer,
             )*
             > Unit<
                 #(
@@ -163,7 +163,7 @@ impl ValidatedSystem {
         quote! {
             impl<
                 #(
-                    #result: core::fmt::Debug + ::slackers_si_units::Integer,
+                    #result: core::fmt::Debug + ::slackers_units::Integer,
                 )*
             > core::fmt::Debug for Unit<
                 #(
