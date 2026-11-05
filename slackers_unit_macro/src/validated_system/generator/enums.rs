@@ -20,8 +20,8 @@ impl ValidatedSystem {
             pub(crate) enum Prefix {
                 #(
                     #prefix_names,
-                    None,
                 )*
+                None,
             }
 
             impl UnitType {
