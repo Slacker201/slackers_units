@@ -48,13 +48,13 @@ impl ParsedUnit {
 
         let unit_vector = suffix
             .and_then(|suffix| unit_lookup_table.get(&suffix as &str))
-            .map_or((0..dimension_count).into_iter().map(|_| 0).collect(), |v| Box::from(*v));
+            .map_or((0..dimension_count).into_iter().map(|_| 0).collect(), |v| {
+                Box::from(*v)
+            });
         let prefix_multi = prefix
             .clone()
             .and_then(|prefix| prefix_lookup_table.get(&prefix as &str).copied())
-            .unwrap_or_else(|| {
-                Decimal::from_i32(1)
-            });
+            .unwrap_or_else(|| Decimal::from_i32(1));
 
         Ok(Self {
             value: num,
@@ -103,8 +103,8 @@ impl ParsedUnit {
                             let actual_unit = String::from_utf8_lossy(&unit).into_owned();
                             return Ok((Some(prefix), Some(actual_unit)));
                         }
-                        return Err(Error::new(span, "Failed to parse {suffix}"));
-                    } 
+                        return Err(Error::new(span, format!("Failed to parse {suffix}")));
+                    }
                     pstate = PState::ParsingUnit { all_bytes }
                 }
                 PState::ParsingUnit { all_bytes } => {
@@ -196,13 +196,12 @@ impl ToTokens for ParsedUnit {
                     }
                 }
 
-                value *= multiplier.powi(i32::try_from(*group_power).unwrap_or({
-                    if *group_power < 0 {
+                value *=
+                    multiplier.powi(i32::try_from(*group_power).unwrap_or(if *group_power < 0 {
                         i32::MIN
                     } else {
                         i32::MAX
-                    }
-                }));
+                    }));
                 a
             },
         );
