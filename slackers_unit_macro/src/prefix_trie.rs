@@ -56,9 +56,16 @@ impl PrefixTrieNode {
         if s.is_empty() {
             self.is_terminal = true;
         } else {
-            let mut trie = PrefixTrieNode::new();
-            trie.add_word(s);
-            *item = TrieNode::Node(trie);
+            match item {
+                TrieNode::Leaf => {
+                    let mut trie = PrefixTrieNode::new();
+                    trie.add_word(s);
+                    *item = TrieNode::Node(trie);
+                },
+                TrieNode::Node(prefix_trie_node) => {
+                    prefix_trie_node.add_word(s);
+                },
+            }
         }
     }
 
