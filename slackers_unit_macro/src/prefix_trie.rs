@@ -61,10 +61,10 @@ impl PrefixTrieNode {
                     let mut trie = PrefixTrieNode::new();
                     trie.add_word(s);
                     *item = TrieNode::Node(trie);
-                },
+                }
                 TrieNode::Node(prefix_trie_node) => {
                     prefix_trie_node.add_word(s);
-                },
+                }
             }
         }
     }
