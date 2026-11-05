@@ -27,7 +27,7 @@ impl ValidatedSystem {
     fn unit_context(&self) -> UnitContext {
         let unit_pieces = self
             .base_type_mapping
-            .values()
+            .iter()
             .enumerate()
             .map(|(idx, v)| {
                 let abbrev = self.units[*v].abbreviation.raw.clone();

@@ -8,7 +8,7 @@ impl ValidatedSystem {
         let vector_len = self.base_type_mapping.len();
         let toks = self
             .base_type_mapping
-            .values()
+            .iter()
             .enumerate()
             .map(|(vector_pos, index)| {
                 let mut vector: Box<[_]> = (0..vector_len).map(|_| 0i64).collect();
