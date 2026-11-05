@@ -168,8 +168,9 @@ impl System {
         Ok(())
     }
 
-    fn validate_all_bases_match_units(&self) -> syn::Result<HashMap<String, usize>> {
-        let mut bases = HashMap::with_capacity(self.base_types.len());
+    fn validate_all_bases_match_units(&self) -> syn::Result<Box<[usize]>> {
+        let mut bases = HashSet::with_capacity(self.base_types.len());
+        let mut indices = Vec::with_capacity(self.base_types.len());
 
         for base in &self.base_types {
             if let Some((idx, _)) = self
@@ -178,7 +179,8 @@ impl System {
                 .enumerate()
                 .find(|(_, unit_decl)| unit_decl.unit.raw == base.ty.raw)
             {
-                bases.insert(base.ty.raw.clone(), idx);
+                bases.insert(&base.ty.raw);
+                indices.push(idx);
             } else {
                 return Err(Error::new(
                     base.ty.span,
@@ -189,6 +191,6 @@ impl System {
                 ));
             }
         }
-        Ok(bases)
+        Ok(indices.into_boxed_slice())
     }
 }

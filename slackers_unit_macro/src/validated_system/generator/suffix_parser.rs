@@ -29,9 +29,9 @@ impl ValidatedSystem {
             Self::generate_type_parsers(&unit_abbrev, unit_ident, &prefix_abbrev, prefix_ident);
 
         quote! {
-            const __UNIT_PREFIX_TRIE__: ::slackers_si_units::Map<u8, ::slackers_si_units::ConstTrie> =
+            const __UNIT_PREFIX_TRIE__: ::slackers_units::Map<u8, ::slackers_units::ConstTrie> =
                 #unit_prefix_trie_map;
-            const __PREFIX_PREFIX_TRIE__: ::slackers_si_units::Map<u8, ::slackers_si_units::ConstTrie> =
+            const __PREFIX_PREFIX_TRIE__: ::slackers_units::Map<u8, ::slackers_units::ConstTrie> =
                 #prefix_prefix_trie_map;
 
             pub struct Parser;
@@ -40,22 +40,22 @@ impl ValidatedSystem {
                 impl crate::Parser {
                     pub fn parse_prefix(
                         prefix: &str,
-                    ) -> Result<(crate::Prefix, crate::UnitType), ::slackers_si_units::ParseError> {
+                    ) -> Result<(crate::Prefix, crate::UnitType), ::slackers_units::ParseError> {
                         let bytes = prefix.as_bytes();
-                        match ::slackers_si_units::FindFirst::find_longest(
+                        match ::slackers_units::FindFirst::find_longest(
                             &crate::__PREFIX_PREFIX_TRIE__,
                             bytes,
                             #prefix_root,
                         ) {
                             Ok((prefix, remainder)) => {
-                                match ::slackers_si_units::FindFirst::find_longest(
+                                match ::slackers_units::FindFirst::find_longest(
                                     &crate::__UNIT_PREFIX_TRIE__,
                                     remainder,
                                     #unit_root,
                                 ) {
                                     Ok((unit, remainder)) => {
                                         if !remainder.is_empty() {
-                                            Err(::slackers_si_units::ParseError::TrailingJunk(
+                                            Err(::slackers_units::ParseError::TrailingJunk(
                                                 remainder.into(),
                                             ))
                                         } else {
@@ -64,20 +64,20 @@ impl ValidatedSystem {
                                                 Ok((crate::Prefix::parse(prefix)?, new_unit))
                                             } else {
                                                 Err(
-                                                    ::slackers_si_units::ParseError::PrefixedUnsupportedUnit(unit.into())
+                                                    ::slackers_units::ParseError::PrefixedUnsupportedUnit(unit.into())
                                                 )
                                             }
                                         }
                                     }
                                     Err(e) => {
                                         let (unit_vec, remainder) =
-                                            ::slackers_si_units::FindFirst::find_longest(
+                                            ::slackers_units::FindFirst::find_longest(
                                                 &crate::__UNIT_PREFIX_TRIE__,
                                                 bytes,
                                                 #unit_root,
                                             )?;
                                         if !remainder.is_empty() {
-                                            Err(::slackers_si_units::ParseError::TrailingJunk(
+                                            Err(::slackers_units::ParseError::TrailingJunk(
                                                 remainder.into(),
                                             ))
                                         } else {
@@ -87,14 +87,14 @@ impl ValidatedSystem {
                                 }
                             }
                             Err(_) => {
-                                let (unit_vec, remainder) = ::slackers_si_units::FindFirst::find_longest(
+                                let (unit_vec, remainder) = ::slackers_units::FindFirst::find_longest(
                                     &crate::__UNIT_PREFIX_TRIE__,
                                     bytes,
                                     #unit_root,
                                 )?;
 
                                 if !remainder.is_empty() {
-                                    return Err(::slackers_si_units::ParseError::TrailingJunk(
+                                    return Err(::slackers_units::ParseError::TrailingJunk(
                                         remainder.into(),
                                     ));
                                 } else {
@@ -151,7 +151,7 @@ impl ValidatedSystem {
 
         quote! {
             impl crate::UnitType {
-                fn parse(mut input: Vec<u8>) -> Result<Self, ::slackers_si_units::ParseError> {
+                fn parse(mut input: Vec<u8>) -> Result<Self, ::slackers_units::ParseError> {
                     const UNIT_TYPES: [(&'static str, crate::UnitType); #unit_type_count] =
                         [
                             #(
@@ -170,12 +170,12 @@ impl ValidatedSystem {
                         }
                     }
 
-                    Err(::slackers_si_units::ParseError::UnknownUnit(input.into()))
+                    Err(::slackers_units::ParseError::UnknownUnit(input.into()))
                 }
             }
 
             impl crate::Prefix {
-                fn parse(mut input: Vec<u8>) -> Result<Self, ::slackers_si_units::ParseError> {
+                fn parse(mut input: Vec<u8>) -> Result<Self, ::slackers_units::ParseError> {
                     const PREFIX_TYPES: [(&'static str, crate::Prefix); #prefix_count] =
                         [
                             #(
@@ -197,7 +197,7 @@ impl ValidatedSystem {
                         }
                     }
 
-                    Err(::slackers_si_units::ParseError::UnknownUnit(input.into()))
+                    Err(::slackers_units::ParseError::UnknownUnit(input.into()))
                 }
             }
         }

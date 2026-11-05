@@ -15,7 +15,7 @@ impl ValidatedSystem {
             #[macro_export]
             macro_rules! unit {
                 ($ ($data : tt) *) => {
-                    ::slackers_si_units::__unit_impl__!(
+                    ::slackers_units::__unit_impl__!(
                         #unit_context
                         $($data)*
                     )
@@ -27,7 +27,7 @@ impl ValidatedSystem {
     fn unit_context(&self) -> UnitContext {
         let unit_pieces = self
             .base_type_mapping
-            .values()
+            .iter()
             .enumerate()
             .map(|(idx, v)| {
                 let abbrev = self.units[*v].abbreviation.raw.clone();
