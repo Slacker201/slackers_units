@@ -1,6 +1,6 @@
 [package]
 name = "slackers_units"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "A small SI unit crate with compile time unit macros and generic holding types"
 repository = "https://github.com/Slacker201/slackers_si_units"
@@ -9,7 +9,7 @@ license = "MIT"
 [dependencies]
 fastnum = "0.7.5"
 phf = {version="0.14.0", features=["macros"]}
-slackers_unit_macro = {version = "0.1.0", path = "./slackers_unit_macro" }
+slackers_unit_macro = { version = "0.1.1", path = "./slackers_unit_macro" }
 typenum = "1.20.1"
 
 
