@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.1...slackers_unit_macro-v0.1.2) - 2026-11-05
+
+### Added
+
+- *(macro)* implement support for generic backers
+
+### Fixed
+
+- *(validator)* make validator use declaration order for base-type mapping
+- *(generator)* make `Unit` struct actually use B as backer type
+- *(parser)* make words sharing the same prefix not overwrite each other
+- *(generator)* fix None prefix type being emitted multiple times
+- *(compile time parser)* fix bad error
+- *(parser)* apply prefix, group power, and sign
+- *(generator)* replace old library name with correct path
+
+### Other
+
+- release
+
 ## [0.1.1](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.0...slackers_unit_macro-v0.1.1) - 2026-11-05
 
 ### Added
