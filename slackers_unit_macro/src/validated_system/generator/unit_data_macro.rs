@@ -95,6 +95,7 @@ impl ToTokens for PrefixPiece {
 fn dec8_to_bytes(d: &Decimal<8>) -> [u8; size_of::<Decimal<8>>()] {
     let mut buf: [u8; size_of::<Decimal<8>>()] = [0; size_of::<Decimal<8>>()];
 
+    // use this because serializing and deserializing parts into tokens and back is complex and error-prone
     unsafe {
         std::ptr::copy_nonoverlapping(
             std::ptr::from_ref(d).cast::<u8>(),

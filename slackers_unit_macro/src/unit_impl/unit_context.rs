@@ -97,6 +97,8 @@ impl Parse for PrefixPiece {
 fn slice_to_dec8(slice: &[u8]) -> Decimal<8> {
     let dec = Decimal::default();
     assert_eq!(slice.len(), size_of::<Decimal<8>>());
+
+    // use this because serializing and deserializing parts into tokens and back is complex and error-prone
     unsafe {
         core::ptr::copy_nonoverlapping(
             slice.as_ptr(),
