@@ -74,66 +74,38 @@ impl ParsedUnit {
 
         let bytes = suffix.as_bytes();
 
-        let mut pstate = PState::ParsingPrefix { all_bytes: bytes };
-
-        loop {
-            match pstate {
-                PState::ParsingPrefix { all_bytes } => {
-                    if let Some((mut prefix, remainder)) = ptrie.find_longest(all_bytes) {
-                        prefix.reverse();
-                        let actual_prefix = String::from_utf8_lossy(&prefix).into_owned();
-
-                        pstate = PState::ParsedPrefix {
-                            prefix: actual_prefix,
-                            remainder_bytes: remainder,
-                            all_bytes,
-                        }
-                    } else {
-                        pstate = PState::ParsingUnit { all_bytes }
-                    }
-                }
-                PState::ParsedPrefix {
-                    prefix,
-                    remainder_bytes,
-                    all_bytes,
-                } => {
-                    if let Some((mut unit, remainder)) = utrie.find_longest(remainder_bytes) {
-                        if remainder.is_empty() {
-                            unit.reverse();
-                            let actual_unit = String::from_utf8_lossy(&unit).into_owned();
-                            return Ok((Some(prefix), Some(actual_unit)));
-                        }
-                        return Err(Error::new(span, format!("Failed to parse {suffix}")));
-                    }
-                    pstate = PState::ParsingUnit { all_bytes }
-                }
-                PState::ParsingUnit { all_bytes } => {
-                    if let Some((mut unit, remainder)) = utrie.find_longest(all_bytes)
-                        && remainder.is_empty()
-                    {
-                        unit.reverse();
-                        let actual_unit = String::from_utf8_lossy(&unit).into_owned();
-                        return Ok((None, Some(actual_unit)));
-                    }
-                    return Err(Error::new(span, format!("Failed to parse {suffix}")));
-                }
+        if let Some((prefix, prefix_remainder)) = ptrie.find_longest(bytes)
+            && let Some((unit, unit_remainder)) = utrie.find_longest(prefix_remainder)
+        {
+            let prefix = String::from_utf8_lossy(prefix).to_string();
+            let unit = String::from_utf8_lossy(unit).to_string();
+            if unit_remainder.is_empty() {
+                return Ok((Some(prefix), Some(unit)));
             }
+            return Err(Error::new(
+                span,
+                format!(
+                    "Found trailing text '{}' after parsing {prefix}{unit}",
+                    String::from_utf8_lossy(unit_remainder)
+                ),
+            ));
         }
-    }
-}
+        if let Some((unit, unit_remainder)) = utrie.find_longest(bytes) {
+            let unit = String::from_utf8_lossy(unit).to_string();
+            if unit_remainder.is_empty() {
+                return Ok((None, Some(unit)));
+            }
+            return Err(Error::new(
+                span,
+                format!(
+                    "Found trailing text '{}' after parsing {unit}",
+                    String::from_utf8_lossy(unit_remainder)
+                ),
+            ));
+        }
 
-enum PState<'a> {
-    ParsingPrefix {
-        all_bytes: &'a [u8],
-    },
-    ParsedPrefix {
-        prefix: String,
-        remainder_bytes: &'a [u8],
-        all_bytes: &'a [u8],
-    },
-    ParsingUnit {
-        all_bytes: &'a [u8],
-    },
+        Err(Error::new(span, format!("Could not parse {suffix}")))
+    }
 }
 
 struct DecWrapper(Decimal<8>);
