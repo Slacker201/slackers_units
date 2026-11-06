@@ -54,25 +54,27 @@ impl PrefixTrieNode {
             return;
         };
 
-        if let Some(trie_node) = self.items.get_mut(first_byte) { match trie_node {
-            TrieNode::Leaf { t } => {
-                let mut trie = PrefixTrieNode::new();
-                trie.add_word(&s[1..], value);
-                let old_terminal = core::mem::take(t);
-                *trie_node = TrieNode::Node {
-                    next: trie,
-                    terminal: Some(old_terminal),
+        if let Some(trie_node) = self.items.get_mut(first_byte) {
+            match trie_node {
+                TrieNode::Leaf { t } => {
+                    let mut trie = PrefixTrieNode::new();
+                    trie.add_word(&s[1..], value);
+                    let old_terminal = core::mem::take(t);
+                    *trie_node = TrieNode::Node {
+                        next: trie,
+                        terminal: Some(old_terminal),
+                    }
+                }
+                TrieNode::Node { next, terminal } => {
+                    let next_slice = &s[1..];
+                    if next_slice.is_empty() {
+                        *terminal = Some(Box::from(value));
+                    } else {
+                        next.add_word(next_slice, value);
+                    }
                 }
             }
-            TrieNode::Node { next, terminal } => {
-                let next_slice = &s[1..];
-                if next_slice.is_empty() {
-                    *terminal = Some(Box::from(value));
-                } else {
-                    next.add_word(next_slice, value);
-                }
-            }
-        } } else {
+        } else {
             let trie = if s[1..].is_empty() {
                 TrieNode::Leaf { t: value.into() }
             } else {
