@@ -18,8 +18,8 @@ macro_rules! add_abbrevs {
 
 impl ValidatedSystem {
     pub(crate) fn generate_runtime_parser(&self) -> TokenStream {
-        let ctrie_enum = Self::construct_enum();
-        let maps = self.construct_maps();
+        let ctrie_enum = Self::construct_const_trie_enum();
+        let maps = self.construct_parser_maps();
         let trait_ = Self::construct_trait();
         let find_longest_impl = Self::construct_find_longest_impl();
         let error_enums = Self::construct_error_enums();
@@ -35,7 +35,7 @@ impl ValidatedSystem {
         }
     }
 
-    fn construct_enum() -> TokenStream {
+    fn construct_const_trie_enum() -> TokenStream {
         quote! {
             #[derive(core::fmt::Debug)]
             pub(crate) enum ConstTrie<T: 'static + core::fmt::Debug> {
@@ -50,7 +50,7 @@ impl ValidatedSystem {
         }
     }
 
-    fn construct_maps(&self) -> TokenStream {
+    fn construct_parser_maps(&self) -> TokenStream {
         let mut prefix_trie = PrefixTrie::new();
         let mut unit_trie = PrefixTrie::new();
 
