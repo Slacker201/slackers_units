@@ -22,6 +22,7 @@ impl ValidatedSystem {
         let maps = self.construct_maps();
         let trait_ = Self::construct_trait();
         let find_longest_impl = Self::construct_find_longest_impl();
+        let error_enums = Self::construct_error_enums();
         let suffix_parser = Self::construct_suffix_parser();
 
         quote! {
@@ -30,6 +31,7 @@ impl ValidatedSystem {
             #trait_
             #find_longest_impl
             #suffix_parser
+            #error_enums
         }
     }
 
@@ -104,7 +106,7 @@ impl ValidatedSystem {
         }
     }
 
-    fn construct_suffix_parser() -> TokenStream {
+    fn construct_error_enums() -> TokenStream {
         quote! {
             #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
             pub(crate) enum ParseResult {
@@ -112,34 +114,90 @@ impl ValidatedSystem {
                 PrefixUnit(Prefix, UnitType),
                 Unit(UnitType),
             }
-            #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+            #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
             pub(crate) enum ParseError {
                 UnknownUnit(Box<[u8]>),
+                NotPrefixable(Box<[u8]>),
                 FoundTrailingBytes(Box<[u8]>),
             }
 
+            impl core::fmt::Debug for ParseError {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    match self {
+                        Self::UnknownUnit(arg0) => {
+                            let arg0 = String::from_utf8_lossy(arg0);
+                            f.debug_tuple("UnknownUnit").field(&arg0).finish()
+                        },
+                        Self::NotPrefixable(arg0) => {
+                            let arg0 = String::from_utf8_lossy(arg0);
+                            f.debug_tuple("NotPrefixable").field(&arg0).finish()
+                        },
+                        Self::FoundTrailingBytes(arg0) => {
+                            let arg0 = String::from_utf8_lossy(arg0);
+                            f.debug_tuple("FoundTrailingBytes").field(&arg0).finish()
+                        },
+                    }
+                }
+            }
+
+            #[derive(Debug, PartialEq)]
+            enum ErrorOpt {
+                NotPrefixable(Box<[u8]>),
+                TrailingBytes(Box<[u8]>),
+                None,
+            }
+
+            impl TryInto<ParseError> for ErrorOpt {
+                type Error = ();
+
+                fn try_into(self) -> Result<ParseError, Self::Error> {
+                    match self {
+                        ErrorOpt::NotPrefixable(items) => Ok(ParseError::NotPrefixable(items)),
+                        ErrorOpt::TrailingBytes(items) => Ok(ParseError::FoundTrailingBytes(items)),
+                        ErrorOpt::None => Err(()),
+                    }
+                }
+            }
+
+            impl ErrorOpt {
+                pub(crate) fn set_if_none<F: Fn() -> ErrorOpt>(&mut self, f: F) {
+                    if Self::None == *self {
+                        *self = f();
+                    }
+                }
+            }
+        }
+    }
+
+    fn construct_suffix_parser() -> TokenStream {
+        quote! {
             pub struct RuntimeParser;
 
             impl RuntimeParser {
                 pub(crate) fn parse_suffix(suffix: &str) -> ParseResult {
                     let suffix_bytes = suffix.as_bytes();
+                    let mut non_prefixable = ErrorOpt::None;
 
                     if let Some((prefix, remainder)) = PREFIX_MAP.find_longest(suffix_bytes)
                         && let Some((unit, unit_remainder)) = UNIT_MAP.find_longest(remainder) {
-                        if unit_remainder.is_empty() && unit.is_prefixable() {
-                            return ParseResult::PrefixUnit(prefix, unit);
+                        if unit_remainder.is_empty() {
+                            if unit.is_prefixable() {
+                                return ParseResult::PrefixUnit(prefix, unit);
+                            } else {
+                                non_prefixable = ErrorOpt::NotPrefixable(remainder.into())
+                            }
                         }
                     }
 
                     if let Some((unit, remainder)) = UNIT_MAP.find_longest(suffix_bytes) {
                         if remainder.is_empty() {
-                            ParseResult::Unit(unit)
+                            return ParseResult::Unit(unit)
                         } else {
-                            ParseResult::Err(ParseError::FoundTrailingBytes(remainder.into()))
+                            non_prefixable.set_if_none(|| ErrorOpt::TrailingBytes(remainder.into()));
                         }
-                    } else {
-                        ParseResult::Err(ParseError::UnknownUnit(suffix_bytes.into()))
                     }
+
+                    ParseResult::Err(non_prefixable.try_into().unwrap_or_else(|_| ParseError::UnknownUnit(suffix_bytes.into())))
                 }
             }
         }
