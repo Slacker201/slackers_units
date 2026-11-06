@@ -10,13 +10,13 @@ impl ValidatedSystem {
         let prefix_names = &self.prefix_enum_names;
 
         quote! {
-            #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
+            #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
             pub(crate) enum UnitType {
                 #(
                     #unit_names,
                 )*
             }
-            #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
+            #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
             pub(crate) enum Prefix {
                 #(
                     #prefix_names,

@@ -10,13 +10,17 @@ pub struct PrefixTrie {
 #[derive(Debug)]
 struct PrefixTrieNode {
     items: HashMap<u8, TrieNode>,
-    is_terminal: bool,
 }
 
 #[derive(Debug)]
 enum TrieNode {
-    Leaf,
-    Node(PrefixTrieNode),
+    Leaf {
+        t: Box<[u8]>,
+    },
+    Node {
+        next: PrefixTrieNode,
+        terminal: Option<Box<[u8]>>,
+    },
 }
 
 impl PrefixTrie {
@@ -26,17 +30,16 @@ impl PrefixTrie {
         }
     }
 
-    pub fn add_word(&mut self, word: &str) {
-        let slice = word.as_bytes();
-        self.root.add_word(slice);
+    pub fn add_word(&mut self, word: &str, value: &str) {
+        self.root.add_word(word.as_bytes(), value.as_bytes());
     }
 
-    pub fn to_const_map(&self) -> TokenStream {
-        self.root.to_const_map()
+    pub fn to_const_map(&self, ty: &str) -> TokenStream {
+        self.root.to_const_map(ty)
     }
-    #[allow(unused)]
-    pub fn find_longest<'a>(&self, s: &'a [u8]) -> Option<(Vec<u8>, &'a [u8])> {
-        self.root.find_longest(s)
+
+    pub fn find_longest<'a>(&'a self, bytes: &'a [u8]) -> Option<(&'a [u8], &'a [u8])> {
+        self.root.find_longest(bytes)
     }
 }
 
@@ -44,76 +47,102 @@ impl PrefixTrieNode {
     fn new() -> Self {
         PrefixTrieNode {
             items: HashMap::new(),
-            is_terminal: false,
         }
     }
-    pub fn add_word(&mut self, s: &[u8]) {
-        let Some(latest_byte) = s.first() else {
+    pub fn add_word(&mut self, s: &[u8], value: &[u8]) {
+        let Some(first_byte) = s.first() else {
             return;
         };
-        let item = self.items.entry(*latest_byte).or_insert(TrieNode::Leaf);
-        let s = &s[1..];
-        if s.is_empty() {
-            self.is_terminal = true;
-        } else {
-            match item {
-                TrieNode::Leaf => {
+
+        if let Some(trie_node) = self.items.get_mut(first_byte) {
+            match trie_node {
+                TrieNode::Leaf { t } => {
                     let mut trie = PrefixTrieNode::new();
-                    trie.add_word(s);
-                    *item = TrieNode::Node(trie);
-                }
-                TrieNode::Node(prefix_trie_node) => {
-                    prefix_trie_node.add_word(s);
-                }
-            }
-        }
-    }
-
-    pub fn to_const_map(&self) -> TokenStream {
-        let mut q = phf_codegen::Map::new();
-
-        for (key, value) in self.items.iter().map(|(k, v)| match v {
-            TrieNode::Leaf => (*k, "::slackers_units::ConstTrie::Leaf".to_string()),
-            TrieNode::Node(prefix_trie_node) => {
-                let v_items = prefix_trie_node.to_const_map();
-                let is_terminal = prefix_trie_node.is_terminal;
-                (
-                    *k,
-                    format!(
-                        "::slackers_units::ConstTrie::Node {{
-                                is_terminal: {is_terminal},
-                                node: {v_items},
-                            }},"
-                    ),
-                )
-            }
-        }) {
-            q.entry(key, value);
-        }
-
-        q.phf_path("::slackers_units");
-
-        q.build().into_token_stream()
-    }
-
-    fn find_longest<'a>(&self, bytes: &'a [u8]) -> Option<(Vec<u8>, &'a [u8])> {
-        let first_byte = bytes.first()?;
-
-        match self.items.get(first_byte)? {
-            TrieNode::Leaf => Some((vec![*first_byte], &bytes[1..])),
-            TrieNode::Node(node) => match node.find_longest(&bytes[1..]) {
-                Some((mut found_bytes, remainder)) => {
-                    found_bytes.push(*first_byte);
-                    Some((found_bytes, remainder))
-                }
-                None => {
-                    if self.is_terminal {
-                        Some((vec![*first_byte], &bytes[1..]))
-                    } else {
-                        None
+                    trie.add_word(&s[1..], value);
+                    let old_terminal = core::mem::take(t);
+                    *trie_node = TrieNode::Node {
+                        next: trie,
+                        terminal: Some(old_terminal),
                     }
                 }
-            },
+                TrieNode::Node { next, terminal } => {
+                    let next_slice = &s[1..];
+                    if next_slice.is_empty() {
+                        *terminal = Some(Box::from(value));
+                    } else {
+                        next.add_word(next_slice, value);
+                    }
+                }
+            }
+        } else {
+            let trie = if s[1..].is_empty() {
+                TrieNode::Leaf { t: value.into() }
+            } else {
+                let mut trie = PrefixTrieNode::new();
+                trie.add_word(&s[1..], value);
+                TrieNode::Node {
+                    next: trie,
+                    terminal: None,
+                }
+            };
+
+            self.items.insert(*first_byte, trie);
         }
+    }
+
+    pub fn to_const_map(&self, ty: &str) -> TokenStream {
+        let mut trie_builder = phf_codegen::Map::new();
+
+        for (key, value) in &self.items {
+            match value {
+                TrieNode::Leaf { t } => {
+                    let terminal = String::from_utf8_lossy(t);
+                    trie_builder.entry(
+                        *key,
+                        format!("ConstTrie::<{ty}>::Leaf {{ value: {ty}::{terminal} }}"),
+                    );
+                }
+                TrieNode::Node { next, terminal } => {
+                    let term = if let Some(t) = terminal {
+                        format!("Some({ty}::{})", String::from_utf8_lossy(t))
+                    } else {
+                        "None".to_string()
+                    };
+
+                    let nt = next.to_const_map(ty);
+
+                    trie_builder.entry(
+                        *key,
+                        format!("ConstTrie::<{ty}>::Node {{ next: {nt}, terminal: {term} }}"),
+                    );
+                }
+            }
+        }
+
+        trie_builder.phf_path("::slackers_units");
+
+        trie_builder.build().into_token_stream()
+    }
+
+    pub(crate) fn find_longest<'a, 'b>(&'b self, bytes: &'a [u8]) -> Option<(&'b [u8], &'a [u8])> {
+        let byte = bytes.first()?;
+
+        if let Some(value) = self.items.get(byte) {
+            match value {
+                TrieNode::Leaf { t } => {
+                    return Some((t, &bytes[1..]));
+                }
+                TrieNode::Node { next, terminal } => {
+                    if let Some(next) = next.find_longest(&bytes[1..]) {
+                        return Some(next);
+                    }
+
+                    if let Some(term) = terminal {
+                        return Some((term, &bytes[1..]));
+                    }
+                }
+            }
+        }
+        None
     }
 }

@@ -7,14 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.2](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.1...slackers_unit_macro-v0.1.2) - 2026-11-05
+## [0.1.2](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.1...slackers_unit_macro-v0.1.2) - 2026-11-06
 
 ### Added
 
+- *(runtime parser)* implement better error messages
 - *(macro)* implement support for generic backers
 
 ### Fixed
 
+- *(repo url)* fix repo url
 - *(validator)* make validator use declaration order for base-type mapping
 - *(generator)* make `Unit` struct actually use B as backer type
 - *(parser)* make words sharing the same prefix not overwrite each other
@@ -25,6 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Other
 
+- apply fmt and clippy
+- rename functions for clarity
+- add explanation for unsafe usage
+- *(runtime parser)* refactor runtime parser to decrease bug surface and increase efficiency
+- Merge branch 'main' into bug-fix-one
+- release v0.1.2
 - release
 
 ## [0.1.1](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.0...slackers_unit_macro-v0.1.1) - 2026-11-05

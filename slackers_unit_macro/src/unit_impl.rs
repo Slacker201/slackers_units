@@ -53,7 +53,7 @@ impl Parse for UnitImpl {
             if len == 0 {
                 len = vector.len();
             }
-            unit_trie.add_word(abbrev);
+            unit_trie.add_word(abbrev, abbrev);
             unit_lookup_table.insert(abbrev, vector);
         }
 
@@ -62,7 +62,7 @@ impl Parse for UnitImpl {
             .iter()
             .map(|piece| (&piece.abbrev as &str, piece.multiplier))
         {
-            prefix_trie.add_word(abbrev);
+            prefix_trie.add_word(abbrev, abbrev);
             prefix_lookup_table.insert(abbrev, multiplier);
         }
 
