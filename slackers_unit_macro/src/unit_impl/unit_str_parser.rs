@@ -1,21 +1,26 @@
-use std::{cmp::Ordering, collections::HashMap};
-
-use fastnum::decimal::{Decimal, Sign};
+use num_rational::Ratio;
 use proc_macro2::Span;
 use quote::{ToTokens, format_ident, quote};
+use std::{cmp::Ordering, collections::HashMap};
 use syn::Error;
 
-use crate::{prefix_trie::PrefixTrie, unit_system::Number};
+use crate::{
+    prefix_trie::PrefixTrie,
+    unit_system::{Number, NumberRepr},
+};
 
 #[derive(Debug)]
 pub struct ParsedUnit {
     value: Number,
-    modifiers: Vec<(
-        ModOp,      // Operation
-        Decimal<8>, // PrefixMultiplier
-        Box<[i64]>, // Unit vector
-        i64,        // Group power
-    )>,
+    modifiers: Vec<Modifier>,
+}
+
+#[derive(Debug)]
+struct Modifier {
+    op: ModOp,               // Operation
+    mult: Ratio<NumberRepr>, // PrefixMultiplier
+    vec: Box<[i64]>,         // Unit vector
+    pow: i64,                // Group power
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -23,6 +28,13 @@ pub enum ModOp {
     Multiply,
     #[allow(unused)]
     Divide,
+}
+
+impl Modifier {
+    #[allow(clippy::large_types_passed_by_value)]
+    fn new(op: ModOp, mult: Ratio<NumberRepr>, vec: Box<[i64]>, pow: i64) -> Self {
+        Self { op, mult, vec, pow }
+    }
 }
 
 /*
@@ -37,7 +49,7 @@ impl ParsedUnit {
         unit_trie: &PrefixTrie,
         prefix_trie: &PrefixTrie,
         unit_lookup_table: &HashMap<&str, &[i64]>,
-        prefix_lookup_table: &HashMap<&str, Decimal<8>>,
+        prefix_lookup_table: &HashMap<&str, Ratio<NumberRepr>>,
         dimension_count: i64,
     ) -> syn::Result<Self> {
         let num = input.parse::<Number>()?;
@@ -52,13 +64,12 @@ impl ParsedUnit {
                 Box::from(*v)
             });
         let prefix_multi = prefix
-            .clone()
             .and_then(|prefix| prefix_lookup_table.get(&prefix as &str).copied())
-            .unwrap_or_else(|| Decimal::from_i32(1));
+            .unwrap_or(Ratio::from_integer(bnum::n!(1)));
 
         Ok(Self {
             value: num,
-            modifiers: vec![(ModOp::Multiply, prefix_multi, unit_vector, 1)],
+            modifiers: vec![Modifier::new(ModOp::Multiply, prefix_multi, unit_vector, 1)],
         })
     }
 
@@ -108,44 +119,32 @@ impl ParsedUnit {
     }
 }
 
-struct DecWrapper(Decimal<8>);
+struct DecWrapper(Ratio<NumberRepr>);
 struct DimensionArray(Box<[i64]>);
 
 impl ToTokens for DecWrapper {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let v = self.0;
-
-        let uint = v.digits();
-        let digits = uint.digits();
-        let exp = -i32::from(v.fractional_digits_count());
-        let sign = v.sign();
-
-        let sign_toks = if sign == Sign::Minus {
-            quote! {
-                ::slackers_units::fastnum::decimal::Sign::Minus
-            }
-        } else {
-            quote! {
-                ::slackers_units::fastnum::decimal::Sign::Plus
-            }
-        };
+        let (numer, denom) = self.0.into_raw();
+        let numer = numer.to_be_bytes();
+        let denom = denom.to_be_bytes();
 
         tokens.extend(quote! {
             {
-                let uint = ::slackers_units::fastnum::bint::UInt::<8>::from_digits(
+                let numer = ::slackers_units::bnum::Integer::<true, 256, 0, 0>::from_be_bytes(
                     [
                         #(
-                            #digits,
+                            #numer,
                         )*
                     ]
                 );
-
-                ::slackers_units::fastnum::decimal::Decimal::<8>::from_parts(
-                    uint,
-                    #exp,
-                    #sign_toks,
-                    ::slackers_units::fastnum::decimal::Context::default()
-                )
+                let denom = ::slackers_units::bnum::Integer::<true, 256, 0, 0>::from_be_bytes(
+                    [
+                        #(
+                            #denom,
+                        )*
+                    ]
+                );
+                ::slackers_units::num_rational::Ratio::new(numer, denom)
             }
         });
     }
@@ -153,30 +152,27 @@ impl ToTokens for DecWrapper {
 
 impl ToTokens for ParsedUnit {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let mut value = self.value.value;
-        let unit_vec = self.modifiers.iter().fold(
-            vec![],
-            |mut a, (operation, multiplier, vector, group_power)| {
-                if a.len() != vector.len() {
-                    a.resize(vector.len(), 0);
+        let mut value = self.value.ratio;
+        let unit_vec = self.modifiers.iter().fold(vec![], |mut a, modifier| {
+            if a.len() != modifier.vec.len() {
+                a.resize(modifier.vec.len(), 0);
+            }
+            for (idx, q) in modifier.vec.iter().enumerate() {
+                if modifier.op == ModOp::Multiply {
+                    a[idx] += *q * modifier.pow;
+                } else {
+                    a[idx] -= *q * modifier.pow;
                 }
-                for (idx, q) in vector.iter().enumerate() {
-                    if *operation == ModOp::Multiply {
-                        a[idx] += *q * group_power;
-                    } else {
-                        a[idx] -= *q * group_power;
-                    }
-                }
+            }
 
-                value *=
-                    multiplier.powi(i32::try_from(*group_power).unwrap_or(if *group_power < 0 {
-                        i32::MIN
-                    } else {
-                        i32::MAX
-                    }));
-                a
-            },
-        );
+            let pow_mult = (0..modifier.pow.abs()).fold(modifier.mult, |a, _| a * modifier.mult);
+            value *= if modifier.pow.is_negative() {
+                Ratio::ONE / pow_mult
+            } else {
+                pow_mult
+            };
+            a
+        });
 
         let r = DecWrapper(value);
 
@@ -185,7 +181,7 @@ impl ToTokens for ParsedUnit {
         tokens.extend(quote! {
             {
                 crate::Unit::<_, #dvec>::new(
-                    #r.to_f64()
+                    #r
                 )
             }
         });

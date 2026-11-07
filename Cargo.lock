@@ -10,17 +10,10 @@ checksum = "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53"
 
 [[package]]
 name = "bnum"
-version = "0.12.1"
+version = "0.14.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f781dba93de3a5ef6dc5b17c9958b208f6f3f021623b360fb605ea51ce443f10"
-
-[[package]]
-name = "fastnum"
-version = "0.7.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "020d1b59a944bc239d79903fbac2eda2365138b44890c27979562f6592059dcd"
+checksum = "b1b08cb4ecbb540b940016b0a0f35b7e48ab0cc372ab88150c351de4cc469959"
 dependencies = [
- "bnum",
  "num-integer",
  "num-traits",
 ]
@@ -32,11 +25,32 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "da7c62ceae207dd37ea5b845da6a0696c799f85e97da1ab5b7910be3c1c80223"
 
 [[package]]
+name = "num-bigint"
+version = "0.4.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c89e69e7e0f03bea5ef08013795c25018e101932225a656383bd384495ecc367"
+dependencies = [
+ "num-integer",
+ "num-traits",
+]
+
+[[package]]
 name = "num-integer"
 version = "0.1.47"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ce2d95d4b3734dc35aa2f45e1aa22cd416814592a4f9d9205e11affd5b8e10b"
 dependencies = [
+ "num-traits",
+]
+
+[[package]]
+name = "num-rational"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f83d14da390562dca69fc84082e73e548e1ad308d24accdedd2720017cb37824"
+dependencies = [
+ "num-bigint",
+ "num-integer",
  "num-traits",
 ]
 
@@ -159,24 +173,36 @@ checksum = "33f4fe9184a62d842c9ef383018f3306d8ba224fd9d836f56d7288308847c256"
 
 [[package]]
 name = "slackers_unit_macro"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
- "fastnum",
+ "bnum",
+ "num-rational",
+ "num-traits",
  "phf_codegen",
  "proc-macro2",
  "quote",
+ "slk-tokenstream",
  "syn 3.0.9",
 ]
 
 [[package]]
 name = "slackers_units"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
- "fastnum",
+ "bnum",
+ "num-rational",
+ "num-traits",
  "phf",
  "slackers_unit_macro",
+ "slk-tokenstream",
  "typenum",
 ]
+
+[[package]]
+name = "slk-tokenstream"
+version = "0.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "287c844758684be78661428b2bf09e00643e1497473dc947fd9158f2915666db"
 
 [[package]]
 name = "syn"
