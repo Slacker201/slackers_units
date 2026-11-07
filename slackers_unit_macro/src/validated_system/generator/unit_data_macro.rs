@@ -10,8 +10,6 @@ impl ValidatedSystem {
     pub(crate) fn generate_unit_macro(&self) -> TokenStream {
         let unit_context = self.unit_context();
 
-        eprintln!("{}", unit_context.to_token_stream());
-
         quote! {
             #[macro_export]
             macro_rules! unit {
