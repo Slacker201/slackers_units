@@ -93,7 +93,7 @@ impl Parse for PrefixPiece {
 
         let top_bytes: [u8; size_of::<NumberRepr>()] = from_fn(|v| mult_bytes[v]);
         let bottom_bytes: [u8; size_of::<NumberRepr>()] =
-            from_fn(|v| mult_bytes[v + size_of::<NumberRepr>() - 1]);
+            from_fn(|v| mult_bytes[v + size_of::<NumberRepr>()]);
 
         let multiplier = Ratio::new(
             NumberRepr::from_be_bytes(top_bytes),
