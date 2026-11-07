@@ -7,28 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.2](https://github.com/Slacker201/slackers_units/compare/slackers_units-v0.1.1...slackers_units-v0.1.2) - 2026-11-06
+## [0.1.2](https://github.com/Slacker201/slackers_units/compare/slackers_units-v0.1.1...slackers_units-v0.1.2) - 2026-11-07
 
 ### Added
 
-- *(macro)* implement support for generic backers
+- rewrite to use Ratio over fastnum::Dec512
+
+### Fixed
+
+- *(unit macro)* fix off by 1 parsing
 
 ### Other
 
+- update. also versioning is goofy rn
 - *(runtime parser)* refactor runtime parser to decrease bug surface and increase efficiency
 - Merge branch 'main' into bug-fix-one
 - release v0.1.2
-- release
-
-## [0.1.2](https://github.com/Slacker201/slackers_units/compare/slackers_units-v0.1.1...slackers_units-v0.1.2) - 2026-11-05
-
-### Added
-
-- *(macro)* implement support for generic backers
-
-### Other
-
-- release
 
 ## [0.1.1](https://github.com/Slacker201/slackers_units/compare/slackers_units-v0.1.0...slackers_units-v0.1.1) - 2026-11-05
 
