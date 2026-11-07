@@ -176,28 +176,25 @@ impl ValidatedSystem {
             impl RuntimeParser {
                 pub(crate) fn parse_suffix(suffix: &str) -> ParseResult {
                     let suffix_bytes = suffix.as_bytes();
-                    let mut non_prefixable = ErrorOpt::None;
-
+                    let mut error = ErrorOpt::None;
                     if let Some((prefix, remainder)) = PREFIX_MAP.find_longest(suffix_bytes)
                         && let Some((unit, unit_remainder)) = UNIT_MAP.find_longest(remainder) {
                         if unit_remainder.is_empty() {
                             if unit.is_prefixable() {
                                 return ParseResult::PrefixUnit(prefix, unit);
                             } else {
-                                non_prefixable = ErrorOpt::NotPrefixable(remainder.into())
+                                error = ErrorOpt::NotPrefixable(remainder.into())
                             }
                         }
                     }
-
                     if let Some((unit, remainder)) = UNIT_MAP.find_longest(suffix_bytes) {
                         if remainder.is_empty() {
                             return ParseResult::Unit(unit)
                         } else {
-                            non_prefixable.set_if_none(|| ErrorOpt::TrailingBytes(remainder.into()));
+                            error.set_if_none(|| ErrorOpt::TrailingBytes(remainder.into()));
                         }
                     }
-
-                    ParseResult::Err(non_prefixable.try_into().unwrap_or_else(|_| ParseError::UnknownUnit(suffix_bytes.into())))
+                    ParseResult::Err(error.try_into().unwrap_or_else(|_| ParseError::UnknownUnit(suffix_bytes.into())))
                 }
             }
         }
