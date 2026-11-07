@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use num_rational::Ratio;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 use syn::parse::Parse;
@@ -7,6 +8,7 @@ use syn::parse::Parse;
 use crate::{
     prefix_trie::PrefixTrie,
     unit_impl::{unit_context::UnitContext, unit_str_parser::ParsedUnit},
+    unit_system::NumberRepr,
 };
 
 pub(crate) mod unit_context;
@@ -41,7 +43,7 @@ impl Parse for UnitImpl {
         let mut prefix_trie = PrefixTrie::new();
 
         let mut unit_lookup_table = HashMap::new();
-        let mut prefix_lookup_table = HashMap::new();
+        let mut prefix_lookup_table: HashMap<&str, Ratio<NumberRepr>> = HashMap::new();
 
         let mut len = 0;
 

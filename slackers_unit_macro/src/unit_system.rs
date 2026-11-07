@@ -1,16 +1,16 @@
-use std::hash::Hash;
-
-use fastnum::decimal::Decimal;
 use proc_macro2::Span;
+use std::hash::Hash;
 
 use crate::unit_system::parse_impl::expression::expr::MExpr;
 
 mod parse_impl;
 
+pub(crate) type NumberRepr = bnum::t!(I2048w);
+
 #[allow(unused)]
 #[derive(Debug, Clone)]
 pub(crate) struct Number {
-    pub value: Decimal<8>,
+    pub ratio: num_rational::Ratio<NumberRepr>,
     pub suffix: String,
     pub span: Span,
 }

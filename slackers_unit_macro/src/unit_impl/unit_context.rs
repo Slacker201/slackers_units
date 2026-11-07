@@ -1,5 +1,8 @@
-use fastnum::{D512, decimal::Decimal};
+use num_rational::Ratio;
+use std::array::from_fn;
 use syn::{Error, Ident, LitInt, Token, braced, bracketed, parse::Parse, punctuated::Punctuated};
+
+use crate::unit_system::NumberRepr;
 
 #[derive(Debug)]
 #[allow(unused)]
@@ -55,7 +58,7 @@ impl Parse for UnitPiece {
 #[allow(unused)]
 pub(crate) struct PrefixPiece {
     pub(crate) abbrev: String,
-    pub(crate) multiplier: D512,
+    pub(crate) multiplier: Ratio<NumberRepr>,
 }
 
 impl Parse for PrefixPiece {
@@ -77,34 +80,26 @@ impl Parse for PrefixPiece {
                 .collect::<Result<_, _>>()?;
         let span = start_span.join(last_span).unwrap_or(start_span);
 
-        if mult_bytes.len() != size_of::<Decimal<8>>() {
+        if mult_bytes.len() != size_of::<NumberRepr>() * 2 {
             return Err(Error::new(
                 span,
                 format!(
                     "Expected vector of len {}, got len {}",
-                    size_of::<Decimal<8>>(),
+                    size_of::<NumberRepr>(),
                     mult_bytes.len()
                 ),
             ));
         }
 
-        let multiplier = slice_to_dec8(&mult_bytes);
+        let top_bytes: [u8; size_of::<NumberRepr>()] = from_fn(|v| mult_bytes[v]);
+        let bottom_bytes: [u8; size_of::<NumberRepr>()] =
+            from_fn(|v| mult_bytes[v + size_of::<NumberRepr>() - 1]);
+
+        let multiplier = Ratio::new(
+            NumberRepr::from_be_bytes(top_bytes),
+            NumberRepr::from_be_bytes(bottom_bytes),
+        );
 
         Ok(PrefixPiece { abbrev, multiplier })
     }
-}
-
-fn slice_to_dec8(slice: &[u8]) -> Decimal<8> {
-    let dec = Decimal::default();
-    assert_eq!(slice.len(), size_of::<Decimal<8>>());
-
-    // use this because serializing and deserializing parts into tokens and back is complex and error-prone
-    unsafe {
-        core::ptr::copy_nonoverlapping(
-            slice.as_ptr(),
-            std::ptr::from_ref(&dec).cast::<u8>().cast_mut(),
-            size_of::<Decimal<8>>(),
-        );
-    }
-    dec
 }

@@ -8,7 +8,7 @@ macro_rules! generate_dimensional_op {
     ($result: ident, $op1: ident, $op2: ident, $pd_names: ident, $operation: ident, $fn_name: ident, $op_sym: tt) => {
         quote! {
             impl<
-                B: ::slackers_units::backer_trait::Backer + core::ops::$operation<B, Output = B>,
+                B: core::ops::$operation<B, Output = B>,
             #(
                 #$result: ::slackers_units::Integer,
                 #$op1: ::slackers_units::Integer + core::ops::$operation<#$op2, Output = #$result>,
@@ -35,7 +35,7 @@ macro_rules! generate_normal_op {
     ($result: ident, $pd_names: ident, $operation: ident, $fn_name: ident, $op_sym: tt) => {
         quote! {
             impl<
-                B: ::slackers_units::backer_trait::Backer + core::ops::$operation<B, Output = B>,
+                B: core::ops::$operation<B, Output = B>,
             #(
                 #$result: ::slackers_units::Integer,
             )*> core::ops::$operation<Self> for Unit<B, #(#$result,)*> {
@@ -68,7 +68,7 @@ impl ValidatedSystem {
 
         quote! {
             pub(crate) struct Unit<B, #(#dv_names,)*> where
-                B: ::slackers_units::backer_trait::Backer,
+                B: ,
                 #(
                     #dv_names: ::slackers_units::Integer,
                 )*
@@ -142,7 +142,7 @@ impl ValidatedSystem {
         let (result, _, _, pd_names) = self.get_arith_types();
         quote! {
             impl<
-                B: ::slackers_units::backer_trait::Backer,
+                B,
             #(
                 #result: ::slackers_units::Integer,
             )*
@@ -169,7 +169,7 @@ impl ValidatedSystem {
 
         quote! {
             impl<
-                B: ::slackers_units::backer_trait::Backer + core::fmt::Debug,
+                B: core::fmt::Debug,
                 #(
                     #result: core::fmt::Debug + ::slackers_units::Integer,
                 )*

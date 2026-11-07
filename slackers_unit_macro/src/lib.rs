@@ -1,4 +1,3 @@
-#![warn(clippy::pedantic)]
 use proc_macro::TokenStream;
 
 use crate::unit_system::System;

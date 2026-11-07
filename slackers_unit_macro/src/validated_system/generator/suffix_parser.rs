@@ -174,8 +174,7 @@ impl ValidatedSystem {
             pub struct RuntimeParser;
 
             impl RuntimeParser {
-                pub(crate) fn parse_suffix(suffix: &str) -> ParseResult {
-                    let suffix_bytes = suffix.as_bytes();
+                pub(crate) fn parse_suffix(suffix_bytes: &[u8]) -> ParseResult {
                     let mut error = ErrorOpt::None;
                     if let Some((prefix, remainder)) = PREFIX_MAP.find_longest(suffix_bytes)
                         && let Some((unit, unit_remainder)) = UNIT_MAP.find_longest(remainder) {

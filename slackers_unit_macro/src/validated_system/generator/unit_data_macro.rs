@@ -1,4 +1,3 @@
-use fastnum::decimal::Decimal;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, format_ident, quote};
 
@@ -10,6 +9,8 @@ use crate::{
 impl ValidatedSystem {
     pub(crate) fn generate_unit_macro(&self) -> TokenStream {
         let unit_context = self.unit_context();
+
+        eprintln!("{}", unit_context.to_token_stream());
 
         quote! {
             #[macro_export]
@@ -41,7 +42,7 @@ impl ValidatedSystem {
             .iter()
             .map(|prefix| PrefixPiece {
                 abbrev: prefix.abbreviation.raw.clone(),
-                multiplier: prefix.multiplier.value,
+                multiplier: prefix.multiplier.ratio,
             })
             .collect();
         UnitContext {
@@ -81,28 +82,18 @@ impl ToTokens for UnitPiece {
 impl ToTokens for PrefixPiece {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let a_ident = format_ident!("{}", &self.abbrev);
-        let bytes = dec8_to_bytes(&self.multiplier);
+        let (numer, denom) = self.multiplier.into_raw();
+        let numer = numer.to_be_bytes();
+        let denom = denom.to_be_bytes();
         tokens.extend(quote! {
             #a_ident => [
                 #(
-                    #bytes,
+                    #numer,
+                )*
+                #(
+                    #denom,
                 )*
             ]
         });
     }
-}
-
-fn dec8_to_bytes(d: &Decimal<8>) -> [u8; size_of::<Decimal<8>>()] {
-    let mut buf: [u8; size_of::<Decimal<8>>()] = [0; size_of::<Decimal<8>>()];
-
-    // use this because serializing and deserializing parts into tokens and back is complex and error-prone
-    unsafe {
-        std::ptr::copy_nonoverlapping(
-            std::ptr::from_ref(d).cast::<u8>(),
-            buf.as_mut_ptr(),
-            size_of::<Decimal<8>>(),
-        );
-    }
-
-    buf
 }
