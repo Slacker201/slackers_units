@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4](https://github.com/Slacker201/slackers_units/compare/slackers_units-v0.1.3...slackers_units-v0.1.4) - 2026-11-08
+
+### Added
+
+- *(ci)* implement ci v1
+
+### Fixed
+
+- *(ci)* try and fix ci
+
+### Other
+
+- Update CHANGELOG.md
+- release v0.1.4
+- release v0.1.4
+- release v0.1.3
+
 ## [0.1.3](https://github.com/Slacker201/slackers_units/compare/slackers_units-v0.1.1...slackers_units-v0.1.3) - 2026-11-07
 
 ### Added
