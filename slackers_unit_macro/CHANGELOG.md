@@ -111,15 +111,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Other
 
 - rename crates for 0.1.0 release
-
-## [0.1.3](https://github.com/Slacker201/slackers_si_units/compare/si_unit_macro-v0.1.2...si_unit_macro-v0.1.3) - 2026-10-25
-
-### Other
-
-- updated the following local packages: si_unit_type
-
-## [0.1.2](https://github.com/Slacker201/slackers_si_units/compare/si_unit_macro-v0.1.1...si_unit_macro-v0.1.2) - 2026-10-24
-
-### Other
-
-- updated the following local packages: si_unit_type
