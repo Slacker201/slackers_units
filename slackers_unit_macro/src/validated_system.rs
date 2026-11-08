@@ -16,4 +16,6 @@ pub(crate) struct ValidatedSystem {
     pub dimensional_vector_names: Box<[Ident]>,
     pub dimensional_phantom_data_names: Box<[Ident]>,
     pub base_types_raw_vectors: Box<[Box<[i64]>]>,
+
+    pub call_site: String,
 }

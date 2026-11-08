@@ -24,6 +24,7 @@ impl ValidatedSystem {
         let find_longest_impl = Self::construct_find_longest_impl();
         let error_enums = Self::construct_error_enums();
         let suffix_parser = Self::construct_suffix_parser();
+        let ratio_parser = Self::construct_ratio_parser();
 
         quote! {
             #ctrie_enum
@@ -32,6 +33,7 @@ impl ValidatedSystem {
             #find_longest_impl
             #suffix_parser
             #error_enums
+            #ratio_parser
         }
     }
 
@@ -194,6 +196,77 @@ impl ValidatedSystem {
                         }
                     }
                     ParseResult::Err(error.try_into().unwrap_or_else(|_| ParseError::UnknownUnit(suffix_bytes.into())))
+                }
+            }
+        }
+    }
+
+    fn construct_ratio_parser() -> TokenStream {
+        quote! {
+            type NumberRepr = ::slackers_units::bnum::Integer<true, 256, 0, 0>;
+            impl RuntimeParser {
+                pub(crate) fn parse_ratio(value: &[u8]) -> (::slackers_units::num_rational::Ratio<NumberRepr>, &[u8]) {
+                    let mut ts = ::slackers_units::slk_tokenstream::TokenStream::new(value);
+
+                    // Skip leading whitespace
+                    ts.skip_while(|b| b.is_ascii_whitespace());
+
+                    // Optional sign
+                    let negative = match ts.peek() {
+                        Some(b'-') => {
+                            ts.skip();
+                            true
+                        }
+                        Some(b'+') => {
+                            ts.skip();
+                            false
+                        }
+                        _ => false,
+                    };
+
+                    // Integer part
+                    let int_start = ts.mark();
+                    ts.skip_while(|b| b.is_ascii_digit());
+                    let int_end = ts.mark();
+
+                    // Decimal part
+                    let (frac_start, frac_end) = if ts.consume_if(|&b| b == b'.').is_some() {
+                        let start = ts.mark();
+                        ts.skip_while(|b| b.is_ascii_digit());
+                        (start, ts.mark())
+                    } else {
+                        (ts.mark(), ts.mark()) // empty
+                    };
+
+                    // Convert slices (safe because we only accepted ASCII digits)
+                    let integer = unsafe { std::str::from_utf8_unchecked(ts.slice_from_marks(int_start, int_end)) };
+                    let decimal = unsafe { std::str::from_utf8_unchecked(ts.slice_from_marks(frac_start, frac_end)) };
+
+                    // Parse numerator
+                    let mut numer = if integer.is_empty() && decimal.is_empty() {
+                        // Just a sign or empty → treat as 0
+                        <NumberRepr as ::slackers_units::num_traits::ConstZero>::ZERO
+                    } else if integer.is_empty() {
+                        <NumberRepr as ::slackers_units::num_traits::ConstZero>::ZERO
+                    } else {
+                        NumberRepr::from_str_radix(integer, 10).expect("digits only")
+                    };
+
+                    let scale = if decimal.is_empty() {
+                        <NumberRepr as ::slackers_units::num_traits::ConstOne>::ONE
+                    } else {
+                        let scale = <NumberRepr as ::slackers_units::num_traits::FromPrimitive>::from_u8(10u8).unwrap().pow(decimal.len() as u32);
+                        let frac = NumberRepr::from_str_radix(decimal, 10).expect("digits only");
+                        numer = numer * &scale + frac;
+                        scale
+                    };
+
+                    if negative {
+                        numer = -numer;
+                    }
+
+                    let ratio = slackers_units::num_rational::Ratio::new(numer, scale);
+                    (ratio, &value[ts.cursor()..])
                 }
             }
         }

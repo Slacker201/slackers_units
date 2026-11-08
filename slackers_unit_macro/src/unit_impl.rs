@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use num_rational::Ratio;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
-use syn::parse::Parse;
+use syn::{LitStr, parse::Parse};
 
 use crate::{
     prefix_trie::PrefixTrie,
@@ -38,6 +38,7 @@ struct UnitImpl {
 impl Parse for UnitImpl {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let uc = input.parse::<UnitContext>()?;
+        let call_path = input.parse::<LitStr>()?;
 
         let mut unit_trie = PrefixTrie::new();
         let mut prefix_trie = PrefixTrie::new();
@@ -75,6 +76,7 @@ impl Parse for UnitImpl {
             &unit_lookup_table,
             &prefix_lookup_table,
             len.cast_signed() as i64,
+            &call_path.value(),
         )?;
 
         Ok(Self { parsed_unit: pu })

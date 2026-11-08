@@ -9,13 +9,15 @@ use crate::{
 impl ValidatedSystem {
     pub(crate) fn generate_unit_macro(&self) -> TokenStream {
         let unit_context = self.unit_context();
+        let call_site = &self.call_site;
 
         quote! {
             #[macro_export]
             macro_rules! unit {
-                ($ ($data : tt) *) => {
+                ($($data:tt)*) => {
                     ::slackers_units::__unit_impl__!(
                         #unit_context
+                        #call_site
                         $($data)*
                     )
                 }

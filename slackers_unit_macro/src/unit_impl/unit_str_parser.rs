@@ -1,5 +1,5 @@
 use num_rational::Ratio;
-use proc_macro2::Span;
+use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, format_ident, quote};
 use std::{cmp::Ordering, collections::HashMap};
 use syn::Error;
@@ -11,6 +11,7 @@ use crate::{
 
 #[derive(Debug)]
 pub struct ParsedUnit {
+    call_path: TokenStream,
     value: Number,
     modifiers: Vec<Modifier>,
 }
@@ -51,6 +52,7 @@ impl ParsedUnit {
         unit_lookup_table: &HashMap<&str, &[i64]>,
         prefix_lookup_table: &HashMap<&str, Ratio<NumberRepr>>,
         dimension_count: i64,
+        call_path: &str,
     ) -> syn::Result<Self> {
         let num = input.parse::<Number>()?;
 
@@ -70,6 +72,7 @@ impl ParsedUnit {
         Ok(Self {
             value: num,
             modifiers: vec![Modifier::new(ModOp::Multiply, prefix_multi, unit_vector, 1)],
+            call_path: syn::parse_str(call_path)?,
         })
     }
 
@@ -165,7 +168,8 @@ impl ToTokens for ParsedUnit {
                 }
             }
 
-            let pow_mult = (0..modifier.pow.abs()).fold(modifier.mult, |a, _| a * modifier.mult);
+            let pow_mult = (0..modifier.pow.abs().saturating_sub(1))
+                .fold(modifier.mult, |a, _| a * modifier.mult);
             value *= if modifier.pow.is_negative() {
                 Ratio::ONE / pow_mult
             } else {
@@ -175,12 +179,12 @@ impl ToTokens for ParsedUnit {
         });
 
         let r = DecWrapper(value);
-
         let dvec = DimensionArray(unit_vec.into_boxed_slice());
+        let call_path = &self.call_path;
 
         tokens.extend(quote! {
             {
-                crate::Unit::<_, #dvec>::new(
+                #call_path::Unit::<_, #dvec>::new(
                     #r
                 )
             }

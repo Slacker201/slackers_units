@@ -74,6 +74,7 @@ impl System {
             dimensional_vector_names: dimensional_vector_names.into_boxed_slice(),
             dimensional_phantom_data_names: dimensional_phantom_data_names.into_boxed_slice(),
             base_types_raw_vectors,
+            call_site: self.call_site,
         })
     }
 
