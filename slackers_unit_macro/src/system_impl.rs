@@ -25,9 +25,18 @@ pub(crate) fn system_impl(ts: TokenStream) -> TokenStream {
     let unit_macro_redef = vs.generate_unit_macro();
 
     quote! {
-        #unit_prefix_enums
-        #unit_impl
-        #unit_macro_redef
-        #runtime_parser
+        macro_rules! unit_bundle {
+            ($($d: tt)*) => {
+                $($d)*
+            }
+        }
+
+        unit_bundle!(
+            #unit_prefix_enums
+            #unit_impl
+            #[macro_export]
+            #unit_macro_redef
+            #runtime_parser
+        );
     }
 }

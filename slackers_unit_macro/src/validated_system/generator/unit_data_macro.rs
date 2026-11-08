@@ -13,7 +13,7 @@ impl ValidatedSystem {
         quote! {
             #[macro_export]
             macro_rules! unit {
-                ($ ($data : tt) *) => {
+                ($($data:tt)*) => {
                     ::slackers_units::__unit_impl__!(
                         #unit_context
                         $($data)*

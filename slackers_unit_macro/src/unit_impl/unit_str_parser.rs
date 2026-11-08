@@ -165,7 +165,8 @@ impl ToTokens for ParsedUnit {
                 }
             }
 
-            let pow_mult = (0..modifier.pow.abs()).fold(modifier.mult, |a, _| a * modifier.mult);
+            let pow_mult = (0..modifier.pow.abs().saturating_sub(1))
+                .fold(modifier.mult, |a, _| a * modifier.mult);
             value *= if modifier.pow.is_negative() {
                 Ratio::ONE / pow_mult
             } else {
@@ -180,7 +181,7 @@ impl ToTokens for ParsedUnit {
 
         tokens.extend(quote! {
             {
-                crate::Unit::<_, #dvec>::new(
+                Unit::<_, #dvec>::new(
                     #r
                 )
             }
