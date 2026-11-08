@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4](https://github.com/Slacker201/slackers_units/compare/slackers_units-v0.1.3...slackers_units-v0.1.4) - 2026-11-08
+
+### Other
+
+- updated the following local packages: slackers_unit_macro
+
 ## [0.1.2](https://github.com/Slacker201/slackers_units/compare/slackers_units-v0.1.1...slackers_units-v0.1.2) - 2026-11-07
 
 ### Added
