@@ -1,3 +1,5 @@
+use module_path_extractor::find_module_path;
+use proc_macro::Span;
 use syn::{Error, Ident, Token, parse::Parse};
 
 use crate::{
@@ -43,11 +45,26 @@ impl Parse for System {
             ));
         }
 
+        let call_site_span = Span::call_site();
+        let call_site = match find_module_path(&call_site_span.file(), call_site_span.line()) {
+            Some(call_site) => call_site,
+            None => {
+                return Err(Error::new(
+                    call_site_span.into(),
+                    format!(
+                        "Could not resolve {} into a mod path",
+                        call_site_span.file()
+                    ),
+                ));
+            }
+        };
+
         Ok(Self {
             span: start_span.join(end_span).unwrap_or(input.span()),
             units: unit_declarations.into_boxed_slice(),
             prefixes: prefix_declarations.into_boxed_slice(),
             base_types: base_types.into_boxed_slice(),
+            call_site,
         })
     }
 }

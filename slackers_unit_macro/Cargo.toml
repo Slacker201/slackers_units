@@ -15,6 +15,7 @@ phf_codegen = {version="0.14.0", features=["quote"]}
 proc-macro2 = "1.0.107"
 quote = "1.0.47"
 syn = {version = "3.0.9", features=["extra-traits"]}
+module_path_extractor = "0.8.0"
 
 [lib]
 proc-macro = true
