@@ -65,6 +65,7 @@ impl ValidatedSystem {
         let sub_impl = self.generate_sub_impl();
         let new_impl = self.generate_new();
         let debug_impl = self.generate_debug_impl();
+        let partial_eq = self.generate_eq_ord();
 
         quote! {
             pub(crate) struct Unit<B, #(#dv_names,)*> where
@@ -83,7 +84,17 @@ impl ValidatedSystem {
             #sub_impl
             #new_impl
             #debug_impl
+            #partial_eq
         }
+    }
+
+    fn get_dvec_idents(&self) -> impl Iterator<Item = Ident> {
+        self
+            .dimensional_vector_names
+            .iter()
+            .map(|v| {
+                format_ident!("Ident{v}")
+            })
     }
 
     fn get_arith_types(&self) -> (Vec<Ident>, Vec<Ident>, Vec<Ident>, &[Ident]) {
@@ -165,7 +176,7 @@ impl ValidatedSystem {
     }
 
     fn generate_debug_impl(&self) -> TokenStream {
-        let (result, _, _, _) = self.get_arith_types();
+        let result: Box<[_]> = self.get_dvec_idents().collect();
 
         quote! {
             impl<
@@ -186,5 +197,57 @@ impl ValidatedSystem {
                 }
             }
         }
+    }
+
+    fn generate_eq_ord(&self) -> TokenStream {
+        let idents: Box<[_]> = self.get_dvec_idents().collect();
+        quote! {
+            impl<
+            B: PartialEq,
+            #(
+                #idents: slackers_units::Integer,
+            )*
+            > PartialEq for Unit<B,
+            #(#idents,)*> {
+                fn eq(&self, other: &Self) -> bool {
+                    self.value == other.value
+                }
+            }
+
+        impl<
+            B: PartialOrd,
+            #(
+                #idents: slackers_units::Integer,
+            )*
+            > PartialOrd for Unit<B,
+            #(#idents,)*> {
+                fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+                    self.value.partial_cmp(&other.value)
+                }
+            }
+
+        impl<
+            B: Eq,
+            #(
+                #idents: slackers_units::Integer,
+            )*
+            > Eq for Unit<B,
+            #(#idents,)*> {}
+
+        impl<
+            B: Ord,
+            #(
+                #idents: slackers_units::Integer,
+            )*
+            > Ord for Unit<B,
+            #(#idents,)*> {
+                fn cmp(&self, other: &Self) -> core::cmp::Ordering {
+                    self.value.cmp(&other.value)
+                }
+            }
+        }
+
+        
+        
     }
 }
