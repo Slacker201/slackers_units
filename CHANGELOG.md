@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4](https://github.com/Slacker201/slackers_units/compare/slackers_units-v0.1.3...slackers_units-v0.1.4) - 2026-11-08
+
+### Added
+
+- *(ci)* implement ci v1
+
+### Fixed
+
+- update changelog again
+- *(ci)* try and fix ci
+
+### Other
+
+- Update CHANGELOG.md
+- release v0.1.4
+- release v0.1.4
+- prep 0.1.4
+- release v0.1.3
+
 ## [0.1.3](https://github.com/Slacker201/slackers_units/compare/slackers_units-v0.1.1...slackers_units-v0.1.3) - 2026-11-07
 
 ### Added
@@ -96,23 +115,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - *(dependencies)* added and re-exported the dependancies
 - *(types)* init types crate
 - initial commit
-
-## [0.1.3](https://github.com/Slacker201/slackers_si_units/compare/slackers_si_units-v0.1.2...slackers_si_units-v0.1.3) - 2026-10-25
-
-### Added
-
-- *(serialization)* implement serialization and deserialization for backers that support it
-
-### Fixed
-
-- *(serde)* add serde/derive to serde feature
-
-### Other
-
-- add serde dep
-
-## [0.1.2](https://github.com/Slacker201/slackers_si_units/compare/slackers_si_units-v0.1.1...slackers_si_units-v0.1.2) - 2026-10-24
-
-### Other
-
-- updated the following local packages: si_unit_type, si_unit_macro
