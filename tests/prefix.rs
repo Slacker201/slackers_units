@@ -1,6 +1,6 @@
 mod prefix {
     use crate::prefix;
-    use slackers_units::system; // required because rust is goofy as fuck
+    use slackers_units::system;
 
     system! {
         basetype: Second;
@@ -30,6 +30,8 @@ mod prefix {
             abbrev: "deg";
             multiplier: 69420.69;
         }
+        
+        default_repr: f64;
     }
 
     #[test]

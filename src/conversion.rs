@@ -24,3 +24,10 @@ impl Conversion for f64 {
         numer / denom
     }
 }
+
+
+impl Conversion for Ratio<Integer<true, 256, 0, 0>> {
+    fn convert(ratio: Ratio<Integer<true, 256, 0, 0>>) -> Self {
+        ratio
+    }
+}
