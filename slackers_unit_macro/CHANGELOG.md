@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.7](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.6...slackers_unit_macro-v0.1.7) - 2026-11-09
+
+### Added
+
+- *(unit conversion)* implement features for 1,2,4,8,16,32,64,128,256 byte integer ratio for prefix conversion
+- feat(unit conversion):
+
+### Other
+
+- Merge pull request #27 from Slacker201/dev
+
 ## [0.1.6](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.5...slackers_unit_macro-v0.1.6) - 2026-11-09
 
 ### Other
