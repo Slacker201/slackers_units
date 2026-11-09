@@ -2,7 +2,7 @@ use num_rational::Ratio;
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, format_ident, quote};
 use std::{cmp::Ordering, collections::HashMap};
-use syn::Error;
+use syn::{Error};
 
 use crate::{
     prefix_trie::PrefixTrie,
@@ -131,16 +131,18 @@ impl ToTokens for DecWrapper {
         let numer = numer.to_be_bytes();
         let denom = denom.to_be_bytes();
 
+        let int_type = get_path();
+
         tokens.extend(quote! {
             {
-                let numer = ::slackers_units::bnum::Integer::<true, 256, 0, 0>::from_be_bytes(
+                let numer = #int_type::from_be_bytes(
                     [
                         #(
                             #numer,
                         )*
                     ]
                 );
-                let denom = ::slackers_units::bnum::Integer::<true, 256, 0, 0>::from_be_bytes(
+                let denom = #int_type::from_be_bytes(
                     [
                         #(
                             #denom,
@@ -211,5 +213,45 @@ impl ToTokens for DimensionArray {
                 ::slackers_units::#idents,
             )*
         });
+    }
+}
+
+
+fn get_path() -> TokenStream {
+    let amount: usize = cfg_select! {
+        feature = "converter_256" => {
+            256
+        }
+        feature = "converter_128" => {
+            128
+        }
+        feature = "converter_64" => {
+            64
+        }
+        feature = "converter_32" => {
+            32
+        }
+        feature = "converter_16" => {
+           16
+        }
+        feature = "converter_8" => {
+            8
+        }
+        feature = "converter_4" => {
+            4
+        }
+        feature = "converter_2" => {
+            2
+        }
+        feature = "converter_1" => {
+            1
+        }
+        _ => {
+            8
+        }
+    };
+
+    quote! {
+        ::slackers_units::bnum::Integer::<true, #amount, 0, 0>
     }
 }
