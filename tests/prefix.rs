@@ -1,8 +1,8 @@
 mod prefix {
-    use slackers_units::system;
-    use crate::prefix; // required because rust is goofy as fuck
+    use crate::prefix;
+    use slackers_units::system; // required because rust is goofy as fuck
 
-    system!{
+    system! {
         basetype: Second;
         basetype: Meter;
 

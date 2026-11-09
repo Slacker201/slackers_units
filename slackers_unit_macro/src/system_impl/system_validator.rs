@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use quote::format_ident;
-use syn::Error;
+use syn::{Error, Path};
 
 use crate::{System, validated_system::ValidatedSystem};
 
@@ -33,6 +33,7 @@ impl System {
         self.validate_no_conversions()?;
         self.validate_conversion_expr_subset()?;
         let base_type_mapping = self.validate_all_bases_match_units()?;
+        let default_repr = self.validate_default_repr()?;
 
         let unit_idents = self
             .units
@@ -75,6 +76,7 @@ impl System {
             dimensional_phantom_data_names: dimensional_phantom_data_names.into_boxed_slice(),
             base_types_raw_vectors,
             call_site: self.call_site,
+            default_repr,
         })
     }
 
@@ -193,5 +195,12 @@ impl System {
             }
         }
         Ok(indices.into_boxed_slice())
+    }
+
+    fn validate_default_repr(&self) -> syn::Result<Path> {
+        self.default_repr
+            .clone()
+            .ok_or(Error::new(self.span, "Please provide a unit type"))
+            .map(|v| v.path)
     }
 }

@@ -1,4 +1,4 @@
-use syn::Ident;
+use syn::{Ident, Path};
 
 use crate::unit_system::{BaseTypeDeclaration, PrefixDeclaration, UnitDeclaration};
 
@@ -18,4 +18,5 @@ pub(crate) struct ValidatedSystem {
     pub base_types_raw_vectors: Box<[Box<[i64]>]>,
 
     pub call_site: String,
+    pub default_repr: Path,
 }

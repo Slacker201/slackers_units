@@ -1,10 +1,13 @@
 use module_path_extractor::find_module_path;
 use proc_macro::Span;
-use syn::{Error, Ident, Token, parse::Parse};
+use syn::{Error, Token, parse::Parse};
 
 use crate::{
     System,
-    unit_system::{BaseTypeDeclaration, PrefixDeclaration, TypeIdentifier, UnitDeclaration},
+    unit_system::{
+        BaseTypeDeclaration, PrefixDeclaration, TypeIdentifier, UnitDeclaration,
+        parse_impl::default_repr::DefaultRepr,
+    },
 };
 
 impl Parse for System {
@@ -15,6 +18,8 @@ impl Parse for System {
 
         let start_span = input.span();
         let mut end_span = input.span();
+
+        let mut default_repr = None;
 
         loop {
             if input.peek(super::kw::unit) {
@@ -29,13 +34,16 @@ impl Parse for System {
                 prefix_declarations.push(i);
                 continue;
             }
-            if input.peek(Ident) {
+            if input.peek(super::kw::basetype) {
                 let i = input.parse::<BaseTypeDeclaration>()?;
                 end_span = i.span;
                 base_types.push(i);
                 continue;
             }
-
+            if input.peek(super::kw::default_repr) {
+                let q = input.parse::<DefaultRepr>()?;
+                default_repr = Some(q);
+            }
             if input.is_empty() {
                 break;
             }
@@ -48,9 +56,7 @@ impl Parse for System {
         let call_site_span = Span::call_site();
         let call_site = match find_module_path(&call_site_span.file(), call_site_span.line()) {
             Some(call_site) => call_site,
-            None => {
-                "crate".to_string()
-            }
+            None => "crate".to_string(),
         };
 
         Ok(Self {
@@ -59,6 +65,7 @@ impl Parse for System {
             prefixes: prefix_declarations.into_boxed_slice(),
             base_types: base_types.into_boxed_slice(),
             call_site,
+            default_repr,
         })
     }
 }
