@@ -208,10 +208,8 @@ impl ValidatedSystem {
                 pub(crate) fn parse_ratio(value: &[u8]) -> (::slackers_units::num_rational::Ratio<NumberRepr>, &[u8]) {
                     let mut ts = ::slackers_units::slk_tokenstream::TokenStream::new(value);
 
-                    // Skip leading whitespace
                     ts.skip_while(|b| b.is_ascii_whitespace());
 
-                    // Optional sign
                     let negative = match ts.peek() {
                         Some(b'-') => {
                             ts.skip();
@@ -223,28 +221,22 @@ impl ValidatedSystem {
                         }
                         _ => false,
                     };
-
-                    // Integer part
                     let int_start = ts.mark();
                     ts.skip_while(|b| b.is_ascii_digit());
                     let int_end = ts.mark();
 
-                    // Decimal part
                     let (frac_start, frac_end) = if ts.consume_if(|&b| b == b'.').is_some() {
                         let start = ts.mark();
                         ts.skip_while(|b| b.is_ascii_digit());
                         (start, ts.mark())
                     } else {
-                        (ts.mark(), ts.mark()) // empty
+                        (ts.mark(), ts.mark())
                     };
 
-                    // Convert slices (safe because we only accepted ASCII digits)
                     let integer = unsafe { std::str::from_utf8_unchecked(ts.slice_from_marks(int_start, int_end)) };
                     let decimal = unsafe { std::str::from_utf8_unchecked(ts.slice_from_marks(frac_start, frac_end)) };
 
-                    // Parse numerator
                     let mut numer = if integer.is_empty() && decimal.is_empty() {
-                        // Just a sign or empty → treat as 0
                         <NumberRepr as ::slackers_units::num_traits::ConstZero>::ZERO
                     } else if integer.is_empty() {
                         <NumberRepr as ::slackers_units::num_traits::ConstZero>::ZERO

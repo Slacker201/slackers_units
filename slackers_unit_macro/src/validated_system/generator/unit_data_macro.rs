@@ -11,8 +11,13 @@ impl ValidatedSystem {
         let unit_context = self.unit_context();
         let call_site = &self.call_site;
 
+        let re_export = if call_site == "crate" {
+            quote! {}
+        } else {
+            quote! {pub(crate) use unit;}
+        };
+
         quote! {
-            #[macro_export]
             macro_rules! unit {
                 ($($data:tt)*) => {
                     ::slackers_units::__unit_impl__!(
@@ -22,6 +27,7 @@ impl ValidatedSystem {
                     )
                 }
             }
+            #re_export
         }
     }
 

@@ -8,17 +8,15 @@ macro_rules! generate_dimensional_op {
     ($result: ident, $op1: ident, $op2: ident, $pd_names: ident, $operation: ident, $fn_name: ident, $op_sym: tt) => {
         quote! {
             impl<
-                B: core::ops::$operation<B, Output = B>,
             #(
                 #$result: ::slackers_units::Integer,
                 #$op1: ::slackers_units::Integer + core::ops::$operation<#$op2, Output = #$result>,
                 #$op2: ::slackers_units::Integer,
             )*> core::ops::$operation<Unit<
-                B,
-                #(#$op2,)*>> for Unit<B,#(#$op1,)*> {
-                type Output = Unit<B,#(#$result,)*>;
+                #(#$op2,)*>> for Unit<#(#$op1,)*> {
+                type Output = Unit<#(#$result,)*>;
 
-                fn $fn_name(self, other: Unit<B,#(#$op2,)*>) -> Self::Output {
+                fn $fn_name(self, other: Unit<#(#$op2,)*>) -> Self::Output {
                     Self::Output {
                         #(
                             #$pd_names: core::marker::PhantomData,
@@ -35,10 +33,9 @@ macro_rules! generate_normal_op {
     ($result: ident, $pd_names: ident, $operation: ident, $fn_name: ident, $op_sym: tt) => {
         quote! {
             impl<
-                B: core::ops::$operation<B, Output = B>,
             #(
                 #$result: ::slackers_units::Integer,
-            )*> core::ops::$operation<Self> for Unit<B, #(#$result,)*> {
+            )*> core::ops::$operation<Self> for Unit<#(#$result,)*> {
                 type Output = Self;
 
                 fn $fn_name(self, other: Self) -> Self::Output {
@@ -67,8 +64,10 @@ impl ValidatedSystem {
         let debug_impl = self.generate_debug_impl();
         let partial_eq = self.generate_eq_ord();
 
+        let default_repr_path = &self.default_repr;
+
         quote! {
-            pub(crate) struct Unit<B, #(#dv_names,)*> where
+            pub(crate) struct Unit<#(#dv_names,)* B = #default_repr_path> where
                 B: ,
                 #(
                     #dv_names: ::slackers_units::Integer,
@@ -89,12 +88,9 @@ impl ValidatedSystem {
     }
 
     fn get_dvec_idents(&self) -> impl Iterator<Item = Ident> {
-        self
-            .dimensional_vector_names
+        self.dimensional_vector_names
             .iter()
-            .map(|v| {
-                format_ident!("Ident{v}")
-            })
+            .map(|v| format_ident!("Ident{v}"))
     }
 
     fn get_arith_types(&self) -> (Vec<Ident>, Vec<Ident>, Vec<Ident>, &[Ident]) {
@@ -158,10 +154,9 @@ impl ValidatedSystem {
                 #result: ::slackers_units::Integer,
             )*
             > Unit<
-            B,
                 #(
                     #result,
-                )*
+                )* B,
             > {
                 pub(crate) fn new(value: B) -> Self {
                     Self {
@@ -185,10 +180,10 @@ impl ValidatedSystem {
                     #result: core::fmt::Debug + ::slackers_units::Integer,
                 )*
             > core::fmt::Debug for Unit<
-            B,
                 #(
                     #result,
                 )*
+            B,
             > {
                 fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                     f.debug_struct(
@@ -207,8 +202,9 @@ impl ValidatedSystem {
             #(
                 #idents: slackers_units::Integer,
             )*
-            > PartialEq for Unit<B,
-            #(#idents,)*> {
+            > PartialEq for Unit<
+            #(#idents,)*
+            B> {
                 fn eq(&self, other: &Self) -> bool {
                     self.value == other.value
                 }
@@ -219,8 +215,8 @@ impl ValidatedSystem {
             #(
                 #idents: slackers_units::Integer,
             )*
-            > PartialOrd for Unit<B,
-            #(#idents,)*> {
+            > PartialOrd for Unit<
+            #(#idents,)* B> {
                 fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
                     self.value.partial_cmp(&other.value)
                 }
@@ -231,23 +227,20 @@ impl ValidatedSystem {
             #(
                 #idents: slackers_units::Integer,
             )*
-            > Eq for Unit<B,
-            #(#idents,)*> {}
+            > Eq for Unit<
+            #(#idents,)* B> {}
 
         impl<
             B: Ord,
             #(
                 #idents: slackers_units::Integer,
             )*
-            > Ord for Unit<B,
-            #(#idents,)*> {
+            > Ord for Unit<
+            #(#idents,)* B> {
                 fn cmp(&self, other: &Self) -> core::cmp::Ordering {
                     self.value.cmp(&other.value)
                 }
             }
         }
-
-        
-        
     }
 }

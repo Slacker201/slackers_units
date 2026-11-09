@@ -184,8 +184,8 @@ impl ToTokens for ParsedUnit {
 
         tokens.extend(quote! {
             {
-                #call_path::Unit::<_, #dvec>::new(
-                    #r
+                #call_path::Unit::<#dvec>::new(
+                    ::slackers_units::conversion::Conversion::convert(#r)
                 )
             }
         });

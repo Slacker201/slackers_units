@@ -1,7 +1,7 @@
 use proc_macro2::Span;
 use std::hash::Hash;
 
-use crate::unit_system::parse_impl::expression::expr::MExpr;
+use crate::unit_system::parse_impl::{default_repr::DefaultRepr, expression::expr::MExpr};
 
 mod parse_impl;
 
@@ -84,6 +84,7 @@ pub(crate) struct System {
     pub prefixes: Box<[PrefixDeclaration]>,
     pub base_types: Box<[BaseTypeDeclaration]>,
     pub call_site: String,
+    pub default_repr: Option<DefaultRepr>,
 
     pub span: Span,
 }
