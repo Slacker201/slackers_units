@@ -1,13 +1,15 @@
-use bnum::Integer;
 use num_rational::Ratio;
 use num_traits::{Signed, ToPrimitive};
+mod number_repr;
+use number_repr::NumberRepr;
 
 pub trait Conversion {
-    fn convert(ratio: Ratio<Integer<true, 256, 0, 0>>) -> Self;
+    fn convert(ratio: Ratio<NumberRepr>) -> Self;
 }
 
+
 impl Conversion for f64 {
-    fn convert(ratio: Ratio<Integer<true, 256, 0, 0>>) -> Self {
+    fn convert(ratio: Ratio<NumberRepr>) -> Self {
         let (numer, denom) = ratio.into_raw();
 
         let numer = numer.to_f64().unwrap_or(if numer.is_negative() {
@@ -25,8 +27,8 @@ impl Conversion for f64 {
     }
 }
 
-impl Conversion for Ratio<Integer<true, 256, 0, 0>> {
-    fn convert(ratio: Ratio<Integer<true, 256, 0, 0>>) -> Self {
+impl Conversion for Ratio<NumberRepr> {
+    fn convert(ratio: Ratio<NumberRepr>) -> Self {
         ratio
     }
 }
