@@ -1,0 +1,7 @@
+error: Found no base types, please add at least 1
+ --> tests/c_fail/empty_system.rs:1:1
+  |
+1 | ::slackers_units::system! {}
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the macro `::slackers_units::system` (in Nightly builds, run with -Z macro-backtrace for more info)

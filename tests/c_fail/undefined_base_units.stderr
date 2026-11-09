@@ -1,0 +1,5 @@
+error: Please declare the type `Second` to use it as a base type
+ --> tests/c_fail/undefined_base_units.rs:2:15
+  |
+2 |     basetype: Second;
+  |               ^^^^^^

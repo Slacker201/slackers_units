@@ -8,29 +8,29 @@ mod prefix {
 
         unit Second {
             prefixable: true;
-            abbrev: "s";
+            abbrev: s;
         }
 
         unit Meter {
             prefixable: true;
-            abbrev: "m";
+            abbrev: m;
         }
 
         prefix Deci {
-            abbrev: "d";
+            abbrev: d;
             multiplier: 0.1;
         }
 
         prefix Centi {
-            abbrev: "c";
+            abbrev: c;
             multiplier: 0.01;
         }
 
         prefix Degenerate {
-            abbrev: "deg";
+            abbrev: deg;
             multiplier: 69420.69;
         }
-        
+
         default_repr: f64;
     }
 

@@ -25,7 +25,6 @@ impl Conversion for f64 {
     }
 }
 
-
 impl Conversion for Ratio<Integer<true, 256, 0, 0>> {
     fn convert(ratio: Ratio<Integer<true, 256, 0, 0>>) -> Self {
         ratio
