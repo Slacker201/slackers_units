@@ -1,6 +1,6 @@
 [package]
 name = "slackers_units"
-version = "0.1.6"
+version = "0.2.0"
 edition = "2024"
 description = "A small SI unit crate with compile time unit macros and generic holding types"
 repository = "https://github.com/Slacker201/slackers_units"

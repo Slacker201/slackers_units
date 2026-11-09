@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0](https://github.com/Slacker201/slackers_units/compare/slackers_units-v0.1.6...slackers_units-v0.2.0) - 2026-11-09
+
+### Added
+
+- implement identity conversion
+
+### Other
+
+- [**breaking**] fix tests. breaking cuz i forgot b4
+- Create rust.yml
+
 ## [0.1.6](https://github.com/Slacker201/slackers_units/compare/slackers_units-v0.1.5...slackers_units-v0.1.6) - 2026-11-09
 
 ### Added
