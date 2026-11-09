@@ -12,7 +12,7 @@ mod prefix {
         }
 
         unit Meter {
-            prefixable: true;
+            prefixable: false;
             abbrev: m;
         }
 

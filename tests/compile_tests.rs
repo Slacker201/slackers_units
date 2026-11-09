@@ -1,6 +1,17 @@
 #[test]
-fn must_fail() {
+fn system_parsing() {
     let tester = trybuild::TestCases::new();
+    tester.compile_fail("./tests/sys_parse/*.rs");
+}
 
-    tester.compile_fail("./tests/c_fail/*.rs");
+#[test]
+fn sys_validate() {
+    let tester = trybuild::TestCases::new();
+    tester.compile_fail("./tests/sys_validate/*.rs");
+}
+
+#[test]
+fn unit_parse() {
+    let tester = trybuild::TestCases::new();
+    tester.compile_fail("./tests/unit_parse/*.rs");
 }
