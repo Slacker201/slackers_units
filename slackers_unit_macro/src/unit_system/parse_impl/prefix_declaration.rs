@@ -1,4 +1,4 @@
-use syn::{LitStr, Token, braced, parse::Parse};
+use syn::{Ident, Token, braced, parse::Parse};
 
 use crate::unit_system::{Abbreviation, Number, PrefixDeclaration, TypeIdentifier};
 
@@ -32,11 +32,11 @@ impl Parse for Abbreviation {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let _ = input.parse::<super::kw::abbrev>()?;
         let _ = input.parse::<Token![:]>()?;
-        let abbreviation = input.parse::<LitStr>()?;
+        let abbreviation = input.parse::<Ident>()?;
         let _ = input.parse::<Token![;]>()?;
 
         Ok(Self {
-            raw: abbreviation.value(),
+            raw: abbreviation.to_string(),
             span: abbreviation.span(),
         })
     }

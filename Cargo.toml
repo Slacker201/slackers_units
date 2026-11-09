@@ -15,6 +15,8 @@ slackers_unit_macro = { version = "0.1.5", path = "./slackers_unit_macro" }
 slk-tokenstream = "0.5.3"
 typenum = "1.20.1"
 
+[dev-dependencies]
+trybuild = "1.0.122"
 
 [workspace]
 resolver = "3"
