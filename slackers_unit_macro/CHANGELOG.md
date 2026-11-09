@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.6](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.5...slackers_unit_macro-v0.1.6) - 2026-11-09
+
+### Other
+
+- implement build fail tests for empty system, dup abbrev, dup units, undefined base unit
+
 ## [0.1.5](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.4...slackers_unit_macro-v0.1.5) - 2026-11-09
 
 ### Added
