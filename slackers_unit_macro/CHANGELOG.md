@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.5](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.4...slackers_unit_macro-v0.1.5) - 2026-11-09
+
+### Added
+
+- implement default representation field
+- *(generator)* increased macro hygiege
+
 ## [0.1.4](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.3...slackers_unit_macro-v0.1.4) - 2026-11-08
 
 ### Added
