@@ -1,0 +1,5 @@
+error: Could not parse qm
+  --> tests/unit_parse/invalid_prefix.rs:23:19
+   |
+23 |     let _ = unit!(1qm);
+   |                   ^^^

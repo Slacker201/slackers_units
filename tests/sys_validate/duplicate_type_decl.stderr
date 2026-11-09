@@ -1,5 +1,5 @@
 error: Found duplicate type declaration `Second`
- --> tests/c_fail/duplicate_type_decl.rs:6:10
+ --> tests/sys_validate/duplicate_type_decl.rs:6:10
   |
 6 |     unit Second {
   |          ^^^^^^
