@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3](https://github.com/Slacker201/slackers_units/compare/slackers_units-v0.2.2...slackers_units-v0.2.3) - 2026-11-09
+
+### Fixed
+
+- make generated code reflect converter features
+
+### Other
+
+- more tests
+
 ## [0.2.2](https://github.com/Slacker201/slackers_units/compare/slackers_units-v0.2.1...slackers_units-v0.2.2) - 2026-11-09
 
 ### Added
