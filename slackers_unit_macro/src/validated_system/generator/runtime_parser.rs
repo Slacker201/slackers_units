@@ -111,7 +111,7 @@ impl ValidatedSystem {
                     if let Some((prefix, remainder)) = PREFIX_MAP.find_longest(suffix_bytes)
                         && let Some((unit, unit_remainder)) = UNIT_MAP.find_longest(remainder) {
                         if unit.is_prefixable() {
-                            return Ok((ParseResult::PrefixUnit(prefix, unit), remainder));
+                            return Ok((ParseResult::PrefixUnit(prefix, unit), unit_remainder));
                         } else {
                             error = ErrorOpt::NotPrefixable(remainder.into())
                         }
@@ -217,8 +217,8 @@ impl ValidatedSystem {
                                 let (parse_result, remainder2) = Self::parse_suffix(remainder)?;
                                 remainder = remainder2;
                                 match parse_result {
-                                    ParseResult::PrefixUnit(_, unit_type) => {
-                                        ratio *= Ratio::new(Default::default(), Default::default());
+                                    ParseResult::PrefixUnit(prefix, unit_type) => {
+                                        ratio *= prefix.to_multiplier();
                                         for (vector_part, new_vec_part) in vector.iter_mut().zip(unit_type.vector()) {
                                             *vector_part += new_vec_part;
                                         }
@@ -234,8 +234,8 @@ impl ValidatedSystem {
                                 let (parse_result, remainder2) = Self::parse_suffix(remainder)?;
                                 remainder = remainder2;
                                 match parse_result {
-                                    ParseResult::PrefixUnit(_, unit_type) => {
-                                        ratio *= Ratio::new(Default::default(), Default::default());
+                                    ParseResult::PrefixUnit(prefix, unit_type) => {
+                                        ratio *= prefix.to_multiplier();
                                         for (vector_part, new_vec_part) in vector.iter_mut().zip(unit_type.vector()) {
                                             *vector_part -= new_vec_part;
                                         }
