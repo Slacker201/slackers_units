@@ -123,7 +123,7 @@ impl ParsedUnit {
     }
 }
 
-struct DecWrapper(Ratio<NumberRepr>);
+pub struct DecWrapper(pub Ratio<NumberRepr>);
 struct DimensionArray(Box<[i64]>);
 
 impl ToTokens for DecWrapper {

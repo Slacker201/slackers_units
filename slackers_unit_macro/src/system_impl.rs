@@ -22,6 +22,7 @@ pub(crate) fn system_impl(ts: TokenStream) -> TokenStream {
     let runtime_parser = vs.generate_runtime_parser();
     let unit_prefix_enums = vs.generate_unit_prefix_enums();
     let unit_impl = vs.generate_units();
+    let unit_trait = vs.generate_unit_trait();
     let unit_macro_redef = vs.generate_unit_macro();
 
     quote! {
@@ -34,6 +35,7 @@ pub(crate) fn system_impl(ts: TokenStream) -> TokenStream {
         unit_bundle!(
             #unit_prefix_enums
             #unit_impl
+            #unit_trait
             #[macro_export]
             #unit_macro_redef
             #runtime_parser

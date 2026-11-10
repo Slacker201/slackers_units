@@ -12,7 +12,7 @@ use crate::{
 };
 
 pub(crate) mod unit_context;
-mod unit_str_parser;
+pub(crate) mod unit_str_parser;
 
 pub(crate) fn unit_impl(tokens: TokenStream) -> TokenStream {
     #[allow(unused)]

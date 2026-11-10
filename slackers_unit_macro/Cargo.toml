@@ -24,7 +24,7 @@ proc-macro = true
 cargo = { level = "warn", priority = -1 }
 
 [features]
-default = ["converter_64"]
+default = ["converter_8"]
 converter_256 = []
 converter_128 = []
 converter_64 = []
