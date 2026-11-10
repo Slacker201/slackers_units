@@ -127,7 +127,7 @@ impl ValidatedSystem {
         let (result, op1, op2, pd_names) = self.get_arith_types();
 
         generate_dimensional_op!(
-            result, op1, op2, pd_names, Add, Div, div, /
+            result, op1, op2, pd_names, Sub, Div, div, /
         )
     }
 
