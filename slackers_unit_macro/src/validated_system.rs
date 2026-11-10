@@ -3,6 +3,7 @@ use syn::{Ident, Path};
 use crate::unit_system::{BaseTypeDeclaration, PrefixDeclaration, UnitDeclaration};
 
 mod generator;
+mod utils;
 
 pub(crate) struct ValidatedSystem {
     pub units: Box<[UnitDeclaration]>,
