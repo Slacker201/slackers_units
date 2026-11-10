@@ -262,7 +262,7 @@ dependencies = [
 
 [[package]]
 name = "slackers_units"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "bnum",
  "cfg-if",
