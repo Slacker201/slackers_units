@@ -7,7 +7,6 @@ pub trait Conversion {
     fn convert(ratio: Ratio<NumberRepr>) -> Self;
 }
 
-
 impl Conversion for f64 {
     fn convert(ratio: Ratio<NumberRepr>) -> Self {
         let (numer, denom) = ratio.into_raw();

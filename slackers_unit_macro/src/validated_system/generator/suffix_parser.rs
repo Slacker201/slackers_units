@@ -202,8 +202,9 @@ impl ValidatedSystem {
     }
 
     fn construct_ratio_parser() -> TokenStream {
+        let repr = Self::get_integer_repr();
         quote! {
-            type NumberRepr = ::slackers_units::bnum::Integer<true, 256, 0, 0>;
+            type NumberRepr = #repr;
             impl RuntimeParser {
                 pub(crate) fn parse_ratio(value: &[u8]) -> (::slackers_units::num_rational::Ratio<NumberRepr>, &[u8]) {
                     let mut ts = ::slackers_units::slk_tokenstream::TokenStream::new(value);
