@@ -1,6 +1,6 @@
 [package]
 name = "slackers_units"
-version = "0.2.4"
+version = "0.3.0"
 edition = "2024"
 description = "A small SI unit crate with compile time unit macros and generic holding types"
 repository = "https://github.com/Slacker201/slackers_units"
@@ -12,7 +12,7 @@ cfg-if = "1.0.5"
 num-rational = "0.4.2"
 num-traits = "0.2.19"
 phf = {version="0.14.0", features=["macros"]}
-slackers_unit_macro = { version = "0.1.8", path = "./slackers_unit_macro" }
+slackers_unit_macro = { version = "0.1.9", path = "./slackers_unit_macro" }
 slk-tokenstream = "0.5.3"
 typenum = "1.20.1"
 
