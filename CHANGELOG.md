@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0](https://github.com/Slacker201/slackers_units/compare/slackers_units-v0.2.4...slackers_units-v0.3.0) - 2026-11-10
+
+### Added
+
+- *(runtime parser)* implement basic mul and div parsing
+
+### Fixed
+
+- *(runtime parser)* fix runtime parser hardcoding 256B ratio
+
+### Other
+
+- reset default converter feature, cleanup backer trait
+- update rust.yml settings
+
 ## [0.2.4](https://github.com/Slacker201/slackers_units/compare/slackers_units-v0.2.3...slackers_units-v0.2.4) - 2026-11-10
 
 ### Other

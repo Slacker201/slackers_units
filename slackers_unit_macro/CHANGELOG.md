@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.9](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.8...slackers_unit_macro-v0.1.9) - 2026-11-10
+
+### Added
+
+- *(runtime parser)* implement basic mul and div parsing
+
+### Fixed
+
+- *(runtime parser)* make suffix parser return correct remainder
+- *(runtime parser)* fix runtime parser hardcoding 256B ratio
+
+### Other
+
+- reset default converter feature, cleanup backer trait
+- *(runtime parser)* refactor runtime parser
+
 ## [0.1.8](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.7...slackers_unit_macro-v0.1.8) - 2026-11-09
 
 ### Fixed
