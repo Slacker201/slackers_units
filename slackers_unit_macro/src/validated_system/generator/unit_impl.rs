@@ -60,7 +60,7 @@ impl ValidatedSystem {
         let div_impl = self.generate_div_impl();
         let add_impl = self.generate_add_impl();
         let sub_impl = self.generate_sub_impl();
-        let new_impl = self.generate_new();
+        let new_impl = self.generate_unit_trait_impl();
         let debug_impl = self.generate_debug_impl();
         let partial_eq = self.generate_eq_ord();
 
@@ -68,7 +68,6 @@ impl ValidatedSystem {
 
         quote! {
             pub(crate) struct Unit<#(#dv_names,)* B = #default_repr_path> where
-                B: ,
                 #(
                     #dv_names: ::slackers_units::Integer,
                 )*
@@ -145,31 +144,6 @@ impl ValidatedSystem {
         )
     }
 
-    fn generate_new(&self) -> TokenStream {
-        let (result, _, _, pd_names) = self.get_arith_types();
-        quote! {
-            impl<
-                B,
-            #(
-                #result: ::slackers_units::Integer,
-            )*
-            > Unit<
-                #(
-                    #result,
-                )* B,
-            > {
-                pub(crate) fn new(value: B) -> Self {
-                    Self {
-                        #(
-                            #pd_names: core::marker::PhantomData,
-                        )*
-                        value
-                    }
-                }
-            }
-        }
-    }
-
     fn generate_debug_impl(&self) -> TokenStream {
         let result: Box<[_]> = self.get_dvec_idents().collect();
 
@@ -239,6 +213,39 @@ impl ValidatedSystem {
             #(#idents,)* B> {
                 fn cmp(&self, other: &Self) -> core::cmp::Ordering {
                     self.value.cmp(&other.value)
+                }
+            }
+        }
+    }
+
+    fn generate_unit_trait_impl(&self) -> TokenStream {
+        let idents: Box<[_]> = self.get_dvec_idents().collect();
+        let dim_count = self.base_types.len();
+        let pd_names = &self.dimensional_phantom_data_names;
+        quote! {
+            impl<
+            B: ::slackers_units::conversion::Conversion,
+            #(
+                #idents: ::slackers_units::Integer,
+            )*
+            > UnitTrait for Unit<#(#idents,)* B> {
+                type Underlying = B;
+
+                fn vector() -> [i64; #dim_count] {
+                    [
+                        #(
+                            #idents::to_i64(),
+                        )*
+                    ]
+                }
+
+                fn new(value: B) -> Self {
+                    Self {
+                        #(
+                            #pd_names: core::marker::PhantomData,
+                        )*
+                        value,
+                    }
                 }
             }
         }

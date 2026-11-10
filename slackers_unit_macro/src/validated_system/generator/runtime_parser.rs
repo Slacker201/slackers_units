@@ -11,9 +11,10 @@ impl ValidatedSystem {
         let maps = self.construct_parser_maps();
         let find_longest_trait = Self::construct_trait();
         let find_longest_impl = Self::construct_find_longest_impl();
-        let error_enums = Self::construct_error_enums();
+        let error_enums = self.construct_error_enums();
         let suffix_parser = Self::construct_suffix_parser();
         let ratio_parser = Self::construct_ratio_parser();
+        let parser = self.construct_parser();
 
         quote! {
             #ctrie_enum
@@ -23,14 +24,16 @@ impl ValidatedSystem {
             #suffix_parser
             #error_enums
             #ratio_parser
+            #parser
         }
     }
 
-    fn construct_error_enums() -> TokenStream {
+    fn construct_error_enums(&self) -> TokenStream {
+        let dim_count = self.base_types.len();
+
         quote! {
             #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
             pub(crate) enum ParseResult {
-                Err(ParseError),
                 PrefixUnit(Prefix, UnitType),
                 Unit(UnitType),
             }
@@ -39,6 +42,10 @@ impl ValidatedSystem {
                 UnknownUnit(Box<[u8]>),
                 NotPrefixable(Box<[u8]>),
                 FoundTrailingBytes(Box<[u8]>),
+                MismatchedDimensions {
+                    expected: [i64; #dim_count],
+                    got: [i64; #dim_count],
+                },
             }
 
             impl core::fmt::Debug for ParseError {
@@ -56,6 +63,11 @@ impl ValidatedSystem {
                             let arg0 = String::from_utf8_lossy(arg0);
                             f.debug_tuple("FoundTrailingBytes").field(&arg0).finish()
                         },
+                        Self::MismatchedDimensions { expected, got } => {
+                            f.debug_struct("MismatchedDimensions").field("expected", expected)
+                                .field("got", got)
+                                .finish()
+                        }
                     }
                 }
             }
@@ -91,29 +103,25 @@ impl ValidatedSystem {
 
     fn construct_suffix_parser() -> TokenStream {
         quote! {
-            pub struct RuntimeParser;
+            pub(crate) struct RuntimeParser;
 
             impl RuntimeParser {
-                pub(crate) fn parse_suffix(suffix_bytes: &[u8]) -> ParseResult {
+                fn parse_suffix(suffix_bytes: &[u8]) -> Result<(ParseResult, &[u8]), ParseError> {
                     let mut error = ErrorOpt::None;
                     if let Some((prefix, remainder)) = PREFIX_MAP.find_longest(suffix_bytes)
                         && let Some((unit, unit_remainder)) = UNIT_MAP.find_longest(remainder) {
-                        if unit_remainder.is_empty() {
-                            if unit.is_prefixable() {
-                                return ParseResult::PrefixUnit(prefix, unit);
-                            } else {
-                                error = ErrorOpt::NotPrefixable(remainder.into())
-                            }
+                        if unit.is_prefixable() {
+                            return Ok((ParseResult::PrefixUnit(prefix, unit), remainder));
+                        } else {
+                            error = ErrorOpt::NotPrefixable(remainder.into())
                         }
                     }
                     if let Some((unit, remainder)) = UNIT_MAP.find_longest(suffix_bytes) {
-                        if remainder.is_empty() {
-                            return ParseResult::Unit(unit)
-                        } else {
-                            error.set_if_none(|| ErrorOpt::TrailingBytes(remainder.into()));
-                        }
+                        
+                        return Ok((ParseResult::Unit(unit), remainder))
+                            
                     }
-                    ParseResult::Err(error.try_into().unwrap_or_else(|_| ParseError::UnknownUnit(suffix_bytes.into())))
+                    Err(error.try_into().unwrap_or_else(|_| ParseError::UnknownUnit(suffix_bytes.into())))
                 }
             }
         }
@@ -124,7 +132,7 @@ impl ValidatedSystem {
         quote! {
             type NumberRepr = #repr;
             impl RuntimeParser {
-                pub(crate) fn parse_ratio(value: &[u8]) -> (::slackers_units::num_rational::Ratio<NumberRepr>, &[u8]) {
+                fn parse_ratio(value: &[u8]) -> (::slackers_units::num_rational::Ratio<NumberRepr>, &[u8]) {
                     let mut ts = ::slackers_units::slk_tokenstream::TokenStream::new(value);
 
                     ts.skip_while(|b| b.is_ascii_whitespace());
@@ -178,6 +186,96 @@ impl ValidatedSystem {
 
                     let ratio = slackers_units::num_rational::Ratio::new(numer, scale);
                     (ratio, &value[ts.cursor()..])
+                }
+            }
+        }
+    }
+
+    fn construct_parser(&self) -> TokenStream {
+        let dim_count = self.base_types.len();
+        quote! {
+            impl RuntimeParser {
+                pub(crate) fn parse<U>(lit: &str) -> Result<U, ParseError> 
+                where
+                    U: UnitTrait,
+                {
+                    let (mut ratio, mut remainder) = Self::parse_ratio(lit.as_bytes());
+                    let mut vector = [0i64; #dim_count];
+
+                    let mut ts = ::slackers_units::slk_tokenstream::TokenStream::new(remainder);
+                    loop {
+                        ts.skip_while(|b| b.is_ascii_whitespace());
+                        let Some(sign) = ts.consume_if(|c| matches!(c, b'*' | b'/')).copied() else {
+                            break;
+                        };
+                        ts.skip_while(|b| b.is_ascii_whitespace());
+                        let start = ts.cursor();
+                        remainder = &remainder[start..];
+
+                        match sign {
+                            b'*' => {
+                                let (parse_result, remainder2) = Self::parse_suffix(remainder)?;
+                                remainder = remainder2;
+                                match parse_result {
+                                    ParseResult::PrefixUnit(_, unit_type) => {
+                                        ratio *= Ratio::new(Default::default(), Default::default());
+                                        for (vector_part, new_vec_part) in vector.iter_mut().zip(unit_type.vector()) {
+                                            *vector_part += new_vec_part;
+                                        }
+                                    },
+                                    ParseResult::Unit(unit_type) => {
+                                        for (vector_part, new_vec_part) in vector.iter_mut().zip(unit_type.vector()) {
+                                            *vector_part += new_vec_part;
+                                        }
+                                    },
+                                }
+                            }
+                            b'/' => {
+                                let (parse_result, remainder2) = Self::parse_suffix(remainder)?;
+                                remainder = remainder2;
+                                match parse_result {
+                                    ParseResult::PrefixUnit(_, unit_type) => {
+                                        ratio *= Ratio::new(Default::default(), Default::default());
+                                        for (vector_part, new_vec_part) in vector.iter_mut().zip(unit_type.vector()) {
+                                            *vector_part -= new_vec_part;
+                                        }
+                                    },
+                                    ParseResult::Unit(unit_type) => {
+                                        for (vector_part, new_vec_part) in vector.iter_mut().zip(unit_type.vector()) {
+                                            *vector_part -= new_vec_part;
+                                        }
+                                    },
+                                }
+                            }
+                            _ => unreachable!(),
+                        }
+                        ts = ::slackers_units::slk_tokenstream::TokenStream::new(remainder);
+                    }
+
+                    if ts.is_eof() {
+                        if U::vector() == vector {
+                            return Ok(
+                                U::new(<U::Underlying as ::slackers_units::conversion::Conversion>::convert(ratio))
+                            )
+                        } else {
+                            return Err(
+                                ParseError::MismatchedDimensions{
+                                    expected: U::vector(),
+                                    got: vector,
+                                }
+                            )
+                        }
+                    } else {
+                        let start = ts.mark();
+                        ts.advance(usize::MAX);
+                        let remainder = ts.slice_from_marks(start, ts.mark());
+
+                        return Err(
+                            ParseError::FoundTrailingBytes(
+                                remainder.into()
+                            )
+                        )
+                    }
                 }
             }
         }
