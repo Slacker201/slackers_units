@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.11](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.10...slackers_unit_macro-v0.1.11) - 2026-11-11
+
+### Fixed
+
+- *(runtime parser)* fix incorrectly adding vectors when dividing
+
+## [0.1.10](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.9...slackers_unit_macro-v0.1.10) - 2026-11-11
+
+### Added
+
+- *(runtime parser)* implement number suffix parsing with inferred multiply
+
+### Fixed
+
+- *(generator)* fix generated div impl adding unit vectors
+- *(generator)* add arith bounds to backing repr for arith impls
+
+### Other
+
+- better error message for missing default representation declaration
+- make rust analyzer default to braces for system! macro
+
 ## [0.1.9](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.8...slackers_unit_macro-v0.1.9) - 2026-11-10
 
 ### Added

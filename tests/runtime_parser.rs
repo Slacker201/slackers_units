@@ -67,7 +67,10 @@ mod runtime_parser {
         assert_eq!(Ok(unit!(10s)), RuntimeParser::parse("10 * s"));
         assert_eq!(Ok(unit!(50s)), RuntimeParser::parse("50 * s"));
         assert_eq!(Ok(unit!(964914.1s)), RuntimeParser::parse("964914.1 * s"));
-        assert_eq!(Ok(unit!(-759316.59s)), RuntimeParser::parse("-759316.59 * s"));
+        assert_eq!(
+            Ok(unit!(-759316.59s)),
+            RuntimeParser::parse("-759316.59 * s")
+        );
     }
     #[test]
     fn parse_mult() {
@@ -76,12 +79,21 @@ mod runtime_parser {
     }
     #[test]
     fn parse_div() {
-        assert_eq!(Ok(unit!(1) / unit!(1m) / unit!(1s)), RuntimeParser::parse("1 / s / m"));
-        assert_eq!(Ok(unit!(1) / unit!(1s) / unit!(1s)), RuntimeParser::parse("1 / s / s"));
+        assert_eq!(
+            Ok(unit!(1) / unit!(1m) / unit!(1s)),
+            RuntimeParser::parse("1 / s / m")
+        );
+        assert_eq!(
+            Ok(unit!(1) / unit!(1s) / unit!(1s)),
+            RuntimeParser::parse("1 / s / s")
+        );
     }
     #[test]
     fn parse_mixed() {
-        assert_eq!(Ok(unit!(1) * unit!(1m) / unit!(1s)), RuntimeParser::parse("1 / s * m"));
+        assert_eq!(
+            Ok(unit!(1) / unit!(1s) * unit!(1m)),
+            RuntimeParser::parse("1 / s * m")
+        );
         assert_eq!(Ok(unit!(1)), RuntimeParser::parse("1 * s / s"));
     }
 }
