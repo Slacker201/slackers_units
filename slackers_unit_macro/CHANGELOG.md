@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.11](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.10...slackers_unit_macro-v0.1.11) - 2026-11-11
+
+### Fixed
+
+- *(runtime parser)* fix incorrectly adding vectors when dividing
+
 ## [0.1.10](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.9...slackers_unit_macro-v0.1.10) - 2026-11-11
 
 ### Added
