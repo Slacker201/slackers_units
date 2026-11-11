@@ -10,6 +10,7 @@ mod validated_system;
 mod unit_impl;
 
 #[proc_macro]
+#[rust_analyzer::macro_style(braces)]
 pub fn system(ts: TokenStream) -> TokenStream {
     system_impl::system_impl(ts.into()).into()
 }

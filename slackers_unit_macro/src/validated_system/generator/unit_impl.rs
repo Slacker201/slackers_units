@@ -5,18 +5,20 @@ use syn::Ident;
 use crate::validated_system::ValidatedSystem;
 
 macro_rules! generate_dimensional_op {
-    ($result: ident, $op1: ident, $op2: ident, $pd_names: ident, $operation: ident, $fn_name: ident, $op_sym: tt) => {
+    ($result: ident, $op1: ident, $op2: ident, $pd_names: ident, $type_op: ident, $operation: ident, $fn_name: ident, $op_sym: tt) => {
         quote! {
             impl<
             #(
                 #$result: ::slackers_units::Integer,
-                #$op1: ::slackers_units::Integer + core::ops::$operation<#$op2, Output = #$result>,
+                #$op1: ::slackers_units::Integer + core::ops::$type_op<#$op2, Output = #$result>,
                 #$op2: ::slackers_units::Integer,
-            )*> core::ops::$operation<Unit<
-                #(#$op2,)*>> for Unit<#(#$op1,)*> {
-                type Output = Unit<#(#$result,)*>;
+            )*
+            B: core::ops::$operation<B, Output = B>,
+            > core::ops::$operation<Unit<
+                #(#$op2,)* B>> for Unit<#(#$op1,)* B> {
+                type Output = Unit<#(#$result,)* B>;
 
-                fn $fn_name(self, other: Unit<#(#$op2,)*>) -> Self::Output {
+                fn $fn_name(self, other: Unit<#(#$op2,)* B,>) -> Self::Output {
                     Self::Output {
                         #(
                             #$pd_names: core::marker::PhantomData,
@@ -35,7 +37,9 @@ macro_rules! generate_normal_op {
             impl<
             #(
                 #$result: ::slackers_units::Integer,
-            )*> core::ops::$operation<Self> for Unit<#(#$result,)*> {
+            )*
+                B: core::ops::$operation<B, Output = B>,
+            > core::ops::$operation<Self> for Unit<#(#$result,)* B> {
                 type Output = Self;
 
                 fn $fn_name(self, other: Self) -> Self::Output {
@@ -75,7 +79,6 @@ impl ValidatedSystem {
                 #(#dv_pd_names: std::marker::PhantomData<#dv_names>,)*
                 value: B,
             }
-
             #mul_impl
             #div_impl
             #add_impl
@@ -116,7 +119,7 @@ impl ValidatedSystem {
         let (result, op1, op2, pd_names) = self.get_arith_types();
 
         generate_dimensional_op!(
-            result, op1, op2, pd_names, Mul, mul, *
+            result, op1, op2, pd_names, Add, Mul, mul, *
         )
     }
 
@@ -124,7 +127,7 @@ impl ValidatedSystem {
         let (result, op1, op2, pd_names) = self.get_arith_types();
 
         generate_dimensional_op!(
-            result, op1, op2, pd_names, Div, div, /
+            result, op1, op2, pd_names, Sub, Div, div, /
         )
     }
 

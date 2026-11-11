@@ -200,7 +200,7 @@ impl System {
     fn validate_default_repr(&self) -> syn::Result<Path> {
         self.default_repr
             .clone()
-            .ok_or(Error::new(self.span, "Please provide a unit type"))
+            .ok_or(Error::new(self.span, "Expected `default_repr: T;`"))
             .map(|v| v.path)
     }
 }
