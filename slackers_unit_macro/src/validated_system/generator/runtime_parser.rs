@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use crate::{validated_system::ValidatedSystem};
+use crate::validated_system::ValidatedSystem;
 
 mod map_gen;
 
@@ -117,9 +117,9 @@ impl ValidatedSystem {
                         }
                     }
                     if let Some((unit, remainder)) = UNIT_MAP.find_longest(suffix_bytes) {
-                        
+
                         return Ok((ParseResult::Unit(unit), remainder))
-                            
+
                     }
                     Err(error.try_into().unwrap_or_else(|_| ParseError::UnknownUnit(suffix_bytes.into())))
                 }
@@ -195,23 +195,23 @@ impl ValidatedSystem {
         let dim_count = self.base_types.len();
         quote! {
             impl RuntimeParser {
-                pub(crate) fn parse<U>(lit: &str) -> Result<U, ParseError> 
+                pub(crate) fn parse<U>(lit: &str) -> Result<U, ParseError>
                 where
                     U: UnitTrait,
                 {
 
                     macro_rules! handle_parse_result {
-                        ($pr: ident, $ratio: ident, $vector: ident) => {
+                        ($pr: ident, $ratio: ident, $vector: ident, $($op: tt)*) => {
                             match $pr {
                                 ParseResult::PrefixUnit(prefix, unit_type) => {
                                     $ratio *= prefix.to_multiplier();
                                     for (vector_part, new_vec_part) in $vector.iter_mut().zip(unit_type.vector()) {
-                                        *vector_part += new_vec_part;
+                                        *vector_part $($op)* new_vec_part;
                                     }
                                 },
                                 ParseResult::Unit(unit_type) => {
                                     for (vector_part, new_vec_part) in $vector.iter_mut().zip(unit_type.vector()) {
-                                        *vector_part += new_vec_part;
+                                        *vector_part $($op)* new_vec_part;
                                     }
                                 },
                             }
@@ -229,7 +229,7 @@ impl ValidatedSystem {
                     remainder = &remainder[start..];
                     if let Ok((parse_result, remainder2)) = Self::parse_suffix(remainder) {
                         remainder = remainder2;
-                        handle_parse_result!(parse_result, ratio, vector);
+                        handle_parse_result!(parse_result, ratio, vector, +=);
                     }
                     ts = ::slackers_units::slk_tokenstream::TokenStream::new(remainder);
                     loop {
@@ -245,12 +245,12 @@ impl ValidatedSystem {
                             b'*' => {
                                 let (parse_result, remainder2) = Self::parse_suffix(remainder)?;
                                 remainder = remainder2;
-                                handle_parse_result!(parse_result, ratio, vector);
+                                handle_parse_result!(parse_result, ratio, vector, +=);
                             }
                             b'/' => {
                                 let (parse_result, remainder2) = Self::parse_suffix(remainder)?;
                                 remainder = remainder2;
-                                handle_parse_result!(parse_result, ratio, vector);
+                                handle_parse_result!(parse_result, ratio, vector, -=);
                             }
                             _ => unreachable!(),
                         }
