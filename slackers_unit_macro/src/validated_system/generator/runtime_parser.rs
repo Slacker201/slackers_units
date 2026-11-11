@@ -199,10 +199,39 @@ impl ValidatedSystem {
                 where
                     U: UnitTrait,
                 {
+
+                    macro_rules! handle_parse_result {
+                        ($pr: ident, $ratio: ident, $vector: ident) => {
+                            match $pr {
+                                ParseResult::PrefixUnit(prefix, unit_type) => {
+                                    $ratio *= prefix.to_multiplier();
+                                    for (vector_part, new_vec_part) in $vector.iter_mut().zip(unit_type.vector()) {
+                                        *vector_part += new_vec_part;
+                                    }
+                                },
+                                ParseResult::Unit(unit_type) => {
+                                    for (vector_part, new_vec_part) in $vector.iter_mut().zip(unit_type.vector()) {
+                                        *vector_part += new_vec_part;
+                                    }
+                                },
+                            }
+                        };
+                    }
+
+
+
                     let (mut ratio, mut remainder) = Self::parse_ratio(lit.as_bytes());
                     let mut vector = [0i64; #dim_count];
 
                     let mut ts = ::slackers_units::slk_tokenstream::TokenStream::new(remainder);
+                    ts.skip_while(|b| b.is_ascii_whitespace());
+                    let start = ts.cursor();
+                    remainder = &remainder[start..];
+                    if let Ok((parse_result, remainder2)) = Self::parse_suffix(remainder) {
+                        remainder = remainder2;
+                        handle_parse_result!(parse_result, ratio, vector);
+                    }
+                    ts = ::slackers_units::slk_tokenstream::TokenStream::new(remainder);
                     loop {
                         ts.skip_while(|b| b.is_ascii_whitespace());
                         let Some(sign) = ts.consume_if(|c| matches!(c, b'*' | b'/')).copied() else {
@@ -216,36 +245,12 @@ impl ValidatedSystem {
                             b'*' => {
                                 let (parse_result, remainder2) = Self::parse_suffix(remainder)?;
                                 remainder = remainder2;
-                                match parse_result {
-                                    ParseResult::PrefixUnit(prefix, unit_type) => {
-                                        ratio *= prefix.to_multiplier();
-                                        for (vector_part, new_vec_part) in vector.iter_mut().zip(unit_type.vector()) {
-                                            *vector_part += new_vec_part;
-                                        }
-                                    },
-                                    ParseResult::Unit(unit_type) => {
-                                        for (vector_part, new_vec_part) in vector.iter_mut().zip(unit_type.vector()) {
-                                            *vector_part += new_vec_part;
-                                        }
-                                    },
-                                }
+                                handle_parse_result!(parse_result, ratio, vector);
                             }
                             b'/' => {
                                 let (parse_result, remainder2) = Self::parse_suffix(remainder)?;
                                 remainder = remainder2;
-                                match parse_result {
-                                    ParseResult::PrefixUnit(prefix, unit_type) => {
-                                        ratio *= prefix.to_multiplier();
-                                        for (vector_part, new_vec_part) in vector.iter_mut().zip(unit_type.vector()) {
-                                            *vector_part -= new_vec_part;
-                                        }
-                                    },
-                                    ParseResult::Unit(unit_type) => {
-                                        for (vector_part, new_vec_part) in vector.iter_mut().zip(unit_type.vector()) {
-                                            *vector_part -= new_vec_part;
-                                        }
-                                    },
-                                }
+                                handle_parse_result!(parse_result, ratio, vector);
                             }
                             _ => unreachable!(),
                         }
