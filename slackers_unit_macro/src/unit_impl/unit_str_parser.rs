@@ -1,10 +1,9 @@
 use num_rational::Ratio;
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, quote};
-use syn::Error;
+use syn::{Error, Ident, LitInt, Token, parse::{discouraged::Speculative}};
 
 use crate::{
-    prefix_trie::PrefixTrie,
     unit_impl::{
         unit_context::UnitContext,
         unit_str_parser::decimal_constructor::{DecWrapper, DimensionArray},
@@ -36,85 +35,66 @@ pub enum ModOp {
     Divide,
 }
 
-impl Modifier {
-    #[allow(clippy::large_types_passed_by_value)]
-    fn new(op: ModOp, mult: Ratio<NumberRepr>, vec: Box<[i64]>, pow: i64) -> Self {
-        Self { op, mult, vec, pow }
-    }
-}
-
 impl ParsedUnit {
-    pub fn parse(input: syn::parse::ParseStream, context: &UnitContext) -> syn::Result<Self> {
+    pub fn parse(input: syn::parse::ParseStream, uc: &UnitContext) -> syn::Result<Self> {
         let num = input.parse::<Number>()?;
+        let first_modifier = Modifier::parse_first(input, &num.suffix, num.span, uc)?;
 
-        let suffix = num.suffix.clone();
-
-        let (prefix, suffix) =
-            Self::get_prefix_suffix(num.span, &suffix, &context.prefix_trie, &context.unit_trie)?;
-
-        let unit_vector = suffix
-            .and_then(|suffix| context.unit_lookup_table.get(&suffix as &str))
-            .map_or(
-                (0..context.dimension_count)
-                    .into_iter()
-                    .map(|_| 0)
-                    .collect(),
-                |vector| vector.clone(),
-            );
-        let prefix_multi = prefix
-            .and_then(|prefix| context.prefix_lookup_table.get(&prefix as &str).copied())
-            .unwrap_or(Ratio::from_integer(bnum::n!(1)));
+        let mut modifiers = vec![first_modifier];
+        let fork  = input.fork();
+        while let Ok(modifier) = Modifier::parse(&fork, uc) {
+            modifiers.push(modifier);
+            input.advance_to(&fork);
+        }
 
         Ok(Self {
             value: num,
-            modifiers: vec![Modifier::new(ModOp::Multiply, prefix_multi, unit_vector, 1)],
-            call_path: syn::parse_str(&context.call_path)?,
+            modifiers,
+            call_path: syn::parse_str(&uc.call_path)?,
         })
     }
+}
 
-    fn get_prefix_suffix(
-        span: Span,
+impl Modifier {
+    fn parse(input: syn::parse::ParseStream, uc: &UnitContext) -> syn::Result<Self> {
+        let op = if input.peek(Token![*]) {
+            let _ = input.parse::<Token![*]>()?;
+            ModOp::Multiply
+        } else if input.peek(Token![/]) {
+            let _ = input.parse::<Token![/]>()?;
+            ModOp::Divide
+        } else {
+            return Err(Error::new(input.span(), "Expected `*` or `/`"));
+        };
+
+        let ident = input.parse::<Ident>()?;
+        let (mult, vec) = uc.parse_suffix_to_parts(&ident.to_string(), ident.span())?;
+        let pow = Self::parse_pow(input)?;
+
+        Ok(Self { op, mult, vec, pow })
+    }
+
+    fn parse_first(
+        input: syn::parse::ParseStream,
         suffix: &str,
-        ptrie: &PrefixTrie,
-        utrie: &PrefixTrie,
-    ) -> syn::Result<(Option<String>, Option<String>)> {
-        if suffix.is_empty() {
-            return Ok((None, None));
-        }
+        span: Span,
+        uc: &UnitContext,
+    ) -> syn::Result<Self> {
+        let op = ModOp::Multiply;
+        let (mult, vec) = uc.parse_suffix_to_parts(suffix, span)?;
+        let pow = Self::parse_pow(input)?;
 
-        let bytes = suffix.as_bytes();
+        Ok(Self { op, mult, vec, pow })
+    }
 
-        if let Some((prefix, prefix_remainder)) = ptrie.find_longest(bytes)
-            && let Some((unit, unit_remainder)) = utrie.find_longest(prefix_remainder)
-        {
-            let prefix = String::from_utf8_lossy(prefix).to_string();
-            let unit = String::from_utf8_lossy(unit).to_string();
-            if unit_remainder.is_empty() {
-                return Ok((Some(prefix), Some(unit)));
-            }
-            return Err(Error::new(
-                span,
-                format!(
-                    "Found trailing text '{}' after parsing {prefix}{unit}",
-                    String::from_utf8_lossy(unit_remainder)
-                ),
-            ));
+    fn parse_pow(input: syn::parse::ParseStream) -> syn::Result<i64> {
+        if input.peek(Token![^]) {
+            let _ = input.parse::<Token![^]>()?;
+            let litint = input.parse::<LitInt>()?;
+            litint.base10_parse::<i64>()
+        } else {
+            Ok(1)
         }
-        if let Some((unit, unit_remainder)) = utrie.find_longest(bytes) {
-            let unit = String::from_utf8_lossy(unit).to_string();
-            if unit_remainder.is_empty() {
-                return Ok((None, Some(unit)));
-            }
-            return Err(Error::new(
-                span,
-                format!(
-                    "Found trailing text '{}' after parsing {unit}",
-                    String::from_utf8_lossy(unit_remainder)
-                ),
-            ));
-        }
-
-        Err(Error::new(span, format!("Could not parse {suffix}")))
     }
 }
 

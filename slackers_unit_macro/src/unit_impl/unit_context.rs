@@ -1,4 +1,5 @@
 use num_rational::Ratio;
+use proc_macro2::Span;
 use std::{array::from_fn, collections::HashMap};
 use syn::{
     Error, Ident, LitInt, LitStr, Token, braced, bracketed, parse::Parse, punctuated::Punctuated,
@@ -81,6 +82,67 @@ impl UnitContext {
             dimension_count,
             call_path,
         }
+    }
+
+    pub(crate) fn parse_suffix_to_parts(
+        &self,
+        suffix: &str,
+        span: Span,
+    ) -> syn::Result<(Ratio<NumberRepr>, Box<[i64]>)> {
+        let (prefix, unit) = self.get_prefix_suffix(suffix, span)?;
+
+        let prefix_multi = prefix
+            .and_then(|v| self.prefix_lookup_table.get(&v).copied())
+            .unwrap_or(Ratio::ONE);
+        let unit_vector = unit
+            .and_then(|unit| self.unit_lookup_table.get(&unit).cloned())
+            .unwrap_or((0..self.dimension_count).map(|_| 0).collect());
+
+        Ok((prefix_multi, unit_vector))
+    }
+
+    fn get_prefix_suffix(
+        &self,
+        suffix: &str,
+        span: Span,
+    ) -> syn::Result<(Option<String>, Option<String>)> {
+        if suffix.is_empty() {
+            return Ok((None, None));
+        }
+
+        let bytes = suffix.as_bytes();
+
+        if let Some((prefix, prefix_remainder)) = self.prefix_trie.find_longest(bytes)
+            && let Some((unit, unit_remainder)) = self.unit_trie.find_longest(prefix_remainder)
+        {
+            let prefix = String::from_utf8_lossy(prefix).to_string();
+            let unit = String::from_utf8_lossy(unit).to_string();
+            if unit_remainder.is_empty() {
+                return Ok((Some(prefix), Some(unit)));
+            }
+            return Err(Error::new(
+                span,
+                format!(
+                    "Found trailing text '{}' after parsing {prefix}{unit}",
+                    String::from_utf8_lossy(unit_remainder)
+                ),
+            ));
+        }
+        if let Some((unit, unit_remainder)) = self.unit_trie.find_longest(bytes) {
+            let unit = String::from_utf8_lossy(unit).to_string();
+            if unit_remainder.is_empty() {
+                return Ok((None, Some(unit)));
+            }
+            return Err(Error::new(
+                span,
+                format!(
+                    "Found trailing text '{}' after parsing {unit}",
+                    String::from_utf8_lossy(unit_remainder)
+                ),
+            ));
+        }
+
+        Err(Error::new(span, format!("Could not parse {suffix}")))
     }
 }
 
