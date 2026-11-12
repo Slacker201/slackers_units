@@ -7,7 +7,7 @@ description = "The macros for slackers_units"
 license = "MIT"
 
 [dependencies]
-slk-tokenstream = "0.5.3"
+slk-tokenstream = "0.6.0"
 bnum = { workspace = true }
 num-rational = { workspace = true }
 num-traits = { workspace = true }
