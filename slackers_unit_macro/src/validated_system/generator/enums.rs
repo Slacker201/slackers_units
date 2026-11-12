@@ -1,7 +1,9 @@
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 
-use crate::{unit_impl::unit_str_parser::decimal_constructor::DecWrapper, validated_system::ValidatedSystem};
+use crate::{
+    unit_impl::unit_str_parser::decimal_constructor::DecWrapper, validated_system::ValidatedSystem,
+};
 
 impl ValidatedSystem {
     pub(crate) fn generate_unit_prefix_enums(&self) -> TokenStream {
@@ -9,8 +11,16 @@ impl ValidatedSystem {
         let dim_count = self.base_types.len();
         let unit_names = &self.unit_enum_names;
         let prefix_names = &self.prefix_enum_names;
-        let dim_mapping: Box<[_]> = self.base_types_raw_vectors.iter().map(|v| DimMapping { items: v }).collect();
-        let prefix_multi: Box<[_]> = self.prefixes.iter().map(|prefix| DecWrapper(prefix.multiplier.ratio)).collect();
+        let dim_mapping: Box<[_]> = self
+            .base_types_raw_vectors
+            .iter()
+            .map(|v| DimMapping { items: v })
+            .collect();
+        let prefix_multi: Box<[_]> = self
+            .prefixes
+            .iter()
+            .map(|prefix| DecWrapper(prefix.multiplier.ratio))
+            .collect();
         let int_repr = Self::get_integer_repr();
 
         quote! {
@@ -69,14 +79,12 @@ struct DimMapping<'a> {
 impl<'a> ToTokens for DimMapping<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let items = self.items;
-        tokens.extend(
-            quote! {
-                [
-                    #(
-                        #items,
-                    )*
-                ]
-            }
-        );
+        tokens.extend(quote! {
+            [
+                #(
+                    #items,
+                )*
+            ]
+        });
     }
 }

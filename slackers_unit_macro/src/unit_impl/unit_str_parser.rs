@@ -1,11 +1,15 @@
 use num_rational::Ratio;
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, quote};
-use std::{collections::HashMap};
 use syn::Error;
 
 use crate::{
-    prefix_trie::PrefixTrie, unit_impl::unit_str_parser::decimal_constructor::{DecWrapper, DimensionArray}, unit_system::{Number, NumberRepr},
+    prefix_trie::PrefixTrie,
+    unit_impl::{
+        unit_context::UnitContext,
+        unit_str_parser::decimal_constructor::{DecWrapper, DimensionArray},
+    },
+    unit_system::{Number, NumberRepr},
 };
 
 pub(crate) mod decimal_constructor;
@@ -40,34 +44,31 @@ impl Modifier {
 }
 
 impl ParsedUnit {
-    pub fn parse(
-        input: syn::parse::ParseStream,
-        unit_trie: &PrefixTrie,
-        prefix_trie: &PrefixTrie,
-        unit_lookup_table: &HashMap<&str, &[i64]>,
-        prefix_lookup_table: &HashMap<&str, Ratio<NumberRepr>>,
-        dimension_count: i64,
-        call_path: &str,
-    ) -> syn::Result<Self> {
+    pub fn parse(input: syn::parse::ParseStream, context: &UnitContext) -> syn::Result<Self> {
         let num = input.parse::<Number>()?;
 
         let suffix = num.suffix.clone();
 
-        let (prefix, suffix) = Self::get_prefix_suffix(num.span, &suffix, prefix_trie, unit_trie)?;
+        let (prefix, suffix) =
+            Self::get_prefix_suffix(num.span, &suffix, &context.prefix_trie, &context.unit_trie)?;
 
         let unit_vector = suffix
-            .and_then(|suffix| unit_lookup_table.get(&suffix as &str))
-            .map_or((0..dimension_count).into_iter().map(|_| 0).collect(), |v| {
-                Box::from(*v)
-            });
+            .and_then(|suffix| context.unit_lookup_table.get(&suffix as &str))
+            .map_or(
+                (0..context.dimension_count)
+                    .into_iter()
+                    .map(|_| 0)
+                    .collect(),
+                |vector| vector.clone(),
+            );
         let prefix_multi = prefix
-            .and_then(|prefix| prefix_lookup_table.get(&prefix as &str).copied())
+            .and_then(|prefix| context.prefix_lookup_table.get(&prefix as &str).copied())
             .unwrap_or(Ratio::from_integer(bnum::n!(1)));
 
         Ok(Self {
             value: num,
             modifiers: vec![Modifier::new(ModOp::Multiply, prefix_multi, unit_vector, 1)],
-            call_path: syn::parse_str(call_path)?,
+            call_path: syn::parse_str(&context.call_path)?,
         })
     }
 
@@ -155,4 +156,3 @@ impl ToTokens for ParsedUnit {
         });
     }
 }
-

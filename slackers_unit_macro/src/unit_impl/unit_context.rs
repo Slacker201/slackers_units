@@ -1,16 +1,23 @@
 use num_rational::Ratio;
-use std::array::from_fn;
-use syn::{Error, Ident, LitInt, Token, braced, bracketed, parse::Parse, punctuated::Punctuated};
+use std::{array::from_fn, collections::HashMap};
+use syn::{
+    Error, Ident, LitInt, LitStr, Token, braced, bracketed, parse::Parse, punctuated::Punctuated,
+};
 
-use crate::unit_system::NumberRepr;
+use crate::{prefix_trie::PrefixTrie, unit_system::NumberRepr};
 
 #[derive(Debug)]
 #[allow(unused)]
 pub(crate) struct UnitContext {
     pub(crate) units: Box<[UnitPiece]>,
     pub(crate) prefixes: Box<[PrefixPiece]>,
+    pub(crate) unit_trie: PrefixTrie,
+    pub(crate) prefix_trie: PrefixTrie,
+    pub(crate) unit_lookup_table: HashMap<String, Box<[i64]>>,
+    pub(crate) prefix_lookup_table: HashMap<String, Ratio<NumberRepr>>,
+    pub(crate) dimension_count: i64,
+    pub(crate) call_path: String,
 }
-
 impl Parse for UnitContext {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let unit_pieces;
@@ -24,12 +31,59 @@ impl Parse for UnitContext {
             Punctuated::<PrefixPiece, Token![,]>::parse_terminated(&prefix_pieces)?
                 .into_iter()
                 .collect();
-        Ok(Self {
-            units: units.into_boxed_slice(),
-            prefixes: prefixes.into_boxed_slice(),
-        })
+        let call_path = input.parse::<LitStr>()?.value();
+
+        Ok(Self::from_minimal(
+            units.into_boxed_slice(),
+            prefixes.into_boxed_slice(),
+            call_path,
+        ))
     }
 }
+
+impl UnitContext {
+    pub(crate) fn from_minimal(
+        units: Box<[UnitPiece]>,
+        prefixes: Box<[PrefixPiece]>,
+        call_path: String,
+    ) -> Self {
+        let mut unit_trie = PrefixTrie::new();
+        let mut prefix_trie = PrefixTrie::new();
+
+        let mut unit_lookup_table = HashMap::new();
+        let mut prefix_lookup_table = HashMap::new();
+
+        let mut dimension_count = 0;
+
+        for (abbrev, vector) in units.iter().map(|piece| (&piece.abbrev, &piece.vector)) {
+            if dimension_count == 0 {
+                dimension_count = i64::try_from(vector.len().cast_signed()).unwrap();
+            }
+            unit_trie.add_word(abbrev, abbrev);
+            unit_lookup_table.insert(abbrev.to_string(), vector.clone());
+        }
+
+        for (abbrev, multiplier) in prefixes
+            .iter()
+            .map(|piece| (&piece.abbrev, &piece.multiplier))
+        {
+            prefix_trie.add_word(abbrev, abbrev);
+            prefix_lookup_table.insert(abbrev.to_string(), *multiplier);
+        }
+
+        Self {
+            units,
+            prefixes,
+            unit_trie,
+            prefix_trie,
+            unit_lookup_table,
+            prefix_lookup_table,
+            dimension_count,
+            call_path,
+        }
+    }
+}
+
 #[derive(Debug)]
 #[allow(unused)]
 pub(crate) struct UnitPiece {

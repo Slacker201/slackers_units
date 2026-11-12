@@ -20,21 +20,19 @@ impl Parse for Number {
         } else if input.peek(LitInt) {
             let litint = input.parse::<LitInt>()?;
             let (numerator, _) = parse_integer(litint.base10_digits().as_bytes());
-            let (ratio, suffix) = if litint.suffix().is_empty() && input.peek(Token![/]) && input.peek2(LitInt) {
-                let _ = input.parse::<Token![/]>()?;
-                let denom_lit = input.parse::<LitInt>()?;
-                let (denom, _) = parse_integer(denom_lit.base10_digits().as_bytes());
-                (
-                    Ratio::new(numerator, denom),
-                    denom_lit.suffix().to_string()
-                )
-            } else {
-                (Ratio::from_integer(numerator), litint.suffix().to_string())
-            };
+            let (ratio, suffix) =
+                if litint.suffix().is_empty() && input.peek(Token![/]) && input.peek2(LitInt) {
+                    let _ = input.parse::<Token![/]>()?;
+                    let denom_lit = input.parse::<LitInt>()?;
+                    let (denom, _) = parse_integer(denom_lit.base10_digits().as_bytes());
+                    (Ratio::new(numerator, denom), denom_lit.suffix().to_string())
+                } else {
+                    (Ratio::from_integer(numerator), litint.suffix().to_string())
+                };
 
             Ok(Self {
                 ratio,
-                suffix: suffix,
+                suffix,
                 span: litint.span(),
             })
         } else {
@@ -63,7 +61,7 @@ fn parse_ratio(value: &[u8]) -> Ratio<NumberRepr> {
     Ratio::new(numer, denom)
 }
 
-fn parse_integer<'a>(bytes: &'a [u8]) -> (NumberRepr, &'a [u8]) {
+fn parse_integer(bytes: &[u8]) -> (NumberRepr, &[u8]) {
     let mut ts = TokenStream::new(bytes);
     ts.skip_while(|c| c.is_ascii_whitespace());
     let is_negative = ts.consume_if(|c| *c == b'-').is_some();
@@ -72,10 +70,7 @@ fn parse_integer<'a>(bytes: &'a [u8]) -> (NumberRepr, &'a [u8]) {
     ts.skip_while(|c| c.is_ascii_digit());
     let number_bytes = ts.slice_from_marks(start, ts.mark());
     if number_bytes.is_empty() {
-        return (
-            NumberRepr::ZERO,
-            ts.remainder()
-        )
+        return (NumberRepr::ZERO, ts.remainder());
     }
     let mut number = NumberRepr::from_ascii_radix(number_bytes, 10).expect("Number too large");
     if is_negative {
