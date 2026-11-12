@@ -1,7 +1,7 @@
 use num_rational::Ratio;
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, quote};
-use syn::{Error, Ident, LitInt, Token, parse::{discouraged::Speculative}};
+use syn::{Error, Ident, LitInt, Token, parse::discouraged::Speculative};
 
 use crate::{
     unit_impl::{
@@ -41,7 +41,7 @@ impl ParsedUnit {
         let first_modifier = Modifier::parse_first(input, &num.suffix, num.span, uc)?;
 
         let mut modifiers = vec![first_modifier];
-        let fork  = input.fork();
+        let fork = input.fork();
         while let Ok(modifier) = Modifier::parse(&fork, uc) {
             modifiers.push(modifier);
             input.advance_to(&fork);
