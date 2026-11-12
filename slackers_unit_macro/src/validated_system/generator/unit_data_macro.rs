@@ -44,10 +44,7 @@ impl ValidatedSystem {
                 multiplier: prefix.multiplier.ratio,
             })
             .collect();
-        UnitContext {
-            units: unit_pieces,
-            prefixes: prefix_pieces,
-        }
+        UnitContext::from_minimal(unit_pieces, prefix_pieces, "".to_string())
     }
 }
 

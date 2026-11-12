@@ -1,16 +1,24 @@
 use num_rational::Ratio;
-use std::array::from_fn;
-use syn::{Error, Ident, LitInt, Token, braced, bracketed, parse::Parse, punctuated::Punctuated};
+use proc_macro2::Span;
+use std::{array::from_fn, collections::HashMap};
+use syn::{
+    Error, Ident, LitInt, LitStr, Token, braced, bracketed, parse::Parse, punctuated::Punctuated,
+};
 
-use crate::unit_system::NumberRepr;
+use crate::{prefix_trie::PrefixTrie, unit_system::NumberRepr};
 
 #[derive(Debug)]
 #[allow(unused)]
 pub(crate) struct UnitContext {
     pub(crate) units: Box<[UnitPiece]>,
     pub(crate) prefixes: Box<[PrefixPiece]>,
+    pub(crate) unit_trie: PrefixTrie,
+    pub(crate) prefix_trie: PrefixTrie,
+    pub(crate) unit_lookup_table: HashMap<String, Box<[i64]>>,
+    pub(crate) prefix_lookup_table: HashMap<String, Ratio<NumberRepr>>,
+    pub(crate) dimension_count: i64,
+    pub(crate) call_path: String,
 }
-
 impl Parse for UnitContext {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let unit_pieces;
@@ -24,12 +32,120 @@ impl Parse for UnitContext {
             Punctuated::<PrefixPiece, Token![,]>::parse_terminated(&prefix_pieces)?
                 .into_iter()
                 .collect();
-        Ok(Self {
-            units: units.into_boxed_slice(),
-            prefixes: prefixes.into_boxed_slice(),
-        })
+        let call_path = input.parse::<LitStr>()?.value();
+
+        Ok(Self::from_minimal(
+            units.into_boxed_slice(),
+            prefixes.into_boxed_slice(),
+            call_path,
+        ))
     }
 }
+
+impl UnitContext {
+    pub(crate) fn from_minimal(
+        units: Box<[UnitPiece]>,
+        prefixes: Box<[PrefixPiece]>,
+        call_path: String,
+    ) -> Self {
+        let mut unit_trie = PrefixTrie::new();
+        let mut prefix_trie = PrefixTrie::new();
+
+        let mut unit_lookup_table = HashMap::new();
+        let mut prefix_lookup_table = HashMap::new();
+
+        let mut dimension_count = 0;
+
+        for (abbrev, vector) in units.iter().map(|piece| (&piece.abbrev, &piece.vector)) {
+            if dimension_count == 0 {
+                dimension_count = i64::try_from(vector.len().cast_signed()).unwrap();
+            }
+            unit_trie.add_word(abbrev, abbrev);
+            unit_lookup_table.insert(abbrev.to_string(), vector.clone());
+        }
+
+        for (abbrev, multiplier) in prefixes
+            .iter()
+            .map(|piece| (&piece.abbrev, &piece.multiplier))
+        {
+            prefix_trie.add_word(abbrev, abbrev);
+            prefix_lookup_table.insert(abbrev.to_string(), *multiplier);
+        }
+
+        Self {
+            units,
+            prefixes,
+            unit_trie,
+            prefix_trie,
+            unit_lookup_table,
+            prefix_lookup_table,
+            dimension_count,
+            call_path,
+        }
+    }
+
+    pub(crate) fn parse_suffix_to_parts(
+        &self,
+        suffix: &str,
+        span: Span,
+    ) -> syn::Result<(Ratio<NumberRepr>, Box<[i64]>)> {
+        let (prefix, unit) = self.get_prefix_suffix(suffix, span)?;
+
+        let prefix_multi = prefix
+            .and_then(|v| self.prefix_lookup_table.get(&v).copied())
+            .unwrap_or(Ratio::ONE);
+        let unit_vector = unit
+            .and_then(|unit| self.unit_lookup_table.get(&unit).cloned())
+            .unwrap_or((0..self.dimension_count).map(|_| 0).collect());
+
+        Ok((prefix_multi, unit_vector))
+    }
+
+    fn get_prefix_suffix(
+        &self,
+        suffix: &str,
+        span: Span,
+    ) -> syn::Result<(Option<String>, Option<String>)> {
+        if suffix.is_empty() {
+            return Ok((None, None));
+        }
+
+        let bytes = suffix.as_bytes();
+
+        if let Some((prefix, prefix_remainder)) = self.prefix_trie.find_longest(bytes)
+            && let Some((unit, unit_remainder)) = self.unit_trie.find_longest(prefix_remainder)
+        {
+            let prefix = String::from_utf8_lossy(prefix).to_string();
+            let unit = String::from_utf8_lossy(unit).to_string();
+            if unit_remainder.is_empty() {
+                return Ok((Some(prefix), Some(unit)));
+            }
+            return Err(Error::new(
+                span,
+                format!(
+                    "Found trailing text '{}' after parsing {prefix}{unit}",
+                    String::from_utf8_lossy(unit_remainder)
+                ),
+            ));
+        }
+        if let Some((unit, unit_remainder)) = self.unit_trie.find_longest(bytes) {
+            let unit = String::from_utf8_lossy(unit).to_string();
+            if unit_remainder.is_empty() {
+                return Ok((None, Some(unit)));
+            }
+            return Err(Error::new(
+                span,
+                format!(
+                    "Found trailing text '{}' after parsing {unit}",
+                    String::from_utf8_lossy(unit_remainder)
+                ),
+            ));
+        }
+
+        Err(Error::new(span, format!("Could not parse {suffix}")))
+    }
+}
+
 #[derive(Debug)]
 #[allow(unused)]
 pub(crate) struct UnitPiece {
