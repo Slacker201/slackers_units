@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 
-use crate::{unit_impl::unit_str_parser::DecWrapper, validated_system::ValidatedSystem};
+use crate::{unit_impl::unit_str_parser::decimal_constructor::DecWrapper, validated_system::ValidatedSystem};
 
 impl ValidatedSystem {
     pub(crate) fn generate_unit_prefix_enums(&self) -> TokenStream {
