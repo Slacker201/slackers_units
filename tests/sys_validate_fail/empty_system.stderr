@@ -1,5 +1,5 @@
 error: Found no base types, please add at least 1
- --> tests/sys_validate/empty_system.rs:1:1
+ --> tests/sys_validate_fail/empty_system.rs:1:1
   |
 1 | ::slackers_units::system! {}
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

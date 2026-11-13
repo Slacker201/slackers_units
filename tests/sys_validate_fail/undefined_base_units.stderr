@@ -1,5 +1,5 @@
 error: Please declare the type `Second` to use it as a base type
- --> tests/sys_validate/undefined_base_units.rs:2:15
+ --> tests/sys_validate_fail/undefined_base_units.rs:2:15
   |
 2 |     basetype: Second;
   |               ^^^^^^

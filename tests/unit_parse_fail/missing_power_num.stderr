@@ -1,0 +1,16 @@
+error: unexpected end of input, expected integer literal
+  --> tests/unit_parse_fail/missing_power_num.rs:1:1
+   |
+ 1 | / ::slackers_units::system! {
+ 2 | |     basetype: Second;
+ 3 | |     basetype: Meter;
+ 4 | |     unit Second {
+...  |
+18 | |     default_repr: f64;
+19 | | }
+   | |_^
+...
+23 |       let _ = unit!(1m^);
+   |               ---------- in this macro invocation
+   |
+   = note: this error originates in the macro `::slackers_units::__unit_impl__` which comes from the expansion of the macro `unit` (in Nightly builds, run with -Z macro-backtrace for more info)

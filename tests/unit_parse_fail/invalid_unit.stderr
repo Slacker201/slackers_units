@@ -1,5 +1,5 @@
 error: Could not parse q
-  --> tests/unit_parse/invalid_unit.rs:18:19
+  --> tests/unit_parse_fail/invalid_unit.rs:18:19
    |
 18 |     let _ = unit!(1q);
    |                   ^^

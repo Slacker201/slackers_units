@@ -1,5 +1,5 @@
 error: Found duplicate unit abbreviation s
- --> tests/sys_validate/duplicate_abbrev.rs:8:17
+ --> tests/sys_validate_fail/duplicate_abbrev.rs:8:17
   |
 8 |         abbrev: s;
   |                 ^

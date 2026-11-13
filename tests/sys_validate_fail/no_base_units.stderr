@@ -1,5 +1,5 @@
 error: Found no base types, please add at least 1
- --> tests/sys_validate/no_base_units.rs:1:1
+ --> tests/sys_validate_fail/no_base_units.rs:1:1
   |
 1 | / ::slackers_units::system! {
 2 | |     unit Second {

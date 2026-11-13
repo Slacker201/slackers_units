@@ -72,44 +72,24 @@ mod arith {
         let one = unit!(1s);
         let two = unit!(2s);
 
-        warning!("TODO replace with compile time parser");
-        assert_eq!(
-            RuntimeParser::parse::<Unit<_, _>>("2*s*s").unwrap(),
-            one * two
-        )
+        assert_eq!(unit!(2s ^ 2), one * two)
     }
-
     #[test]
     fn multiplication_negative() {
         let one = unit!(1s);
-        let two = unit!(2s);
-        warning!("TODO replace with compile time parser");
-        assert_eq!(
-            RuntimeParser::parse::<Unit<_, _>>("2*s*s").unwrap(),
-            one * two
-        )
+        let two = unit!(-2s);
+        assert_eq!(unit!(-2s ^ 2), one * two)
     }
-
     #[test]
     fn division_positive() {
         let one = unit!(1s);
         let two = unit!(2s);
-
-        warning!("TODO replace with compile time parser");
-        assert_eq!(
-            RuntimeParser::parse::<Unit<_, _>>("0.5").unwrap(),
-            one / two
-        )
+        assert_eq!(unit!(0.5), one / two)
     }
-
     #[test]
     fn division_negative() {
         let one = unit!(1s);
         let two = unit!(-2s);
-        warning!("TODO replace with compile time parser");
-        assert_eq!(
-            RuntimeParser::parse::<Unit<_, _>>("-0.5").unwrap(),
-            one / two
-        )
+        assert_eq!(unit!(-0.5), one / two)
     }
 }
