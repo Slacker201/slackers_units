@@ -1,12 +1,3 @@
-macro_rules! warning {
-    ($msg: literal) => {{
-        #[must_use = $msg]
-        fn warn() -> () {}
-
-        warn();
-    }};
-}
-
 mod arith {
     use crate::arith;
     use slackers_units::system;
