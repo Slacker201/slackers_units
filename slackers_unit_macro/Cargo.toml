@@ -16,6 +16,7 @@ proc-macro2 = "1.0.107"
 quote = "1.0.47"
 syn = {version = "3.0.9", features=["extra-traits"]}
 module_path_extractor = "0.8.0"
+dashmap = "6.2.1"
 
 [lib]
 proc-macro = true

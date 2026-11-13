@@ -2,6 +2,7 @@ use proc_macro2::TokenStream;
 use quote::{ToTokens, format_ident, quote};
 
 use crate::{
+    data_transfer::ParserData,
     unit_impl::unit_context::{PrefixPiece, UnitContext, UnitPiece},
     validated_system::ValidatedSystem,
 };
@@ -24,27 +25,19 @@ impl ValidatedSystem {
         }
     }
 
-    fn unit_context(&self) -> UnitContext {
-        let unit_pieces = self
-            .base_type_mapping
-            .iter()
-            .enumerate()
-            .map(|(idx, v)| {
-                let abbrev = self.units[*v].abbreviation.raw.clone();
-                let vector = self.base_types_raw_vectors[idx].clone();
-
-                UnitPiece { abbrev, vector }
-            })
-            .collect();
-        let prefix_pieces = self
-            .prefixes
-            .iter()
-            .map(|prefix| PrefixPiece {
-                abbrev: prefix.abbreviation.raw.clone(),
-                multiplier: prefix.multiplier.ratio,
-            })
-            .collect();
-        UnitContext::from_minimal(unit_pieces, prefix_pieces, "".to_string())
+    fn unit_context(&self) -> ParserData {
+        ParserData::new(
+            self.base_types.len(),
+            self.units
+                .iter()
+                .zip(&self.base_types_raw_vectors)
+                .map(|(v, vec)| (v.abbreviation.raw.to_owned(), vec.clone()))
+                .collect(),
+            self.prefixes
+                .iter()
+                .map(|v| (v.abbreviation.raw.to_owned(), v.multiplier.ratio.to_owned()))
+                .collect(),
+        )
     }
 }
 

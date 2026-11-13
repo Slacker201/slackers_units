@@ -5,7 +5,7 @@ use syn::{Error, Ident, LitInt, Token, parse::discouraged::Speculative};
 
 use crate::{
     unit_impl::{
-        unit_context::UnitContext,
+        DerivedParseData,
         unit_str_parser::decimal_constructor::{DecWrapper, DimensionArray},
     },
     unit_system::{Number, NumberRepr},
@@ -36,7 +36,10 @@ pub enum ModOp {
 }
 
 impl ParsedUnit {
-    pub fn parse(input: syn::parse::ParseStream, uc: &UnitContext) -> syn::Result<Self> {
+    pub(crate) fn parse(
+        input: syn::parse::ParseStream,
+        uc: &DerivedParseData,
+    ) -> syn::Result<Self> {
         let num = input.parse::<Number>()?;
         let first_modifier = Modifier::parse_first(input, &num.suffix, num.span, uc)?;
 
@@ -56,7 +59,7 @@ impl ParsedUnit {
 }
 
 impl Modifier {
-    fn parse(input: syn::parse::ParseStream, uc: &UnitContext) -> syn::Result<Self> {
+    fn parse(input: syn::parse::ParseStream, uc: &DerivedParseData) -> syn::Result<Self> {
         let op = if input.peek(Token![*]) {
             let _ = input.parse::<Token![*]>()?;
             ModOp::Multiply
@@ -78,7 +81,7 @@ impl Modifier {
         input: syn::parse::ParseStream,
         suffix: &str,
         span: Span,
-        uc: &UnitContext,
+        uc: &DerivedParseData,
     ) -> syn::Result<Self> {
         let op = ModOp::Multiply;
         let (mult, vec) = uc.parse_suffix_to_parts(suffix, span)?;

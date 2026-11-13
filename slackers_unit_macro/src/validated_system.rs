@@ -13,6 +13,7 @@ pub(crate) struct ValidatedSystem {
     pub prefix_enum_names: Box<[Ident]>,
     #[allow(unused)]
     pub base_types: Box<[BaseTypeDeclaration]>,
+    #[allow(unused)]
     pub base_type_mapping: Box<[usize]>,
     pub dimensional_vector_names: Box<[Ident]>,
     pub dimensional_phantom_data_names: Box<[Ident]>,

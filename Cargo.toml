@@ -15,7 +15,6 @@ phf = {version="0.14.0", features=["macros"]}
 slackers_unit_macro = { version = "0.1.11", path = "./slackers_unit_macro" }
 slk-tokenstream = "0.5.3"
 typenum = "1.20.1"
-
 [dev-dependencies]
 trybuild = "1.0.122"
 

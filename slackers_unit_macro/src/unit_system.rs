@@ -25,6 +25,15 @@ cfg_select! {
     feature = "converter_8" => {
         pub type NumberRepr = Integer<true, 8, 0, 0>;
     }
+    feature = "converter_4" => {
+        pub type NumberRepr = Integer<true, 4, 0, 0>;
+    }
+    feature = "converter_2" => {
+        pub type NumberRepr = Integer<true, 2, 0, 0>;
+    }
+    feature = "converter_1" => {
+        pub type NumberRepr = Integer<true, 1, 0, 0>;
+    }
     _ => {
         pub type NumberRepr = Integer<true, 64, 0, 0>;
     }
