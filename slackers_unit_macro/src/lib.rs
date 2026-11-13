@@ -4,9 +4,9 @@ use crate::unit_system::System;
 
 mod prefix_trie;
 pub(crate) mod system_impl;
+mod unit_impl;
 mod unit_system;
 mod validated_system;
-mod unit_impl;
 
 mod data_transfer;
 
