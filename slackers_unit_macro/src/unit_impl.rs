@@ -1,14 +1,19 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::LazyLock};
 
+use dashmap::DashMap;
 use num_rational::Ratio;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
-use syn::{LitInt, LitStr, parse::Parse};
+use syn::{LitByteStr, LitInt, LitStr, parse::Parse};
 
 use crate::{
     data_transfer::ParserData, prefix_trie::PrefixTrie, unit_impl::unit_str_parser::ParsedUnit,
     unit_system::NumberRepr,
 };
+
+static PARSER_CONTEXT_CACHE: LazyLock<DashMap<u64, DerivedParseData>> = LazyLock::new(
+    || DashMap::new()
+);
 
 pub(crate) mod unit_context;
 pub(crate) mod unit_str_parser;
@@ -47,12 +52,23 @@ struct UnitImpl {
 
 impl Parse for UnitImpl {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let _hash = input.parse::<LitInt>()?;
-        let uc = input.parse::<ParserData>()?;
-        let call_path = input.parse::<LitStr>()?.value();
-        let uc = uc.into_derived(call_path);
+        let hash = input.parse::<LitInt>()?.base10_parse::<u64>().unwrap();
+        if PARSER_CONTEXT_CACHE.contains_key(&hash) {
+            let _ = input.parse::<LitByteStr>()?;
+            let _ = input.parse::<LitStr>()?;
+        }
+        let uc = PARSER_CONTEXT_CACHE.entry(
+            hash
+        ).or_try_insert_with::<syn::Error>(
+            || {
+                eprintln!("Cache miss");
+                let uc = input.parse::<ParserData>()?;
+                let call_path = input.parse::<LitStr>()?.value();
+                Ok(uc.into_derived(call_path))
+            }
+        )?;
 
-        let pu = ParsedUnit::parse(input, &uc)?;
+        let pu = ParsedUnit::parse(input, uc.into_self())?;
 
         Ok(Self { parsed_unit: pu })
     }
@@ -84,5 +100,11 @@ impl ParserData {
             pd: self,
             call_path,
         }
+    }
+}
+
+impl DerivedParseData {
+    fn into_self(&self) -> &Self {
+        &self
     }
 }
