@@ -17,22 +17,24 @@ impl ToTokens for DecWrapper {
         let int_type = ValidatedSystem::get_integer_repr();
 
         tokens.extend(quote! {
-            {
-                let numer = #int_type::from_be_bytes(
-                    [
-                        #(
-                            #numer,
-                        )*
-                    ]
-                );
-                let denom = #int_type::from_be_bytes(
-                    [
-                        #(
-                            #denom,
-                        )*
-                    ]
-                );
-                ::slackers_units::num_rational::Ratio::new(numer, denom)
+            const {
+                let numer = 
+                    #int_type::from_be_bytes(
+                        [
+                            #(
+                                #numer,
+                            )*
+                        ]
+                    );
+                let denom = 
+                        #int_type::from_be_bytes(
+                        [
+                            #(
+                                #denom,
+                            )*
+                        ]
+                    );
+                ::slackers_units::num_rational::Ratio::new_raw(numer, denom)
             }
         });
     }
