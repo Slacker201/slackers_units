@@ -118,11 +118,16 @@ impl ToTokens for ParsedUnit {
 
             let pow_mult = (0..modifier.pow.abs().saturating_sub(1))
                 .fold(modifier.mult, |a, _| a * modifier.mult);
-            value *= if modifier.pow.is_negative() {
+            let mut pow_adjusted_mult = if modifier.pow.is_negative() {
                 Ratio::ONE / pow_mult
             } else {
                 pow_mult
             };
+
+            if modifier.op == ModOp::Divide {
+                pow_adjusted_mult = Ratio::ONE / pow_adjusted_mult;
+            }
+            value *= pow_adjusted_mult;
             a
         });
 
