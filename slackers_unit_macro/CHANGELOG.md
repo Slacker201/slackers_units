@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.12](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.11...slackers_unit_macro-v0.1.12) - 2026-11-14
+
+### Added
+
+- *(compile parser)* implement power and `1m` notation in unit! macro
+- *(number parsing)* add support for fractions for unit! macro
+
+### Fixed
+
+- fix division prefixes not inverting
+
+### Other
+
+- implement caching for unit! macro
+- implement bytestring context transfer
+- *(macro)* implement more efficient context transfer architecture
+- fmt
+- expand `UnitContext` for later optimisations
+- reorganize unit! macro parsing
+
 ## [0.1.11](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.10...slackers_unit_macro-v0.1.11) - 2026-11-11
 
 ### Fixed
