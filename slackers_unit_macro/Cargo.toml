@@ -1,6 +1,6 @@
 [package]
 name = "slackers_unit_macro"
-version = "0.1.11"
+version = "0.1.12"
 edition = "2024"
 repository = "https://github.com/Slacker201/slackers_units/tree/main/slackers_unit_macro"
 description = "The macros for slackers_units"
