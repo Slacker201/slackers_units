@@ -7,6 +7,4 @@ pub struct UnitContext {
     prefix_trie: PrefixTrie<Id>,
 }
 
-impl UnitContext {
-    
-}
+impl UnitContext {}

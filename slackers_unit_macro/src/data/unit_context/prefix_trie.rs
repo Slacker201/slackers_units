@@ -1,6 +1,5 @@
 use std::{collections::HashMap, fmt::Debug};
 
-
 #[derive(Debug, Default)]
 pub struct PrefixTrie<T> {
     root: TrieNode<T>,
@@ -32,18 +31,18 @@ impl<T> TrieNode<T> {
             Some(map) => {
                 let next_map = map.entry(*next_byte).or_default();
                 next_map.add_item(&key[1..], item);
-            },
+            }
             None => {
                 let mut map = HashMap::new();
                 let next_map: &mut TrieNode<T> = map.entry(*next_byte).or_default();
                 next_map.add_item(&key[1..], item);
                 self.next = Some(map);
-            },
+            }
         }
     }
     pub fn find_longest<'a, 'b>(&'a self, key: &'b [u8]) -> Option<(&'a T, &'b [u8])> {
         let Some(byte) = key.get(0) else {
-            return self.value.as_ref().map(|value| (value, key))
+            return self.value.as_ref().map(|value| (value, key));
         };
         let Some(next) = self.next.as_ref() else {
             return self.value.as_ref().map(|v| (v, key));
@@ -55,22 +54,26 @@ impl<T> TrieNode<T> {
                 } else {
                     self.value.as_ref().map(|v| (v, key))
                 }
-            },
-            None => {
-                self.value.as_ref().map(|v| (v, key))
-            },
+            }
+            None => self.value.as_ref().map(|v| (v, key)),
         }
     }
 }
 
 impl<T> Default for TrieNode<T> {
     fn default() -> Self {
-        Self { next: None, value: None }
+        Self {
+            next: None,
+            value: None,
+        }
     }
 }
 
 impl<T: Debug> Debug for TrieNode<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("TrieNode").field("next", &self.next).field("value", &self.value).finish()
+        f.debug_struct("TrieNode")
+            .field("next", &self.next)
+            .field("value", &self.value)
+            .finish()
     }
 }

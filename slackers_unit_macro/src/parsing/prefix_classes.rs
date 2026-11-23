@@ -9,7 +9,7 @@ impl Parse for PrefixGrouping {
 
         let bracketed;
         let _ = bracketed!(bracketed in input);
-        let end_span = input.parse::<Token![;]>()?.span;
+        let end_span = input.parse::<Token![,]>()?.span;
 
         let allowed_groups: Box<[_]> =
             Punctuated::<Ident, Token![,]>::parse_terminated(&bracketed)?

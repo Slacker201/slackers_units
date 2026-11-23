@@ -3,10 +3,14 @@ use syn::{Error, Ident, Token, braced};
 
 use crate::{
     data::{
-        Id, parser_data::{
-            Aliases, EqOpt, EqualityExpression, PrefixGrouping, UnitDefinition, aliases, prefix_classes, unit,
-        }, registries::UnitRegistry,
-    }, parsing::expression::{eq, equivalent},
+        Id,
+        parser_data::{
+            Aliases, EqOpt, EqualityExpression, PrefixGrouping, UnitDefinition, aliases,
+            prefix_classes, unit,
+        },
+        registries::UnitRegistry,
+    },
+    parsing::expression::{eq, equivalent},
 };
 
 impl UnitDefinition<String> {

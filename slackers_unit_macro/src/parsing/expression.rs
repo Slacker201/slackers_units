@@ -99,7 +99,9 @@ impl EqOpt<Id> {
                 unit,
                 span: _,
             } => {
-                let node = nodes.get(unit).expect("This should always be a valid id as well");
+                let node = nodes
+                    .get(unit)
+                    .expect("This should always be a valid id as well");
                 let Some((mult, vec)) = &node.vmult else {
                     return Err(node.id);
                 };
@@ -131,20 +133,16 @@ impl Parse for EqualityExpression<String> {
         } else if input.peek(equivalent) {
             input.parse::<equivalent>()?.span
         } else {
-            return Err(
-                Error::new(
-                    input.span(), 
-                    "Expected `eq` or `equivalent`"
-                )
-            );
+            return Err(Error::new(input.span(), "Expected `eq` or `equivalent`"));
         };
         let _ = input.parse::<Token![=]>()?;
 
         let expr = EqOpt::parse_mul(input)?;
         let end_span = input.parse::<Token![,]>()?.span;
-        Ok(
-            Self { inner: expr, span: start_span.join(end_span).unwrap_or(start_span) }
-        )
+        Ok(Self {
+            inner: expr,
+            span: start_span.join(end_span).unwrap_or(start_span),
+        })
     }
 }
 
@@ -180,7 +178,6 @@ impl EqOpt<String> {
 
 impl EqOpt<String> {
     fn parse_mul(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        
         /*
             number = decimal | integer | fraction
             suffixed_num = number ident
@@ -191,6 +188,7 @@ impl EqOpt<String> {
             pow = atom ('^' integer)?
 
         */
+
         let first = Self::parse_pow(input)?;
         let start_span = first.span();
         let mut next = vec![];
@@ -201,9 +199,11 @@ impl EqOpt<String> {
             next.push((op, n));
         }
 
-        Ok(
-            Self::Multiply { first: Box::new(first), next: next.into_boxed_slice(), span: start_span.join(end_span).unwrap_or(start_span) }
-        )
+        Ok(Self::Multiply {
+            first: Box::new(first),
+            next: next.into_boxed_slice(),
+            span: start_span.join(end_span).unwrap_or(start_span),
+        })
     }
 
     fn parse_pow(input: syn::parse::ParseStream) -> syn::Result<Self> {
@@ -216,24 +216,32 @@ impl EqOpt<String> {
             (1, atom.span())
         };
 
-        Ok(
-            Self::Pow { lhs: Box::new(atom), pow, span }
-        )
+        Ok(Self::Pow {
+            lhs: Box::new(atom),
+            pow,
+            span,
+        })
     }
 
     fn parse_atom(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        if let Some((multiplier,unit, span)) = Self::parse_atom_part(input)? {
-            Ok(Self::Atom { multiplier, unit, span })
+        if let Some((multiplier, unit, span)) = Self::parse_atom_part(input)? {
+            Ok(Self::Atom {
+                multiplier,
+                unit,
+                span,
+            })
         } else {
             let paren;
             let end_span = parenthesized!(paren in input).span.close();
-            let mut s = Self::parse_mul(input)?;
+            let mut s = Self::parse_mul(&paren)?;
             s.merge_span(end_span);
             Ok(s)
         }
     }
 
-    fn parse_atom_part(input: syn::parse::ParseStream) -> syn::Result<Option<(Decimal, String, Span)>> {
+    fn parse_atom_part(
+        input: syn::parse::ParseStream,
+    ) -> syn::Result<Option<(Decimal, String, Span)>> {
         if input.peek(LitInt) {
             let first = input.parse::<LitInt>()?;
             if first.suffix().is_empty() && input.peek(Token![/]) && input.peek2(LitInt) {
@@ -241,14 +249,26 @@ impl EqOpt<String> {
                 let denom = input.parse::<LitInt>()?;
                 let numer = first.base10_parse::<Decimal>()?;
                 let true_denom = denom.base10_parse::<Decimal>()?;
-                Ok(Some((numer / true_denom, denom.suffix().to_string(), first.span().join(denom.span()).unwrap_or(first.span()))))
+                Ok(Some((
+                    numer / true_denom,
+                    denom.suffix().to_string(),
+                    first.span().join(denom.span()).unwrap_or(first.span()),
+                )))
             } else {
-                Ok(Some((first.base10_parse::<Decimal>()?, first.suffix().to_string(), first.span())))
+                Ok(Some((
+                    first.base10_parse::<Decimal>()?,
+                    first.suffix().to_string(),
+                    first.span(),
+                )))
             }
         } else if input.peek(LitFloat) {
             let first = input.parse::<LitFloat>()?;
 
-            Ok(Some((first.base10_parse::<Decimal>()?, first.suffix().to_string(), first.span())))
+            Ok(Some((
+                first.base10_parse::<Decimal>()?,
+                first.suffix().to_string(),
+                first.span(),
+            )))
         } else if input.peek(Ident) {
             let ident = input.parse::<Ident>()?;
             Ok(Some((1.0, ident.to_string(), ident.span())))
@@ -265,10 +285,7 @@ impl EqOpt<String> {
             input.parse::<Token![/]>()?;
             Ok(Op::Div)
         } else {
-            Err(Error::new(
-                input.span(), 
-                "Expected `*` or `/`"
-            ))
+            Err(Error::new(input.span(), "Expected `*` or `/`"))
         }
     }
 }

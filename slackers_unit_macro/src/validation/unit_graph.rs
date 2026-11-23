@@ -69,9 +69,17 @@ impl<'a> Graph<'a> {
         ids_to_flatten.sort();
 
         while let Some(self_id) = ids_to_flatten.pop() {
-            match self.nodes.get(&self_id).expect("This should always be a valid id").try_flatten(&self.nodes) {
+            match self
+                .nodes
+                .get(&self_id)
+                .expect("This should always be a valid id")
+                .try_flatten(&self.nodes)
+            {
                 Ok(vec) => {
-                    self.nodes.get_mut(&self_id).expect(&format!("line {} col {}", line!(), column!())).vmult = Some(vec);
+                    self.nodes
+                        .get_mut(&self_id)
+                        .expect(&format!("line {} col {}", line!(), column!()))
+                        .vmult = Some(vec);
                 }
                 Err(id) => {
                     ids_to_flatten.push(self_id);

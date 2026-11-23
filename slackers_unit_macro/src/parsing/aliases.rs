@@ -1,7 +1,11 @@
 use proc_macro2::Span;
 use syn::{Ident, Token, bracketed, parse::Parse, punctuated::Punctuated};
 
-use crate::data::{Id, parser_data::{Aliases, aliases}, registries::UnitRegistry};
+use crate::data::{
+    Id,
+    parser_data::{Aliases, aliases},
+    registries::UnitRegistry,
+};
 
 impl Aliases {
     pub fn new_empty() -> Self {
@@ -20,11 +24,14 @@ impl Parse for Aliases {
         let _ = bracketed!(body in input);
         let end_span = input.parse::<Token![,]>()?.span;
 
-        let aliases = Punctuated::<Ident, Token![,]>::parse_terminated(&body)?.into_iter().collect();
+        let aliases = Punctuated::<Ident, Token![,]>::parse_terminated(&body)?
+            .into_iter()
+            .collect();
 
-        Ok(
-            Self { aliases, span: start_span.join(end_span).unwrap_or(start_span) }
-        )
+        Ok(Self {
+            aliases,
+            span: start_span.join(end_span).unwrap_or(start_span),
+        })
     }
 }
 

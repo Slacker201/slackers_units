@@ -9,8 +9,8 @@ use crate::sys_impl::system_impl;
 mod codegen;
 mod data;
 mod parsing;
-mod validation;
 mod sys_impl;
+mod validation;
 
 #[proc_macro]
 pub fn system(ts: TokenStream) -> TokenStream {
