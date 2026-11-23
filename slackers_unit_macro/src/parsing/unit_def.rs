@@ -100,16 +100,32 @@ impl UnitDefinition<String> {
 impl<T> EqOpt<T> {
     pub fn span(&self) -> Span {
         match self {
-            EqOpt::Multiply { first: _, next: _, span } => *span,
-            EqOpt::Pow { lhs: _, pow: _, span } => *span,
-            EqOpt::Atom { multiplier: _, unit: _, span } => *span,
+            EqOpt::Multiply {
+                first: _,
+                next: _,
+                span,
+            } => *span,
+            EqOpt::Pow {
+                lhs: _,
+                pow: _,
+                span,
+            } => *span,
+            EqOpt::Atom {
+                multiplier: _,
+                unit: _,
+                span,
+            } => *span,
         }
     }
     pub fn merge_span(&mut self, other: Span) {
         match self {
             EqOpt::Multiply { first, next, span } => *span = span.join(other).unwrap_or(*span),
             EqOpt::Pow { lhs, pow, span } => *span = span.join(other).unwrap_or(*span),
-            EqOpt::Atom { multiplier, unit, span } => *span = span.join(other).unwrap_or(*span),
+            EqOpt::Atom {
+                multiplier,
+                unit,
+                span,
+            } => *span = span.join(other).unwrap_or(*span),
         }
     }
 }

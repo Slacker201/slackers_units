@@ -1,15 +1,16 @@
 use proc_macro2::Span;
 use syn::Ident;
 
-use crate::data::{Decimal, Id};
+use crate::data::{Decimal, Id, registries::UnitRegistry};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) struct System {
     pub units: Box<[UnitDefinition<Id>]>,
-    // pub bases: Box<[Id]>,
-    // pub span: Span,
+    pub prefixes: Box<[PrefixDefinition]>,
+    pub bases: Box<[BaseDefinition]>,
+    pub registry: UnitRegistry,
 }
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) struct UnitDefinition<T> {
     pub name: Ident,
     pub id: Id,
@@ -19,13 +20,32 @@ pub(crate) struct UnitDefinition<T> {
     pub span: Span,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug)]
+pub(crate) struct PrefixDefinition {
+    pub name: Ident,
+    pub aliases: Aliases,
+    pub groups: PrefixGrouping,
+    pub span: Span,
+}
+
+syn::custom_keyword!(prefix);
+syn::custom_keyword!(multiplier);
+syn::custom_keyword!(mult);
+
+syn::custom_keyword!(base);
+
+#[derive(Clone, Debug)]
+pub struct BaseDefinition {
+    pub unit: Ident,
+}
+
+#[derive(Clone, Debug)]
 pub struct EqualityExpression<T> {
     pub inner: EqOpt<T>,
     pub span: Span,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug)]
 pub enum EqOpt<T> {
     Multiply {
         first: Box<Self>,
@@ -51,20 +71,20 @@ pub enum Op {
     Div,
 }
 syn::custom_keyword!(unit);
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct PrefixGrouping {
     pub allowed_groups: Box<[Ident]>,
     pub span: Span,
 }
 syn::custom_keyword!(prefix_classes);
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Aliases {
     pub aliases: Box<[Ident]>,
     pub span: Span,
 }
 syn::custom_keyword!(aliases);
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Number<T> {
     value: Decimal,
     suffix: Option<T>,

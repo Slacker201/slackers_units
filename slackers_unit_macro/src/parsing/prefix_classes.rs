@@ -1,3 +1,4 @@
+use proc_macro2::Span;
 use syn::{Ident, Token, bracketed, parse::Parse, punctuated::Punctuated};
 
 use crate::data::parser_data::{PrefixGrouping, prefix_classes};
@@ -20,5 +21,14 @@ impl Parse for PrefixGrouping {
             allowed_groups,
             span: start_span.join(end_span).unwrap_or(start_span),
         })
+    }
+}
+
+impl PrefixGrouping {
+    pub fn new_with_all() -> Self {
+        Self {
+            allowed_groups: Box::from([Ident::new("All", Span::call_site())]),
+            span: Span::call_site(),
+        }
     }
 }

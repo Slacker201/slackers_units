@@ -5,7 +5,7 @@ use syn::Error;
 
 use crate::data::Id;
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct UnitRegistry {
     to_id: HashMap<String, Id>,
     id_counter: u64,
