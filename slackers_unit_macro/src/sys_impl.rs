@@ -13,5 +13,14 @@ pub(crate) fn system_impl(ts: TokenStream) -> TokenStream {
         }
     };
 
+    let validated_system = match system.validate() {
+        Ok(s) => s,
+        Err(e) => {
+            return e.to_compile_error().to_token_stream();
+        }
+    };
+
+    eprintln!("{:?}", validated_system);
+
     quote! {}
 }
