@@ -12,12 +12,13 @@ use crate::{
 };
 
 pub(crate) mod graph_context;
-
+type AliasToId = HashMap<String, Id>;
+type IdToMetadata = HashMap<Id, (Decimal, Box<[i32]>)>;
 impl System {
     pub(crate) fn reduce_unit_equations(
         &self,
         gc: &GraphContext,
-    ) -> syn::Result<(HashMap<String, Id>, HashMap<Id, (Decimal, Box<[i32]>)>)> {
+    ) -> syn::Result<(AliasToId, IdToMetadata)> {
         let mut alias_to_id = HashMap::new();
         let mut id_to_node = HashMap::new();
         for unit in &self.units {
@@ -78,7 +79,7 @@ impl<'a> Graph<'a> {
                 Ok(vec) => {
                     self.nodes
                         .get_mut(&self_id)
-                        .expect(&format!("line {} col {}", line!(), column!()))
+                        .unwrap_or_else(|| panic!("line {} col {}", line!(), column!()))
                         .vmult = Some(vec);
                 }
                 Err(id) => {
@@ -115,8 +116,8 @@ impl<'a> GraphNode<'a> {
             edges: ud
                 .equality
                 .as_ref()
-                .map(|eq| eq.get_children())
-                .unwrap_or(Box::default()),
+                .map(EqualityExpression::get_children)
+                .unwrap_or_default(),
             eq: ud.equality.as_ref(),
             span: ud.span,
         }
@@ -125,10 +126,10 @@ impl<'a> GraphNode<'a> {
     fn get_dependees(&self, nodes: &HashMap<Id, GraphNode>) -> Box<[Id]> {
         if self.eq.is_none() {
             return Box::default();
-        };
+        }
         let mut dependees = vec![];
         for edge in &self.edges {
-            nodes.get(&edge).map(|node| node.gd(nodes, &mut dependees));
+             if let Some(node) = nodes.get(edge) { node.gd(nodes, &mut dependees) }
         }
 
         dependees.into_boxed_slice()
@@ -146,12 +147,12 @@ impl<'a> GraphNode<'a> {
         }
 
         for edge in &self.edges {
-            nodes.get(&edge).map(|node| node.gd(nodes, dependees));
+            if let Some(node) = nodes.get(edge) { node.gd(nodes, dependees) }
         }
     }
     fn try_flatten(&self, nodes: &HashMap<Id, GraphNode>) -> Result<(Decimal, Box<[i32]>), Id> {
         let Some(eq) = self.eq else {
-            return Ok(self.vmult.as_ref().cloned().expect("UNREACHABLE"));
+            return Ok(self.vmult.clone().expect("UNREACHABLE"));
         };
 
         eq.try_get_vmult(nodes)

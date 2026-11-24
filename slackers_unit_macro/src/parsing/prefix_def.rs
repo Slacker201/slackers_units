@@ -1,10 +1,12 @@
 use syn::{Error, Ident, LitFloat, LitInt, Token, braced, parse::Parse};
 
 use crate::data::{
-    Decimal, parser_data::{
+    Decimal,
+    parser_data::{
         Aliases, PrefixDefinition, PrefixGrouping, aliases, mult, multiplier, prefix,
         prefix_classes,
-    }, registries::NameRegistry,
+    },
+    registries::NameRegistry,
 };
 
 impl PrefixDefinition {
@@ -42,30 +44,25 @@ impl PrefixDefinition {
 
             if body.is_empty() {
                 break;
-            } else {
-                return Err(Error::new(body.span(), "Expected `}`"));
             }
+            return Err(Error::new(body.span(), "Expected `}`"));
         }
 
         let Some(multiplier) = sm else {
-            return Err(
-                Error::new(
-                    body.span(), 
-                    "Please provide a multiplication factor: `mult = 1.3`, `multiplier = 1/10`"
-                )
-            );
+            return Err(Error::new(
+                body.span(),
+                "Please provide a multiplication factor: `mult = 1.3`, `multiplier = 1/10`",
+            ));
         };
 
         let id = match registry.try_get(&name.to_string(), name.span()) {
             Ok(_) => {
                 return Err(Error::new(
-                    name.span(), 
-                    format!("Found duplicate prefix name '{name}'")
+                    name.span(),
+                    format!("Found duplicate prefix name '{name}'"),
                 ));
-            },
-            Err(_) => {
-                registry.get_id(name.to_string())
-            },
+            }
+            Err(_) => registry.get_id(name.to_string()),
         };
 
         alia.register_aliases(id, registry)?;

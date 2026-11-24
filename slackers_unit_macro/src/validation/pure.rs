@@ -12,8 +12,7 @@ impl System {
         unit_aliases.sort();
         if let Some(duplicate) = unit_aliases
             .windows(2)
-            .filter_map(|w| if w[0] == w[1] { Some(w[1]) } else { None })
-            .next()
+            .find_map(|w| if w[0] == w[1] { w.first() } else { None })
         {
             return Err(Error::new(
                 duplicate.span(),

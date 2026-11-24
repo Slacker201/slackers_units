@@ -7,7 +7,7 @@ use crate::{
     data::{
         Decimal, Id,
         parser_data::{EqOpt, EqualityExpression, Op},
-        registries::NameRegistry,
+        unit_context::UnitContext,
     },
     validation::unit_graph::GraphNode,
 };
@@ -16,7 +16,11 @@ impl EqOpt<Id> {
     fn get_children(&self) -> Box<[Id]> {
         let mut v = vec![];
         match self {
-            EqOpt::Multiply { first, next, span } => {
+            EqOpt::Multiply {
+                first,
+                next,
+                span: _,
+            } => {
                 first.gc(&mut v);
                 next.iter().for_each(|node| node.1.gc(&mut v));
             }
@@ -70,7 +74,7 @@ impl EqOpt<Id> {
                 span: _,
             } => {
                 let (mut f_mult, mut f_vec) = first.try_get_vmult(nodes)?;
-                for (op, expr) in next.iter() {
+                for (op, expr) in next {
                     let (op, (mult, vec)) = (*op, expr.try_get_vmult(nodes)?);
                     if op == Op::Mul {
                         f_mult *= mult;
@@ -147,18 +151,18 @@ impl Parse for EqualityExpression<String> {
 }
 
 impl EqOpt<String> {
-    pub fn to_ided(self, unit_context: &UnitContext) -> syn::Result<EqOpt<Id>> {
+    pub fn resolve_suffixes(self, unit_context: &UnitContext) -> syn::Result<EqOpt<Id>> {
         let r = match self {
             EqOpt::Multiply { first, next, span } => EqOpt::Multiply {
-                first: Box::new(first.to_ided(unit_context)?),
+                first: Box::new(first.resolve_suffixes(unit_context)?),
                 span,
                 next: next
                     .into_iter()
-                    .map(|(op, next)| next.to_ided(unit_context).map(|q| (op, q)))
+                    .map(|(op, next)| next.resolve_suffixes(unit_context).map(|q| (op, q)))
                     .collect::<Result<_, _>>()?,
             },
             EqOpt::Pow { lhs, pow, span } => EqOpt::Pow {
-                lhs: Box::new(lhs.to_ided(unit_context)?),
+                lhs: Box::new(lhs.resolve_suffixes(unit_context)?),
                 pow,
                 span,
             },
@@ -171,7 +175,7 @@ impl EqOpt<String> {
                 EqOpt::Atom {
                     multiplier: new_multiplier * multiplier,
                     unit,
-                span,
+                    span,
                 }
             }
         };

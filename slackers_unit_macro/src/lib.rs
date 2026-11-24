@@ -1,7 +1,3 @@
-#![allow(clippy::all)]
-#![allow(unused)]
-#![warn(clippy::panic)]
-
 use proc_macro::TokenStream;
 
 use crate::sys_impl::system_impl;

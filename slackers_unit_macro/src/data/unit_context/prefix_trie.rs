@@ -21,27 +21,24 @@ impl<T> PrefixTrie<T> {
 
 impl<T> TrieNode<T> {
     pub fn add_item(&mut self, key: &[u8], item: T) {
-        let Some(next_byte) = key.get(0) else {
+        let Some(next_byte) = key.first() else {
             if self.value.is_none() {
                 self.value = Some(item);
             }
             return;
         };
-        match &mut self.next {
-            Some(map) => {
-                let next_map = map.entry(*next_byte).or_default();
-                next_map.add_item(&key[1..], item);
-            }
-            None => {
-                let mut map = HashMap::new();
-                let next_map: &mut TrieNode<T> = map.entry(*next_byte).or_default();
-                next_map.add_item(&key[1..], item);
-                self.next = Some(map);
-            }
+        if let Some(map) = &mut self.next {
+            let next_map = map.entry(*next_byte).or_default();
+            next_map.add_item(&key[1..], item);
+        } else {
+            let mut map = HashMap::new();
+            let next_map: &mut TrieNode<T> = map.entry(*next_byte).or_default();
+            next_map.add_item(&key[1..], item);
+            self.next = Some(map);
         }
     }
     pub fn find_longest<'a, 'b>(&'a self, key: &'b [u8]) -> Option<(&'a T, &'b [u8])> {
-        let Some(byte) = key.get(0) else {
+        let Some(byte) = key.first() else {
             return self.value.as_ref().map(|value| (value, key));
         };
         let Some(next) = self.next.as_ref() else {
@@ -71,7 +68,9 @@ impl<T> Default for TrieNode<T> {
 
 impl<T> Default for PrefixTrie<T> {
     fn default() -> Self {
-        Self { root: Default::default() }
+        Self {
+            root: TrieNode::default(),
+        }
     }
 }
 

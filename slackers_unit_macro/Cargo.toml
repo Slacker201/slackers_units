@@ -22,14 +22,7 @@ dashmap = "6.2.1"
 proc-macro = true
 
 [lints.clippy]
-panic = "warn"
-todo = "warn"
-unimplemented = "warn"
-unreachable = "warn"
-unwrap_used = "warn"
-panic_in_result_fn = "warn"
-indexing_slicing = "warn"
-string_slice = "warn"
+pedantic = "warn"
 
 [features]
 default = ["converter_8"]

@@ -1,7 +1,9 @@
 use syn::{Error, parse::Parse};
 
 use crate::data::{
-    parser_data::{BaseDefinition, PrefixDefinition, System, UnitDefinition, base, prefix, unit}, registries::NameRegistry, unit_context::UnitContext,
+    parser_data::{BaseDefinition, PrefixDefinition, System, UnitDefinition, base, prefix, unit},
+    registries::NameRegistry,
+    unit_context::UnitContext,
 };
 
 impl Parse for System {
@@ -27,14 +29,15 @@ impl Parse for System {
 
             if input.is_empty() {
                 break;
-            } else {
-                return Err(Error::new(input.span(), "Expected eof"));
             }
+            return Err(Error::new(input.span(), "Expected eof"));
         }
+
+        let unit_context = UnitContext::new(&units, &prefixes);
 
         let units: Box<[UnitDefinition<crate::data::Id>]> = units
             .into_iter()
-            .map(|unit| unit.to_ided(&unit_context))
+            .map(|unit| unit.resolve_suffixes(&unit_context))
             .collect::<Result<_, _>>()?;
 
         Ok(Self {

@@ -3,7 +3,6 @@ use quote::quote;
 
 use crate::data::validated_sys::ValidatedSystem;
 
-
 macro_rules! gen_vec_change_op {
     ($operand_1: ident, $operand_2: ident, $result: ident, $pd_names: ident, $value_op: ident, $value_op_fn: ident, $value_op_sym: tt, $typenum_op: ident, ) => {
         quote! {
@@ -64,7 +63,6 @@ macro_rules! gen_norm_op {
         }
     };
 }
-
 
 impl ValidatedSystem {
     pub fn generate_unit_definition(&self) -> TokenStream {

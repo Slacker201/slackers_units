@@ -25,14 +25,9 @@ impl NameRegistry {
     pub fn add_alias(&mut self, id: Id, s: impl Into<String>, span: Span) -> syn::Result<()> {
         let s = s.into();
         if self.to_id.contains_key(&s) {
-            return Err(
-                Error::new(
-                    span, 
-                    format!("Found duplicate alias '{}'", s)
-                )
-            );
+            return Err(Error::new(span, format!("Found duplicate alias '{s}'")));
         }
-        self.to_id.insert(s.into(), id);
+        self.to_id.insert(s, id);
         Ok(())
     }
     pub fn try_get(&self, s: &str, span: Span) -> syn::Result<Id> {

@@ -6,6 +6,7 @@ use crate::data::{Decimal, Id, registries::NameRegistry};
 #[derive(Clone, Debug)]
 pub(crate) struct System {
     pub units: Box<[UnitDefinition<Id>]>,
+    #[allow(unused)]
     pub prefixes: Box<[PrefixDefinition]>,
     pub bases: Box<[BaseDefinition]>,
     pub unit_registry: NameRegistry,
@@ -22,11 +23,14 @@ pub(crate) struct UnitDefinition<T> {
 
 #[derive(Clone, Debug)]
 pub(crate) struct PrefixDefinition {
+    #[allow(unused)]
     pub name: Ident,
     pub id: Id,
     pub multiplier: Decimal,
     pub aliases: Aliases,
+    #[allow(unused)]
     pub groups: PrefixGrouping,
+    #[allow(unused)]
     pub span: Span,
 }
 
@@ -75,6 +79,7 @@ pub enum Op {
 syn::custom_keyword!(unit);
 #[derive(Clone, Debug)]
 pub struct PrefixGrouping {
+    #[allow(unused)]
     pub allowed_groups: Box<[Ident]>,
     pub span: Span,
 }
@@ -85,9 +90,3 @@ pub struct Aliases {
     pub span: Span,
 }
 syn::custom_keyword!(aliases);
-
-#[derive(Clone, Debug)]
-pub struct Number<T> {
-    value: Decimal,
-    suffix: Option<T>,
-}

@@ -1,5 +1,5 @@
 use proc_macro2::Span;
-use syn::{Error, Ident, Token, braced};
+use syn::{Error, Ident, braced};
 
 use crate::{
     data::{
@@ -54,9 +54,8 @@ impl UnitDefinition<String> {
 
             if body.is_empty() {
                 break;
-            } else {
-                return Err(Error::new(body.span(), "Expected '}'"));
             }
+            return Err(Error::new(body.span(), "Expected '}'"));
         }
 
         let id = unit_registry.get_id(name.to_string());
@@ -77,8 +76,8 @@ impl UnitDefinition<String> {
         })
     }
 
-    pub fn to_ided(self, registry: &UnitContext) -> syn::Result<UnitDefinition<Id>> {
-        let equality = if let Some(r) = self.equality.map(|eq| eq.inner.to_ided(registry)) {
+    pub fn resolve_suffixes(self, registry: &UnitContext) -> syn::Result<UnitDefinition<Id>> {
+        let equality = if let Some(r) = self.equality.map(|eq| eq.inner.resolve_suffixes(registry)) {
             let m = r?;
             Some(EqualityExpression {
                 span: m.span(),
@@ -105,12 +104,12 @@ impl<T> EqOpt<T> {
                 first: _,
                 next: _,
                 span,
-            } => *span,
+            } |
             EqOpt::Pow {
                 lhs: _,
                 pow: _,
                 span,
-            } => *span,
+            } |
             EqOpt::Atom {
                 multiplier: _,
                 unit: _,
@@ -120,11 +119,19 @@ impl<T> EqOpt<T> {
     }
     pub fn merge_span(&mut self, other: Span) {
         match self {
-            EqOpt::Multiply { first, next, span } => *span = span.join(other).unwrap_or(*span),
-            EqOpt::Pow { lhs, pow, span } => *span = span.join(other).unwrap_or(*span),
+            EqOpt::Multiply {
+                first: _,
+                next: _,
+                span,
+            } |
+            EqOpt::Pow {
+                lhs: _,
+                pow: _,
+                span,
+            } |
             EqOpt::Atom {
-                multiplier,
-                unit,
+                multiplier: _,
+                unit: _,
                 span,
             } => *span = span.join(other).unwrap_or(*span),
         }

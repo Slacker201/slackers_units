@@ -22,7 +22,7 @@ impl System {
             else {
                 return Err(Error::new(
                     base.span(),
-                    format!("Please define {} to use it as a base unit", base),
+                    format!("Please define {base} to use it as a base unit"),
                 ));
             };
 
@@ -30,7 +30,7 @@ impl System {
                 .insert(
                     id,
                     (0..leaf_count)
-                        .map(|v| if v == idx { 1 } else { 0 })
+                        .map(|v| i32::from(v == idx))
                         .collect(),
                 )
                 .is_some()

@@ -56,13 +56,13 @@ impl UnitContext {
         if let Some((prefix, prefix_remainder)) = self.prefix_trie.find_longest(suffix.as_bytes()) {
             if let Some((unit, unit_remainder)) = self.unit_trie.find_longest(prefix_remainder) {
                 if unit_remainder.is_empty() {
-                    return Ok((
+                    Ok((
                         *self
                             .prefix_id_to_multiplier
                             .get(prefix)
                             .expect("Safe by construction"),
                         *unit,
-                    ));
+                    ))
                 } else {
                     Err(Error::new(
                         span,
