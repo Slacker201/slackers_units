@@ -36,7 +36,7 @@ impl Parse for Aliases {
 }
 
 impl Aliases {
-    pub fn register_aliases(&self, id: Id, ur: &mut NameRegistry) {
+    pub fn register_aliases(&self, id: Id, ur: &mut NameRegistry) -> syn::Result<()> {
         for alias in &self.aliases {
             ur.add_alias(id, alias.to_string(), alias.span());
         }

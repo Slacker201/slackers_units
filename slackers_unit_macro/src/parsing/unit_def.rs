@@ -61,7 +61,7 @@ impl UnitDefinition<String> {
 
         let id = unit_registry.get_id(name.to_string());
         let aliases = alia.unwrap_or(Aliases::new_empty());
-        aliases.register_aliases(id, unit_registry);
+        aliases.register_aliases(id, unit_registry)?;
         let prefixable = prefixable.unwrap_or(PrefixGrouping {
             allowed_groups: Box::new([Ident::new("All", Span::call_site())]),
             span: Span::call_site(),
