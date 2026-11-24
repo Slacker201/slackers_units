@@ -47,6 +47,15 @@ impl PrefixDefinition {
             }
         }
 
+        let Some(multiplier) = sm else {
+            return Err(
+                Error::new(
+                    body.span(), 
+                    "Please provide a multiplication factor: `mult = 1.3`, `multiplier = 1/10`"
+                )
+            );
+        };
+
         let id = match registry.try_get(&name.to_string(), name.span()) {
             Ok(_) => {
                 return Err(Error::new(
@@ -66,6 +75,7 @@ impl PrefixDefinition {
         Ok(Self {
             name,
             id,
+            multiplier,
             aliases: alia,
             groups: p_classes.unwrap_or(PrefixGrouping::new_with_all()),
             span: start_span.join(end_span).unwrap_or(start_span),
