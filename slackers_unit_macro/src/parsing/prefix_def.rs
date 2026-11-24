@@ -68,9 +68,7 @@ impl PrefixDefinition {
             },
         };
 
-        for alias in &alia.aliases {
-            registry.add_alias(id, alias.to_string(), alias.span())?;
-        }
+        alia.register_aliases(id, registry)?;
 
         Ok(Self {
             name,
