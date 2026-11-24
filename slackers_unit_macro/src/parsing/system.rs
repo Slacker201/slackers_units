@@ -1,8 +1,7 @@
 use syn::{Error, parse::Parse};
 
 use crate::data::{
-    parser_data::{BaseDefinition, PrefixDefinition, System, UnitDefinition, base, prefix, unit},
-    registries::UnitRegistry,
+    parser_data::{BaseDefinition, PrefixDefinition, System, UnitDefinition, base, prefix, unit}, registries::NameRegistry, unit_context::UnitContext,
 };
 
 impl Parse for System {
@@ -10,14 +9,15 @@ impl Parse for System {
         let mut units = vec![];
         let mut prefixes = vec![];
         let mut bases = vec![];
-        let mut registry = UnitRegistry::new();
+        let mut unit_registry = NameRegistry::new();
+        let mut prefix_registry = NameRegistry::new();
         loop {
             if input.peek(unit) {
-                units.push(UnitDefinition::<String>::parse(input, &mut registry)?);
+                units.push(UnitDefinition::<String>::parse(input, &mut unit_registry)?);
                 continue;
             }
             if input.peek(prefix) {
-                prefixes.push(PrefixDefinition::parse(input)?);
+                prefixes.push(PrefixDefinition::parse(input, &mut prefix_registry)?);
                 continue;
             }
             if input.peek(base) {
@@ -34,14 +34,14 @@ impl Parse for System {
 
         let units: Box<[UnitDefinition<crate::data::Id>]> = units
             .into_iter()
-            .map(|unit| unit.to_ided(&registry))
+            .map(|unit| unit.to_ided(&unit_registry))
             .collect::<Result<_, _>>()?;
 
         Ok(Self {
             units,
             prefixes: prefixes.into_boxed_slice(),
             bases: bases.into_boxed_slice(),
-            registry,
+            unit_registry,
         })
     }
 }

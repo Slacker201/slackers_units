@@ -8,7 +8,7 @@ use crate::{
             Aliases, EqOpt, EqualityExpression, PrefixGrouping, UnitDefinition, aliases,
             prefix_classes, unit,
         },
-        registries::UnitRegistry,
+        registries::NameRegistry,
     },
     parsing::expression::{eq, equivalent},
 };
@@ -16,7 +16,7 @@ use crate::{
 impl UnitDefinition<String> {
     pub fn parse(
         input: syn::parse::ParseStream,
-        unit_registry: &mut UnitRegistry,
+        unit_registry: &mut NameRegistry,
     ) -> syn::Result<Self> {
         let start_span = input.parse::<unit>()?.span;
         let name = input.parse::<Ident>()?;
@@ -76,7 +76,7 @@ impl UnitDefinition<String> {
         })
     }
 
-    pub fn to_ided(self, registry: &UnitRegistry) -> syn::Result<UnitDefinition<Id>> {
+    pub fn to_ided(self, registry: &NameRegistry) -> syn::Result<UnitDefinition<Id>> {
         let equality = if let Some(r) = self.equality.map(|eq| eq.inner.to_ided(registry)) {
             let m = r?;
             Some(EqualityExpression {

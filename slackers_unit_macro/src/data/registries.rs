@@ -6,12 +6,12 @@ use syn::Error;
 use crate::data::Id;
 
 #[derive(Clone, Debug, Default)]
-pub struct UnitRegistry {
+pub struct NameRegistry {
     to_id: HashMap<String, Id>,
     id_counter: u64,
 }
 
-impl UnitRegistry {
+impl NameRegistry {
     pub fn new() -> Self {
         Self::default()
     }
@@ -22,8 +22,18 @@ impl UnitRegistry {
             id
         })
     }
-    pub fn add_alias(&mut self, id: Id, s: impl Into<String>) {
+    pub fn add_alias(&mut self, id: Id, s: impl Into<String>, span: Span) -> syn::Result<()> {
+        let s = s.into();
+        if self.to_id.contains_key(&s) {
+            return Err(
+                Error::new(
+                    span, 
+                    format!("Found duplicate alias '{}'", s)
+                )
+            );
+        }
         self.to_id.insert(s.into(), id);
+        Ok(())
     }
     pub fn try_get(&self, s: &str, span: Span) -> syn::Result<Id> {
         self.to_id

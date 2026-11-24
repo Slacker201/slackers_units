@@ -4,7 +4,7 @@ use syn::{Ident, Token, bracketed, parse::Parse, punctuated::Punctuated};
 use crate::data::{
     Id,
     parser_data::{Aliases, aliases},
-    registries::UnitRegistry,
+    registries::NameRegistry,
 };
 
 impl Aliases {
@@ -36,9 +36,9 @@ impl Parse for Aliases {
 }
 
 impl Aliases {
-    pub fn register_aliases(&self, id: Id, ur: &mut UnitRegistry) {
+    pub fn register_aliases(&self, id: Id, ur: &mut NameRegistry) {
         for alias in &self.aliases {
-            ur.add_alias(id, alias.to_string());
+            ur.add_alias(id, alias.to_string(), alias.span());
         }
     }
 }

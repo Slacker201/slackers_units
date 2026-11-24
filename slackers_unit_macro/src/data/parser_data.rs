@@ -1,14 +1,14 @@
 use proc_macro2::Span;
 use syn::Ident;
 
-use crate::data::{Decimal, Id, registries::UnitRegistry};
+use crate::data::{Decimal, Id, registries::NameRegistry};
 
 #[derive(Clone, Debug)]
 pub(crate) struct System {
     pub units: Box<[UnitDefinition<Id>]>,
     pub prefixes: Box<[PrefixDefinition]>,
     pub bases: Box<[BaseDefinition]>,
-    pub registry: UnitRegistry,
+    pub unit_registry: NameRegistry,
 }
 #[derive(Clone, Debug)]
 pub(crate) struct UnitDefinition<T> {
@@ -23,6 +23,7 @@ pub(crate) struct UnitDefinition<T> {
 #[derive(Clone, Debug)]
 pub(crate) struct PrefixDefinition {
     pub name: Ident,
+    pub id: Id,
     pub aliases: Aliases,
     pub groups: PrefixGrouping,
     pub span: Span,

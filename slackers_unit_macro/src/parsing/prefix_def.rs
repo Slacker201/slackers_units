@@ -1,15 +1,14 @@
 use syn::{Error, Ident, LitFloat, LitInt, Token, braced, parse::Parse};
 
 use crate::data::{
-    Decimal,
-    parser_data::{
+    Decimal, parser_data::{
         Aliases, PrefixDefinition, PrefixGrouping, aliases, mult, multiplier, prefix,
         prefix_classes,
-    },
+    }, registries::NameRegistry,
 };
 
-impl Parse for PrefixDefinition {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+impl PrefixDefinition {
+    pub fn parse(input: syn::parse::ParseStream, registry: &mut NameRegistry) -> syn::Result<Self> {
         let start_span = input.parse::<prefix>()?.span;
         let name = input.parse::<Ident>()?;
 
@@ -48,8 +47,25 @@ impl Parse for PrefixDefinition {
             }
         }
 
+        let id = match registry.try_get(&name.to_string(), name.span()) {
+            Ok(_) => {
+                return Err(Error::new(
+                    name.span(), 
+                    format!("Found duplicate prefix name '{name}'")
+                ));
+            },
+            Err(_) => {
+                registry.get_id(name.to_string())
+            },
+        };
+
+        for alias in &alia.aliases {
+            registry.add_alias(id, alias.to_string(), alias.span())?;
+        }
+
         Ok(Self {
             name,
+            id,
             aliases: alia,
             groups: p_classes.unwrap_or(PrefixGrouping::new_with_all()),
             span: start_span.join(end_span).unwrap_or(start_span),

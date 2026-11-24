@@ -7,7 +7,7 @@ use crate::{
     data::{
         Decimal, Id,
         parser_data::{EqOpt, EqualityExpression, Op},
-        registries::UnitRegistry,
+        registries::NameRegistry,
     },
     validation::unit_graph::GraphNode,
 };
@@ -147,7 +147,7 @@ impl Parse for EqualityExpression<String> {
 }
 
 impl EqOpt<String> {
-    pub fn to_ided(self, unit_registry: &UnitRegistry) -> syn::Result<EqOpt<Id>> {
+    pub fn to_ided(self, unit_registry: &NameRegistry) -> syn::Result<EqOpt<Id>> {
         let r = match self {
             EqOpt::Multiply { first, next, span } => EqOpt::Multiply {
                 first: Box::new(first.to_ided(unit_registry)?),
