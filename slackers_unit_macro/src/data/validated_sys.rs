@@ -9,6 +9,13 @@ pub struct ValidatedSystem {
     pub registry: NameRegistry,
     pub alias_to_id: HashMap<String, Id>,
     pub id_to_vector_and_mult: HashMap<Id, (Decimal, Box<[i32]>)>,
+
+    // System metadata
+
+    // Unit definition
+    pub unit_generic_names: Box<[Ident]>,
+    pub unit_phantom_data_names: Box<[Ident]>,
+    pub unit_arith_generic_names: (Box<[Ident]>, Box<[Ident]>, Box<[Ident]>),
 }
 
 #[derive(Default)]

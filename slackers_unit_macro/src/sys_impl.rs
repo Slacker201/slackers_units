@@ -19,8 +19,7 @@ pub(crate) fn system_impl(ts: TokenStream) -> TokenStream {
             return e.to_compile_error().to_token_stream();
         }
     };
-
-    eprintln!("{:?}", validated_system);
-
-    quote! {}
+    quote! {
+        #validated_system
+    }
 }
