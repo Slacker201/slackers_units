@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt::Debug};
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct PrefixTrie<T> {
     root: TrieNode<T>,
 }
@@ -66,6 +66,12 @@ impl<T> Default for TrieNode<T> {
             next: None,
             value: None,
         }
+    }
+}
+
+impl<T> Default for PrefixTrie<T> {
+    fn default() -> Self {
+        Self { root: Default::default() }
     }
 }
 
