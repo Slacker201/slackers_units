@@ -147,18 +147,18 @@ impl Parse for EqualityExpression<String> {
 }
 
 impl EqOpt<String> {
-    pub fn to_ided(self, unit_registry: &NameRegistry) -> syn::Result<EqOpt<Id>> {
+    pub fn to_ided(self, unit_context: &UnitContext) -> syn::Result<EqOpt<Id>> {
         let r = match self {
             EqOpt::Multiply { first, next, span } => EqOpt::Multiply {
-                first: Box::new(first.to_ided(unit_registry)?),
+                first: Box::new(first.to_ided(unit_context)?),
                 span,
                 next: next
                     .into_iter()
-                    .map(|(op, next)| next.to_ided(unit_registry).map(|q| (op, q)))
+                    .map(|(op, next)| next.to_ided(unit_context).map(|q| (op, q)))
                     .collect::<Result<_, _>>()?,
             },
             EqOpt::Pow { lhs, pow, span } => EqOpt::Pow {
-                lhs: Box::new(lhs.to_ided(unit_registry)?),
+                lhs: Box::new(lhs.to_ided(unit_context)?),
                 pow,
                 span,
             },
@@ -166,11 +166,14 @@ impl EqOpt<String> {
                 multiplier,
                 unit,
                 span,
-            } => EqOpt::Atom {
-                multiplier,
-                unit: unit_registry.try_get(&unit, span)?,
+            } => {
+                let (new_multiplier, unit) = unit_context.parse_suffix(&unit, span)?;
+                EqOpt::Atom {
+                    multiplier: new_multiplier * multiplier,
+                    unit,
                 span,
-            },
+                }
+            }
         };
         Ok(r)
     }

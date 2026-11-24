@@ -24,6 +24,7 @@ pub(crate) struct UnitDefinition<T> {
 pub(crate) struct PrefixDefinition {
     pub name: Ident,
     pub id: Id,
+    pub multiplier: Decimal,
     pub aliases: Aliases,
     pub groups: PrefixGrouping,
     pub span: Span,

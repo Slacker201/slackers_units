@@ -9,6 +9,7 @@ use crate::{
             prefix_classes, unit,
         },
         registries::NameRegistry,
+        unit_context::UnitContext,
     },
     parsing::expression::{eq, equivalent},
 };
@@ -76,7 +77,7 @@ impl UnitDefinition<String> {
         })
     }
 
-    pub fn to_ided(self, registry: &NameRegistry) -> syn::Result<UnitDefinition<Id>> {
+    pub fn to_ided(self, registry: &UnitContext) -> syn::Result<UnitDefinition<Id>> {
         let equality = if let Some(r) = self.equality.map(|eq| eq.inner.to_ided(registry)) {
             let m = r?;
             Some(EqualityExpression {

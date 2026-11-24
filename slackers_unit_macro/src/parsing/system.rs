@@ -34,7 +34,7 @@ impl Parse for System {
 
         let units: Box<[UnitDefinition<crate::data::Id>]> = units
             .into_iter()
-            .map(|unit| unit.to_ided(&unit_registry))
+            .map(|unit| unit.to_ided(&unit_context))
             .collect::<Result<_, _>>()?;
 
         Ok(Self {
