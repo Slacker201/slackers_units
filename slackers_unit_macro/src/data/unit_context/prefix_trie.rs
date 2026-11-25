@@ -1,10 +1,11 @@
 use std::{collections::HashMap, fmt::Debug};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct PrefixTrie<T> {
     root: TrieNode<T>,
 }
 
+#[derive(PartialEq, Clone)]
 pub struct TrieNode<T> {
     next: Option<HashMap<u8, TrieNode<T>>>,
     value: Option<T>,

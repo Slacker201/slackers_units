@@ -10,12 +10,17 @@ use crate::data::{
 };
 
 pub mod prefix_trie;
+pub mod serialization;
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct UnitContext {
     unit_trie: PrefixTrie<Id>,
     prefix_trie: PrefixTrie<Id>,
 
     prefix_id_to_multiplier: HashMap<Id, Decimal>,
+
+    prefix_data: Box<[(String, Id)]>,
+    unit_data: Box<[(String, Id)]>,
 }
 
 impl UnitContext {
@@ -30,6 +35,10 @@ impl UnitContext {
             }
         }
 
+        let unit_data = units.iter().flat_map(|unit_def| {
+            unit_def.aliases.aliases.iter().map(|alia| (alia.to_string(), unit_def.id))
+        }).collect();
+
         for prefix in prefixes {
             for alias in &prefix.aliases.aliases {
                 prefix_trie.add_item(alias.to_string().as_bytes(), prefix.id);
@@ -37,10 +46,16 @@ impl UnitContext {
             prefix_id_to_multiplier.insert(prefix.id, prefix.multiplier);
         }
 
+        let prefix_data = prefixes.iter().flat_map(|prefix_def| {
+            prefix_def.aliases.aliases.iter().map(|alia| (alia.to_string(), prefix_def.id))
+        }).collect();
+
         Self {
             unit_trie,
             prefix_trie,
             prefix_id_to_multiplier,
+            unit_data,
+            prefix_data,
         }
     }
 

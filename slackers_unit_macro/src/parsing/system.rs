@@ -41,6 +41,7 @@ impl Parse for System {
             .collect::<Result<_, _>>()?;
 
         Ok(Self {
+            unit_context,
             units,
             prefixes: prefixes.into_boxed_slice(),
             bases: bases.into_boxed_slice(),

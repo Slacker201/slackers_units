@@ -21,7 +21,7 @@ impl System {
         let unit_arith_generic_names = self.get_unit_arith_generic_names();
 
         Ok(ValidatedSystem {
-            registry: self.unit_registry,
+            unit_context: self.unit_context,
             alias_to_id,
             id_to_vector_and_mult,
             unit_generic_names,

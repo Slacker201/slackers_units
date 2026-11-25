@@ -1,7 +1,7 @@
 use proc_macro2::Span;
 use syn::Ident;
 
-use crate::data::{Decimal, Id, registries::NameRegistry};
+use crate::data::{Decimal, Id, registries::NameRegistry, unit_context::UnitContext};
 
 #[derive(Clone, Debug)]
 pub(crate) struct System {
@@ -10,6 +10,7 @@ pub(crate) struct System {
     pub prefixes: Box<[PrefixDefinition]>,
     pub bases: Box<[BaseDefinition]>,
     pub unit_registry: NameRegistry,
+    pub unit_context: UnitContext,
 }
 #[derive(Clone, Debug)]
 pub(crate) struct UnitDefinition<T> {
