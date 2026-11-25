@@ -1,12 +1,15 @@
 use syn::{Error, Ident, LitFloat, LitInt, Token, braced, parse::Parse};
 
-use crate::data::{
-    Decimal,
-    parser_data::{
-        Aliases, PrefixDefinition, PrefixGrouping, aliases, mult, multiplier, prefix,
-        prefix_classes,
+use crate::{
+    data::{
+        Decimal,
+        parser_data::{
+            Aliases, PrefixDefinition, PrefixGrouping, aliases, mult, multiplier, prefix,
+            prefix_classes,
+        },
+        registries::NameRegistry,
     },
-    registries::NameRegistry,
+    parsing::expression::NumberHandler,
 };
 
 impl PrefixDefinition {
@@ -101,7 +104,7 @@ impl PrefixDefinition {
         } else if input.peek(LitFloat) {
             let litfloat = input.parse::<LitFloat>()?;
             if litfloat.suffix().is_empty() {
-                litfloat.base10_parse()
+                NumberHandler::handle_litfloat(&litfloat)
             } else {
                 Err(Error::new(
                     litfloat.span(),

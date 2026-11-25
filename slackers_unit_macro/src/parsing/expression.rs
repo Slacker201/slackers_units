@@ -1,11 +1,14 @@
 use std::collections::HashMap;
 
+use num_rational::Ratio;
+use num_traits::{ConstZero, FromPrimitive};
 use proc_macro2::Span;
+use slk_tokenstream::TokenStream;
 use syn::{Error, Ident, LitFloat, LitInt, Token, parenthesized, parse::Parse};
 
 use crate::{
     data::{
-        Decimal, Id,
+        Decimal, DecimalPart, Id,
         parser_data::{EqOpt, EqualityExpression, Op},
         unit_context::UnitContext,
     },
@@ -263,7 +266,7 @@ impl EqOpt<String> {
                 )))
             } else {
                 Ok(Some((
-                    first.base10_parse::<Decimal>()?,
+                    first.base10_parse()?,
                     first.suffix().to_string(),
                     first.span(),
                 )))
@@ -272,7 +275,7 @@ impl EqOpt<String> {
             let first = input.parse::<LitFloat>()?;
 
             Ok(Some((
-                first.base10_parse::<Decimal>()?,
+                NumberHandler::handle_litfloat(&first)?,
                 first.suffix().to_string(),
                 first.span(),
             )))
@@ -294,5 +297,67 @@ impl EqOpt<String> {
         } else {
             Err(Error::new(input.span(), "Expected `*` or `/`"))
         }
+    }
+}
+
+pub struct NumberHandler;
+
+impl NumberHandler {
+    pub fn handle_litfloat(litfloat: &LitFloat) -> syn::Result<Decimal> {
+        let (number_portion, sci_not_mult) = Self::split_number_and_sci_float(litfloat)?;
+        let mut ts = TokenStream::new(number_portion);
+        let int =
+            str::from_utf8(ts.consume_while(u8::is_ascii_digit)).expect("Safe by construction");
+        let _ = ts.consume_if(|c| *c == b'.');
+        let dec =
+            str::from_utf8(ts.consume_while(u8::is_ascii_digit)).expect("Safe by construction");
+        let dec_len = dec.trim_end_matches('0').len();
+        eprintln!("sci notation mult: {sci_not_mult:?}");
+
+        let scale = DecimalPart::from_u8(10)
+            .unwrap()
+            .pow(u32::try_from(dec_len).unwrap());
+        let int: DecimalPart = int.parse().map_err(|e| Error::new(litfloat.span(), e))?;
+        let dec = if dec.is_empty() {
+            DecimalPart::ZERO
+        } else {
+            dec.parse().map_err(|e| Error::new(litfloat.span(), e))?
+        };
+
+        let numer = int * scale + dec;
+
+        let mut d = Decimal::new_raw(numer, scale);
+
+        if let Some(sci_not) = sci_not_mult {
+            let mut ratio = Ratio::from_integer(
+                DecimalPart::from_u8(10)
+                    .unwrap()
+                    .pow(sci_not.abs().cast_unsigned()),
+            );
+            if sci_not.is_negative() {
+                ratio = ratio.recip();
+            }
+            d *= ratio;
+        }
+        Ok(d)
+    }
+
+    fn split_number_and_sci_float(litfloat: &LitFloat) -> syn::Result<(&[u8], Option<i32>)> {
+        if !litfloat.base10_digits().contains('e') {
+            return Ok((litfloat.base10_digits().as_bytes(), None));
+        }
+        let mut ts = TokenStream::new(litfloat.base10_digits().as_bytes());
+        let number_portion = ts.consume_while(|c| c.is_ascii_digit() || *c == b'.');
+        let _ = ts.consume_if(|c| *c == b'e');
+        let is_negative = ts.consume_if(|c| *c == b'-').is_some();
+        let mut exponent = str::from_utf8(ts.consume_while(u8::is_ascii_digit))
+            .expect("Safe by construction")
+            .parse::<i32>()
+            .map_err(|err| Error::new(litfloat.span(), err))?;
+
+        if is_negative {
+            exponent = -exponent;
+        }
+        Ok((number_portion, Some(exponent)))
     }
 }

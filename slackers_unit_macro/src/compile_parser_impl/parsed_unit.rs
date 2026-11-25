@@ -128,12 +128,10 @@ impl ToTokens for UnitVectorWrapper<'_> {
         let idents: Box<[Ident]> = self
             .0
             .iter()
-            .map(|v| {
-                match v.cmp(&0) {
-                    std::cmp::Ordering::Less => format_ident!("N{}", v.abs().cast_unsigned()),
-                    std::cmp::Ordering::Equal => format_ident!("Z0"),
-                    std::cmp::Ordering::Greater => format_ident!("P{}", v.cast_unsigned()),
-                }
+            .map(|v| match v.cmp(&0) {
+                std::cmp::Ordering::Less => format_ident!("N{}", v.abs().cast_unsigned()),
+                std::cmp::Ordering::Equal => format_ident!("Z0"),
+                std::cmp::Ordering::Greater => format_ident!("P{}", v.cast_unsigned()),
             })
             .collect();
 
