@@ -1,12 +1,13 @@
 #![allow(unused)]
 use std::{array::from_fn, collections::HashMap, ptr};
 
+use num_rational::Ratio;
+use proc_macro2::Span;
 use quote::format_ident;
 use syn::Ident;
 
 use crate::data::{
-    Decimal, Id,
-    unit_context::{UnitContext, prefix_trie::PrefixTrie},
+    Decimal, DecimalPart, Id, parser_data::{Aliases, PrefixDefinition, PrefixGrouping, UnitDefinition}, unit_context::{UnitContext, prefix_trie::PrefixTrie},
 };
 
 pub trait ToBytes {
@@ -52,7 +53,12 @@ impl<'a> Writer<'a> {
         self.idx += data.len();
     }
     fn write_decimal(&mut self, data: Decimal) {
-        self.write_bytes(&data.to_be_bytes());
+        let (numer, denom) = data.into_raw();
+        self.write_decimal_part(numer);
+        self.write_decimal_part(denom);
+    }
+    fn write_decimal_part(&mut self, part: DecimalPart) {
+        self.write_bytes(&part.to_be_bytes());
     }
     fn write_len_prefixed_str(&mut self, s: &str) {
         let len = s.len();
@@ -98,10 +104,20 @@ impl<'a> Reader<'a> {
         self.idx += size_of::<u64>();
         u64::from_be_bytes(bytes)
     }
+    fn read_decimal_part(&mut self) -> DecimalPart {
+        let bytes: [u8; size_of::<DecimalPart>()] = from_fn(|idx| self.buffer[self.idx + idx]);
+        self.idx += size_of::<DecimalPart>();
+        DecimalPart::from_be_bytes(bytes)
+    }
     fn read_decimal(&mut self) -> Decimal {
-        let bytes: [u8; size_of::<Decimal>()] = from_fn(|idx| self.buffer[self.idx + idx]);
-        self.idx += size_of::<Decimal>();
-        Decimal::from_be_bytes(bytes)
+        let numer = self.read_decimal_part();
+        let denom = self.read_decimal_part();
+        Decimal::new(numer, denom)
+    }
+    fn read_bytes(&mut self, len: usize) -> &[u8] {
+        let bytes = &self.buffer[self.idx..self.idx + len];
+        self.idx += len;
+        bytes
     }
     fn deserialize<T: ToBytes>(bytes: &'a [u8]) -> T {
         let mut reader = Self::new(bytes);
@@ -148,7 +164,7 @@ impl ToBytes for Box<[(String, Id)]> {
     }
 }
 
-impl ToBytes for HashMap<Id, f64> {
+impl ToBytes for HashMap<Id, Decimal> {
     fn to_bytes(&self, writer: &mut Writer<'_>) {
         let len = self.len();
         writer.write_usize(len);
@@ -170,17 +186,53 @@ impl ToBytes for HashMap<Id, f64> {
     }
 }
 
+impl ToBytes for HashMap<Id, (Decimal, Box<[i32]>)> {
+    fn to_bytes(&self, writer: &mut Writer<'_>) {
+        writer.write_usize(self.len());
+        let Some((_, vec)) = self.values().next() else {
+            writer.write_usize(0);
+            return;
+        };
+        writer.write_usize(vec.len());
+        for (key, (mult, vector)) in self {
+            writer.write_u64(key.0);
+            writer.write_decimal(*mult);
+            writer.write_bytes(&vector.iter().flat_map(|i| i.to_be_bytes()).collect::<Box<[u8]>>());
+        }
+    }
+
+    fn from_bytes(reader: &mut Reader<'_>) -> Self {
+        let len = reader.read_usize();
+        let vector_len = reader.read_usize();
+        let mut s = HashMap::new();
+        for _ in 0..len {
+            let id = reader.read_u64();
+            let decimal = reader.read_decimal();
+            let mut vector = vec![];
+            for _ in 0..vector_len {
+                let read_bytes = reader.read_bytes(size_of::<i32>());
+                let bytes: [u8; size_of::<i32>()] = from_fn(|idx| read_bytes[idx]);
+                vector.push(i32::from_be_bytes(bytes));
+            }
+            s.insert(Id(id), (decimal, vector.into_boxed_slice()));
+        }
+        s
+    }
+}
+
 impl ToBytes for UnitContext {
     fn to_bytes(&self, writer: &mut Writer<'_>) {
         self.prefix_data.to_bytes(writer);
         self.unit_data.to_bytes(writer);
         self.prefix_id_to_multiplier.to_bytes(writer);
+        self.unit_id_to_vector.to_bytes(writer);
     }
 
     fn from_bytes(reader: &mut Reader<'_>) -> Self {
         let prefix_data: Box<[(String, Id)]> = Box::from_bytes(reader);
         let unit_data: Box<[(String, Id)]> = Box::from_bytes(reader);
-        let prefix_id_to_multiplier = HashMap::<Id, f64>::from_bytes(reader);
+        let prefix_id_to_multiplier = HashMap::<Id, Decimal>::from_bytes(reader);
+        let unit_id_to_vector = ToBytes::from_bytes(reader);
         let _ = reader;
         let mut unit_trie = PrefixTrie::default();
         let mut prefix_trie = PrefixTrie::default();
@@ -197,6 +249,7 @@ impl ToBytes for UnitContext {
             unit_trie,
             prefix_trie,
             prefix_id_to_multiplier,
+            unit_id_to_vector,
             prefix_data,
             unit_data,
         }
@@ -210,4 +263,49 @@ impl UnitContext {
     pub fn deserialize(data: &[u8]) -> Self {
         Reader::deserialize(data)
     }
+}
+
+
+#[test]
+fn test() {
+    let uc = UnitContext::new(
+        &[
+            UnitDefinition {
+                name: format_ident!("Hey"),
+                id: Id(0),
+                aliases: Aliases {
+                    aliases: Box::from([format_ident!("Hey")]),
+                    span: Span::call_site(),
+                },
+                prefix_groups: PrefixGrouping::new_with_all(),
+                equality: None,
+                span: Span::call_site(),
+            }
+        ],
+        &[
+            PrefixDefinition {
+                name: format_ident!("HeyButPrefix"),
+                id: Id(0),
+                multiplier: Ratio::ONE,
+                aliases: Aliases {
+                    aliases: Box::from([format_ident!("HeyButPrefixed")]),
+                    span: Span::call_site(),
+                },
+                groups: PrefixGrouping::new_with_all(),
+                span: Span::call_site(),
+            }
+        ]
+    );
+
+    let bytes = uc.serialize();
+    let uc2 = UnitContext::deserialize(&bytes);
+
+    let mut buf = vec![0; 1024*1024];
+    let mut writer = Writer::new(&mut buf);
+    writer.write_decimal(Ratio::ONE);
+    let mut reader = Reader::new(&buf);
+    println!("{}", reader.read_decimal());
+
+    assert_eq!(uc, uc2);
+
 }
