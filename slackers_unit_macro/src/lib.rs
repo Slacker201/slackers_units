@@ -1,14 +1,13 @@
 use proc_macro::TokenStream;
-use quote::quote;
 
 use crate::{compile_parser_impl::compile_parser_impl, sys_impl::system_impl};
 
 mod codegen;
+mod compile_parser_impl;
 mod data;
 mod parsing;
 mod sys_impl;
 mod validation;
-mod compile_parser_impl;
 
 #[proc_macro]
 pub fn system(ts: TokenStream) -> TokenStream {

@@ -27,11 +27,11 @@ impl System {
         unit_context.unit_id_to_vector = unit_id_to_vector;
 
         Ok(ValidatedSystem {
-            unit_context,
             alias_to_id,
             unit_generic_names,
             unit_phantom_data_names,
             unit_arith_generic_names,
+            unit_context,
         })
     }
 }

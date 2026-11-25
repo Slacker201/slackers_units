@@ -3,7 +3,6 @@ use quote::{ToTokens, quote};
 
 use crate::compile_parser_impl::parsed_unit::ParsedUnit;
 
-
 mod parsed_unit;
 
 pub fn compile_parser_impl(ts: TokenStream) -> TokenStream {
@@ -11,7 +10,7 @@ pub fn compile_parser_impl(ts: TokenStream) -> TokenStream {
         Ok(pu) => pu,
         Err(e) => {
             return e.to_compile_error().into_token_stream();
-        },
+        }
     };
     quote! {
         #pu

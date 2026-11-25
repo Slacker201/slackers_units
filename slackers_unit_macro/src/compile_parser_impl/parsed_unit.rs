@@ -1,8 +1,11 @@
 use quote::{ToTokens, format_ident, quote};
 use syn::{Ident, LitByteStr, parse::Parse};
 
-use crate::data::{Decimal, Id, parser_data::{EqOpt, Op}, unit_context::UnitContext};
-
+use crate::data::{
+    Decimal, Id,
+    parser_data::{EqOpt, Op},
+    unit_context::UnitContext,
+};
 
 #[derive(Debug)]
 pub struct ParsedUnit {
@@ -13,24 +16,25 @@ pub struct ParsedUnit {
 impl Parse for ParsedUnit {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let uc = UnitContext::deserialize(&input.parse::<LitByteStr>()?.value());
-        eprintln!("{}", input);
-
         let expr = EqOpt::parse_mul(input)?;
-        eprintln!("{:?}", expr);
         let resolved_expr = expr.resolve_suffixes(&uc)?;
         let (multiplier, unit_vector) = resolved_expr.flatten_unit_vector(&uc)?;
 
-        Ok(
-            Self { multiplier, unit_vector }
-        )
+        Ok(Self {
+            multiplier,
+            unit_vector,
+        })
     }
 }
-
 
 impl EqOpt<Id> {
     fn flatten_unit_vector(&self, uc: &UnitContext) -> syn::Result<(Decimal, Box<[i32]>)> {
         match self {
-            EqOpt::Multiply { first, next, span: _ } => {
+            EqOpt::Multiply {
+                first,
+                next,
+                span: _,
+            } => {
                 let (mut mult, mut uv) = first.flatten_unit_vector(uc)?;
                 for (op, next) in next {
                     let (n_mult, n_uv) = next.flatten_unit_vector(uc)?;
@@ -42,40 +46,38 @@ impl EqOpt<Id> {
                         uv.iter_mut().zip(n_uv).for_each(|(s, other)| *s -= other);
                     }
                 }
-                Ok(
-                    (
-                        mult,
-                        uv
-                    )
-                )
-            },
+                Ok((mult, uv))
+            }
             EqOpt::Pow { lhs, pow, span: _ } => {
                 let (old_mult, mut uv) = lhs.flatten_unit_vector(uc)?;
                 let mut new_mult = Decimal::ONE;
                 uv.iter_mut().for_each(|s| *s *= *pow);
                 if pow.is_negative() {
                     for _ in 0..pow.abs() {
-                        new_mult /= old_mult
+                        new_mult /= old_mult;
                     }
                 } else {
                     for _ in 0..pow.abs() {
-                        new_mult *= old_mult
+                        new_mult *= old_mult;
                     }
                 }
                 Ok((old_mult, uv))
-            },
-            EqOpt::Atom { multiplier, unit, span: _ } => {
-                let (m2, uv) = 
-                    uc.unit_id_to_vector.get(unit).cloned().expect("Should be correct");
-                Ok((
-                    *multiplier * m2,
-                    uv,
-                ))
-            },
+            }
+            EqOpt::Atom {
+                multiplier,
+                unit,
+                span: _,
+            } => {
+                let (m2, uv) = uc
+                    .unit_id_to_vector
+                    .get(unit)
+                    .cloned()
+                    .expect("Should be correct");
+                Ok((*multiplier * m2, uv))
+            }
         }
     }
 }
-
 
 impl ToTokens for ParsedUnit {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
@@ -93,7 +95,7 @@ impl ToTokens for ParsedUnit {
 }
 
 struct DecimalWrapper(Decimal);
-struct UnitVectorWrapper<'a>(&'a[i32]);
+struct UnitVectorWrapper<'a>(&'a [i32]);
 
 impl ToTokens for DecimalWrapper {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
@@ -101,7 +103,6 @@ impl ToTokens for DecimalWrapper {
         let (numer, denom) = self.0.into_raw();
         let numer_bytes = numer.to_be_bytes();
         let denom_bytes = denom.to_be_bytes();
-
 
         tokens.extend(quote! {
             {
@@ -122,17 +123,19 @@ impl ToTokens for DecimalWrapper {
     }
 }
 
-impl<'a> ToTokens for UnitVectorWrapper<'a> {
+impl ToTokens for UnitVectorWrapper<'_> {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let idents: Box<[Ident]> = self.0.iter().map(|v| {
-            if *v < 0 {
-                format_ident!("N{}", v.abs().cast_unsigned())
-            } else if *v > 0 {
-                format_ident!("P{}", v.cast_unsigned())
-            } else {
-                format_ident!("Z0")
-            }
-        }).collect();
+        let idents: Box<[Ident]> = self
+            .0
+            .iter()
+            .map(|v| {
+                match v.cmp(&0) {
+                    std::cmp::Ordering::Less => format_ident!("N{}", v.abs().cast_unsigned()),
+                    std::cmp::Ordering::Equal => format_ident!("Z0"),
+                    std::cmp::Ordering::Greater => format_ident!("P{}", v.cast_unsigned()),
+                }
+            })
+            .collect();
 
         tokens.extend(quote! {
             #(

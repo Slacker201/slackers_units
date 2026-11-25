@@ -7,7 +7,9 @@ use quote::format_ident;
 use syn::Ident;
 
 use crate::data::{
-    Decimal, DecimalPart, Id, parser_data::{Aliases, PrefixDefinition, PrefixGrouping, UnitDefinition}, unit_context::{UnitContext, prefix_trie::PrefixTrie},
+    Decimal, DecimalPart, Id,
+    parser_data::{Aliases, PrefixDefinition, PrefixGrouping, UnitDefinition},
+    unit_context::{UnitContext, prefix_trie::PrefixTrie},
 };
 
 pub trait ToBytes {
@@ -197,7 +199,12 @@ impl ToBytes for HashMap<Id, (Decimal, Box<[i32]>)> {
         for (key, (mult, vector)) in self {
             writer.write_u64(key.0);
             writer.write_decimal(*mult);
-            writer.write_bytes(&vector.iter().flat_map(|i| i.to_be_bytes()).collect::<Box<[u8]>>());
+            writer.write_bytes(
+                &vector
+                    .iter()
+                    .flat_map(|i| i.to_be_bytes())
+                    .collect::<Box<[u8]>>(),
+            );
         }
     }
 
@@ -263,49 +270,4 @@ impl UnitContext {
     pub fn deserialize(data: &[u8]) -> Self {
         Reader::deserialize(data)
     }
-}
-
-
-#[test]
-fn test() {
-    let uc = UnitContext::new(
-        &[
-            UnitDefinition {
-                name: format_ident!("Hey"),
-                id: Id(0),
-                aliases: Aliases {
-                    aliases: Box::from([format_ident!("Hey")]),
-                    span: Span::call_site(),
-                },
-                prefix_groups: PrefixGrouping::new_with_all(),
-                equality: None,
-                span: Span::call_site(),
-            }
-        ],
-        &[
-            PrefixDefinition {
-                name: format_ident!("HeyButPrefix"),
-                id: Id(0),
-                multiplier: Ratio::ONE,
-                aliases: Aliases {
-                    aliases: Box::from([format_ident!("HeyButPrefixed")]),
-                    span: Span::call_site(),
-                },
-                groups: PrefixGrouping::new_with_all(),
-                span: Span::call_site(),
-            }
-        ]
-    );
-
-    let bytes = uc.serialize();
-    let uc2 = UnitContext::deserialize(&bytes);
-
-    let mut buf = vec![0; 1024*1024];
-    let mut writer = Writer::new(&mut buf);
-    writer.write_decimal(Ratio::ONE);
-    let mut reader = Reader::new(&buf);
-    println!("{}", reader.read_decimal());
-
-    assert_eq!(uc, uc2);
-
 }

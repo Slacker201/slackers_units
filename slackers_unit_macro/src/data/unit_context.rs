@@ -67,10 +67,10 @@ impl UnitContext {
             .collect();
 
         Self {
-            unit_id_to_vector,
             unit_trie,
             prefix_trie,
             prefix_id_to_multiplier,
+            unit_id_to_vector,
             prefix_data,
             unit_data,
         }
