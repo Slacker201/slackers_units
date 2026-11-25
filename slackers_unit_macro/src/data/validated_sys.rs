@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use syn::Ident;
 
-use crate::data::{Decimal, Id, registries::NameRegistry, unit_context::UnitContext};
+use crate::data::{Id, registries::NameRegistry, unit_context::UnitContext};
 
 type Operand1 = Box<[Ident]>;
 type Operand2 = Box<[Ident]>;
@@ -12,8 +12,6 @@ type Result = Box<[Ident]>;
 pub struct ValidatedSystem {
     #[allow(unused)]
     pub alias_to_id: HashMap<String, Id>,
-    #[allow(unused)]
-    pub id_to_vector_and_mult: HashMap<Id, (Decimal, Box<[i32]>)>,
 
     // System metadata
 

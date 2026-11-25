@@ -42,7 +42,7 @@ impl<'a> Graph<'a> {
         for unit in units {
             let mut node = GraphNode::new(unit);
             if let Some(v) = gc.base_to_vector_mapping.get(&node.id) {
-                node.vmult = Some((1.0, v.clone()));
+                node.vmult = Some((Decimal::ONE, v.clone()));
             }
             nodes.insert(node.id, node);
         }

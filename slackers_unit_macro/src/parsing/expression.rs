@@ -88,7 +88,7 @@ impl EqOpt<Id> {
             }
             EqOpt::Pow { lhs, pow, span: _ } => {
                 let (o_mult, mut o_vec) = lhs.try_get_vmult(nodes)?;
-                let mut mult = 1.0;
+                let mut mult = Decimal::ONE;
                 if pow.is_negative() {
                 } else {
                     o_vec.iter_mut().for_each(|v| *v *= pow);
@@ -184,7 +184,7 @@ impl EqOpt<String> {
 }
 
 impl EqOpt<String> {
-    fn parse_mul(input: syn::parse::ParseStream) -> syn::Result<Self> {
+    pub fn parse_mul(input: syn::parse::ParseStream) -> syn::Result<Self> {
         /*
             number = decimal | integer | fraction
             suffixed_num = number ident
@@ -278,7 +278,7 @@ impl EqOpt<String> {
             )))
         } else if input.peek(Ident) {
             let ident = input.parse::<Ident>()?;
-            Ok(Some((1.0, ident.to_string(), ident.span())))
+            Ok(Some((Decimal::ONE, ident.to_string(), ident.span())))
         } else {
             Ok(None)
         }

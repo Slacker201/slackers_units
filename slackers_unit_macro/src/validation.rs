@@ -16,16 +16,19 @@ impl System {
             unit_to_id: Some(&self.unit_registry),
         };
         let graph_context = self.validate_matched_bases(&mut vc)?;
-        let (alias_to_id, id_to_vector_and_mult) = self.reduce_unit_equations(&graph_context)?;
+        let (alias_to_id, unit_id_to_vector) = self.reduce_unit_equations(&graph_context)?;
 
         let unit_generic_names = self.get_unit_generic_names();
         let unit_phantom_data_names = self.get_unit_phantom_data_names();
         let unit_arith_generic_names = self.get_unit_arith_generic_names();
 
+        let mut unit_context = self.unit_context;
+
+        unit_context.unit_id_to_vector = unit_id_to_vector;
+
         Ok(ValidatedSystem {
-            unit_context: self.unit_context,
+            unit_context,
             alias_to_id,
-            id_to_vector_and_mult,
             unit_generic_names,
             unit_phantom_data_names,
             unit_arith_generic_names,

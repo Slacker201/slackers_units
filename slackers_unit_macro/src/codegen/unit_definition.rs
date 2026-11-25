@@ -124,6 +124,28 @@ impl ValidatedSystem {
         ts
     }
 
+    pub fn generate_new(&self) -> TokenStream {
+        let ud_names = &self.unit_generic_names;
+        let pd_names = &self.unit_phantom_data_names;
+
+        quote! {
+            impl<
+            #(
+                #ud_names,
+            )*
+            B: ::slackers_units::conversion::Conversion> Unit<#(#ud_names,)* B> {
+                pub(crate) fn new(value: ::slackers_units::Ratio<::slackers_units::Bint::<true, 8, 0, 0>>) -> Self {
+                    Self {
+                        #(
+                            #pd_names: core::marker::PhantomData,
+                        )*
+                        value: B::convert(value),
+                    }
+                }
+            }
+        }
+    }
+
     pub fn generate_unit_debug(&self) -> TokenStream {
         // TODO incorporate unit vector
         let ud_names = &self.unit_generic_names;

@@ -14,13 +14,14 @@ pub mod serialization;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct UnitContext {
-    unit_trie: PrefixTrie<Id>,
-    prefix_trie: PrefixTrie<Id>,
+    pub unit_trie: PrefixTrie<Id>,
+    pub prefix_trie: PrefixTrie<Id>,
 
-    prefix_id_to_multiplier: HashMap<Id, Decimal>,
+    pub prefix_id_to_multiplier: HashMap<Id, Decimal>,
+    pub unit_id_to_vector: HashMap<Id, (Decimal, Box<[i32]>)>,
 
-    prefix_data: Box<[(String, Id)]>,
-    unit_data: Box<[(String, Id)]>,
+    pub prefix_data: Box<[(String, Id)]>,
+    pub unit_data: Box<[(String, Id)]>,
 }
 
 impl UnitContext {
@@ -28,6 +29,7 @@ impl UnitContext {
         let mut unit_trie = PrefixTrie::default();
         let mut prefix_trie = PrefixTrie::default();
         let mut prefix_id_to_multiplier = HashMap::new();
+        let unit_id_to_vector = HashMap::new();
 
         for unit in units {
             for alias in &unit.aliases.aliases {
@@ -65,6 +67,7 @@ impl UnitContext {
             .collect();
 
         Self {
+            unit_id_to_vector,
             unit_trie,
             prefix_trie,
             prefix_id_to_multiplier,
@@ -80,7 +83,7 @@ impl UnitContext {
         if let Some((unit, remainder)) = self.unit_trie.find_longest(suffix.as_bytes())
             && remainder.is_empty()
         {
-            return Ok((1.0, *unit));
+            return Ok((Decimal::ONE, *unit));
         }
         if let Some((prefix, prefix_remainder)) = self.prefix_trie.find_longest(suffix.as_bytes()) {
             if let Some((unit, unit_remainder)) = self.unit_trie.find_longest(prefix_remainder) {
