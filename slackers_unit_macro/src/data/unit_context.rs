@@ -35,9 +35,16 @@ impl UnitContext {
             }
         }
 
-        let unit_data = units.iter().flat_map(|unit_def| {
-            unit_def.aliases.aliases.iter().map(|alia| (alia.to_string(), unit_def.id))
-        }).collect();
+        let unit_data = units
+            .iter()
+            .flat_map(|unit_def| {
+                unit_def
+                    .aliases
+                    .aliases
+                    .iter()
+                    .map(|alia| (alia.to_string(), unit_def.id))
+            })
+            .collect();
 
         for prefix in prefixes {
             for alias in &prefix.aliases.aliases {
@@ -46,16 +53,23 @@ impl UnitContext {
             prefix_id_to_multiplier.insert(prefix.id, prefix.multiplier);
         }
 
-        let prefix_data = prefixes.iter().flat_map(|prefix_def| {
-            prefix_def.aliases.aliases.iter().map(|alia| (alia.to_string(), prefix_def.id))
-        }).collect();
+        let prefix_data = prefixes
+            .iter()
+            .flat_map(|prefix_def| {
+                prefix_def
+                    .aliases
+                    .aliases
+                    .iter()
+                    .map(|alia| (alia.to_string(), prefix_def.id))
+            })
+            .collect();
 
         Self {
             unit_trie,
             prefix_trie,
             prefix_id_to_multiplier,
-            unit_data,
             prefix_data,
+            unit_data,
         }
     }
 

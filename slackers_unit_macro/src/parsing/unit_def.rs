@@ -77,7 +77,8 @@ impl UnitDefinition<String> {
     }
 
     pub fn resolve_suffixes(self, registry: &UnitContext) -> syn::Result<UnitDefinition<Id>> {
-        let equality = if let Some(r) = self.equality.map(|eq| eq.inner.resolve_suffixes(registry)) {
+        let equality = if let Some(r) = self.equality.map(|eq| eq.inner.resolve_suffixes(registry))
+        {
             let m = r?;
             Some(EqualityExpression {
                 span: m.span(),
@@ -104,13 +105,13 @@ impl<T> EqOpt<T> {
                 first: _,
                 next: _,
                 span,
-            } |
-            EqOpt::Pow {
+            }
+            | EqOpt::Pow {
                 lhs: _,
                 pow: _,
                 span,
-            } |
-            EqOpt::Atom {
+            }
+            | EqOpt::Atom {
                 multiplier: _,
                 unit: _,
                 span,
@@ -123,13 +124,13 @@ impl<T> EqOpt<T> {
                 first: _,
                 next: _,
                 span,
-            } |
-            EqOpt::Pow {
+            }
+            | EqOpt::Pow {
                 lhs: _,
                 pow: _,
                 span,
-            } |
-            EqOpt::Atom {
+            }
+            | EqOpt::Atom {
                 multiplier: _,
                 unit: _,
                 span,

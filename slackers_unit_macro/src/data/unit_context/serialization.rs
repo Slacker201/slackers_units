@@ -1,17 +1,18 @@
+#![allow(unused)]
 use std::{array::from_fn, collections::HashMap, ptr};
 
 use quote::format_ident;
 use syn::Ident;
 
-use crate::data::{Decimal, Id, unit_context::{UnitContext, prefix_trie::PrefixTrie}};
-
+use crate::data::{
+    Decimal, Id,
+    unit_context::{UnitContext, prefix_trie::PrefixTrie},
+};
 
 pub trait ToBytes {
     fn to_bytes(&self, writer: &mut Writer<'_>);
     fn from_bytes(reader: &mut Reader<'_>) -> Self;
 }
-
-
 
 pub struct Writer<'a> {
     slice: &'a mut [u8],
@@ -20,11 +21,19 @@ pub struct Writer<'a> {
 }
 
 impl<'a> Writer<'a> {
-    fn new(slice: &'a mut[u8]) -> Self {
-        Self { slice, idx: 0, is_fake: false }
+    fn new(slice: &'a mut [u8]) -> Self {
+        Self {
+            slice,
+            idx: 0,
+            is_fake: false,
+        }
     }
     fn new_fake() -> Self {
-        Self { slice: &mut [], idx: 0, is_fake: true }
+        Self {
+            slice: &mut [],
+            idx: 0,
+            is_fake: true,
+        }
     }
     fn write_usize(&mut self, value: usize) {
         self.write_bytes(&value.to_be_bytes());
@@ -51,16 +60,13 @@ impl<'a> Writer<'a> {
         self.write_bytes(s.as_bytes());
     }
     pub fn serialize_data<T>(data: &T) -> Box<[u8]>
-    where 
+    where
         T: ToBytes,
     {
         let mut fake = Self::new_fake();
         data.to_bytes(&mut fake);
         let len = fake.idx;
-        let mut backer: Vec<u8> = Vec::with_capacity(len);
-        unsafe {
-            backer.set_len(len);
-        }
+        let mut backer: Vec<u8> = vec![0; len];
         let mut real = Writer::new(&mut backer);
         data.to_bytes(&mut real);
         backer.into_boxed_slice()
@@ -83,11 +89,7 @@ impl<'a> Reader<'a> {
     }
     fn read_str(&mut self) -> &str {
         let len = self.read_usize();
-        let s = unsafe {
-            str::from_utf8_unchecked(
-                &self.buffer[self.idx..self.idx + len]
-            )
-        };
+        let s = unsafe { str::from_utf8_unchecked(&self.buffer[self.idx..self.idx + len]) };
         self.idx += len;
         s
     }
@@ -121,9 +123,7 @@ impl ToBytes for Box<[Ident]> {
         for idx in 0..len {
             s[idx].write(format_ident!("{}", reader.read_str()));
         }
-        unsafe {
-            s.assume_init()
-        }
+        unsafe { s.assume_init() }
     }
 }
 
@@ -135,7 +135,7 @@ impl ToBytes for Box<[(String, Id)]> {
             writer.write_u64(id.0);
         }
     }
-    
+
     fn from_bytes(reader: &mut Reader<'_>) -> Self {
         let len = reader.read_usize();
         let mut s = Self::new_uninit_slice(len);
@@ -144,9 +144,7 @@ impl ToBytes for Box<[(String, Id)]> {
             let id = Id(reader.read_u64());
             s[idx].write((string, id));
         }
-        unsafe {
-            s.assume_init()
-        }
+        unsafe { s.assume_init() }
     }
 }
 
@@ -159,7 +157,7 @@ impl ToBytes for HashMap<Id, f64> {
             writer.write_decimal(*decimal);
         }
     }
-    
+
     fn from_bytes(reader: &mut Reader<'_>) -> Self {
         let len = reader.read_usize();
         let mut s = Self::new();
@@ -178,7 +176,7 @@ impl ToBytes for UnitContext {
         self.unit_data.to_bytes(writer);
         self.prefix_id_to_multiplier.to_bytes(writer);
     }
-    
+
     fn from_bytes(reader: &mut Reader<'_>) -> Self {
         let prefix_data: Box<[(String, Id)]> = Box::from_bytes(reader);
         let unit_data: Box<[(String, Id)]> = Box::from_bytes(reader);
@@ -195,7 +193,13 @@ impl ToBytes for UnitContext {
             prefix_trie.add_item(key.as_bytes(), *id);
         }
 
-        Self { unit_trie, prefix_trie, prefix_id_to_multiplier, prefix_data, unit_data, }
+        Self {
+            unit_trie,
+            prefix_trie,
+            prefix_id_to_multiplier,
+            prefix_data,
+            unit_data,
+        }
     }
 }
 

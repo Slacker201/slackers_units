@@ -145,5 +145,4 @@ impl ValidatedSystem {
             }
         }
     }
-    
 }

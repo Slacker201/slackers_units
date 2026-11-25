@@ -27,12 +27,7 @@ impl System {
             };
 
             if base_to_vector_mapping
-                .insert(
-                    id,
-                    (0..leaf_count)
-                        .map(|v| i32::from(v == idx))
-                        .collect(),
-                )
+                .insert(id, (0..leaf_count).map(|v| i32::from(v == idx)).collect())
                 .is_some()
             {
                 return Err(Error::new(

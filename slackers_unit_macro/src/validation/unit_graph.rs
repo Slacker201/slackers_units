@@ -129,7 +129,9 @@ impl<'a> GraphNode<'a> {
         }
         let mut dependees = vec![];
         for edge in &self.edges {
-             if let Some(node) = nodes.get(edge) { node.gd(nodes, &mut dependees) }
+            if let Some(node) = nodes.get(edge) {
+                node.gd(nodes, &mut dependees);
+            }
         }
 
         dependees.into_boxed_slice()
@@ -147,7 +149,9 @@ impl<'a> GraphNode<'a> {
         }
 
         for edge in &self.edges {
-            if let Some(node) = nodes.get(edge) { node.gd(nodes, dependees) }
+            if let Some(node) = nodes.get(edge) {
+                node.gd(nodes, dependees);
+            }
         }
     }
     fn try_flatten(&self, nodes: &HashMap<Id, GraphNode>) -> Result<(Decimal, Box<[i32]>), Id> {

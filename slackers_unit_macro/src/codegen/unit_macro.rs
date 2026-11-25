@@ -4,8 +4,6 @@ use syn::LitByteStr;
 
 use crate::data::validated_sys::ValidatedSystem;
 
-
-
 impl ValidatedSystem {
     pub fn generate_unit_macro_impl(&self) -> TokenStream {
         let byte_str = LitByteStr::new(&self.unit_context.serialize(), Span::call_site());
