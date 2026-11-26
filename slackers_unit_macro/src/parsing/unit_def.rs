@@ -5,7 +5,7 @@ use crate::{
     data::{
         Id,
         parser_data::{
-            Aliases, EqOpt, EqualityExpression, PrefixGrouping, UnitDefinition, aliases,
+            Aliases, EqOpt, EqualityExpression, PrefixClasses, UnitDefinition, aliases,
             prefix_classes, unit,
         },
         registries::NameRegistry,
@@ -23,15 +23,16 @@ impl UnitDefinition<String> {
         let name = input.parse::<Ident>()?;
         let body;
         let end_span = braced!(body in input).span.close();
-        let mut prefixable: Option<PrefixGrouping> = None;
+        let mut prefixable: Option<PrefixClasses> = None;
         let mut alia: Option<Aliases> = None;
         let mut equiv: Option<EqualityExpression<String>> = None;
         loop {
             if body.peek(prefix_classes) {
-                if let Some(pref) = prefixable {
-                    return Err(Error::new(pref.span, "Expected at most 1 prefix class"));
+                let pref_span = body.span();
+                if prefixable.is_some() {
+                    return Err(Error::new(pref_span, "Expected at most 1 prefix class"));
                 }
-                prefixable = Some(body.parse::<PrefixGrouping>()?);
+                prefixable = Some(body.parse::<PrefixClasses>()?);
                 continue;
             }
             if body.peek(eq) || body.peek(equivalent) {
@@ -61,9 +62,8 @@ impl UnitDefinition<String> {
         let id = unit_registry.get_id(name.to_string());
         let aliases = alia.unwrap_or(Aliases::new_empty());
         aliases.register_aliases(id, unit_registry)?;
-        let prefixable = prefixable.unwrap_or(PrefixGrouping {
-            allowed_groups: Box::new([Ident::new("All", Span::call_site())]),
-            span: Span::call_site(),
+        let prefixable = prefixable.unwrap_or(PrefixClasses {
+            allowed_groups: Box::new(["All".to_string()]),
         });
 
         Ok(Self {

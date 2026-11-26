@@ -4,7 +4,7 @@ use crate::{
     data::{
         Decimal,
         parser_data::{
-            Aliases, PrefixDefinition, PrefixGrouping, aliases, mult, multiplier, prefix,
+            Aliases, PrefixClasses, PrefixDefinition, aliases, mult, multiplier, prefix,
             prefix_classes,
         },
         registries::NameRegistry,
@@ -42,7 +42,7 @@ impl PrefixDefinition {
                 continue;
             }
             if body.peek(prefix_classes) {
-                p_classes = Some(PrefixGrouping::parse(&body)?);
+                p_classes = Some(PrefixClasses::parse(&body)?);
             }
 
             if body.is_empty() {
@@ -75,7 +75,7 @@ impl PrefixDefinition {
             id,
             multiplier,
             aliases: alia,
-            groups: p_classes.unwrap_or(PrefixGrouping::new_with_all()),
+            groups: p_classes.unwrap_or(PrefixClasses::new_with_all()),
             span: start_span.join(end_span).unwrap_or(start_span),
         })
     }

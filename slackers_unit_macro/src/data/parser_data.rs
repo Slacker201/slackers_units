@@ -17,7 +17,7 @@ pub(crate) struct UnitDefinition<T> {
     pub name: Ident,
     pub id: Id,
     pub aliases: Aliases,
-    pub prefix_groups: PrefixGrouping,
+    pub prefix_groups: PrefixClasses,
     pub equality: Option<EqualityExpression<T>>,
     pub span: Span,
 }
@@ -30,7 +30,7 @@ pub(crate) struct PrefixDefinition {
     pub multiplier: Decimal,
     pub aliases: Aliases,
     #[allow(unused)]
-    pub groups: PrefixGrouping,
+    pub groups: PrefixClasses,
     #[allow(unused)]
     pub span: Span,
 }
@@ -79,10 +79,9 @@ pub enum Op {
 }
 syn::custom_keyword!(unit);
 #[derive(Clone, Debug)]
-pub struct PrefixGrouping {
+pub struct PrefixClasses {
     #[allow(unused)]
-    pub allowed_groups: Box<[Ident]>,
-    pub span: Span,
+    pub allowed_groups: Box<[String]>,
 }
 syn::custom_keyword!(prefix_classes);
 #[derive(Clone, Debug)]

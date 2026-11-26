@@ -1,5 +1,5 @@
 #![allow(unused)]
-use std::{array::from_fn, collections::HashMap, ptr};
+use std::{array::from_fn, collections::HashMap, hash::Hash, ptr, sync::Arc};
 
 use num_rational::Ratio;
 use proc_macro2::Span;
@@ -8,7 +8,7 @@ use syn::Ident;
 
 use crate::data::{
     Decimal, DecimalPart, Id,
-    parser_data::{Aliases, PrefixDefinition, PrefixGrouping, UnitDefinition},
+    parser_data::{Aliases, PrefixClasses, PrefixDefinition, UnitDefinition},
     unit_context::{UnitContext, prefix_trie::PrefixTrie},
 };
 
@@ -127,52 +127,33 @@ impl<'a> Reader<'a> {
     }
 }
 
-impl ToBytes for Box<[Ident]> {
-    fn to_bytes(&self, writer: &mut Writer<'_>) {
-        let ident_count = self.len();
-        writer.write_usize(ident_count);
-        for ident in self {
-            writer.write_len_prefixed_str(&ident.to_string());
-        }
-    }
-    fn from_bytes(reader: &mut Reader<'_>) -> Self {
-        let len = reader.read_usize();
-        let mut s = Self::new_uninit_slice(len);
-        for idx in 0..len {
-            s[idx].write(format_ident!("{}", reader.read_str()));
-        }
-        unsafe { s.assume_init() }
-    }
-}
-
-impl ToBytes for Box<[(String, Id)]> {
+impl<T: ToBytes> ToBytes for Box<[T]> {
     fn to_bytes(&self, writer: &mut Writer<'_>) {
         writer.write_usize(self.len());
-        for (s, id) in self {
-            writer.write_len_prefixed_str(s);
-            writer.write_u64(id.0);
+        for value in self {
+            value.to_bytes(writer);
         }
     }
 
     fn from_bytes(reader: &mut Reader<'_>) -> Self {
-        let len = reader.read_usize();
-        let mut s = Self::new_uninit_slice(len);
-        for idx in 0..len {
-            let string = reader.read_str().to_string();
-            let id = Id(reader.read_u64());
-            s[idx].write((string, id));
+        let count = reader.read_usize();
+        let mut s = Self::new_uninit_slice(count);
+        for item in &mut s {
+            item.write(T::from_bytes(reader));
         }
+
         unsafe { s.assume_init() }
     }
 }
 
-impl ToBytes for HashMap<Id, Decimal> {
+impl<K: ToBytes + Ord + Hash, V: ToBytes> ToBytes for HashMap<K, V> {
     fn to_bytes(&self, writer: &mut Writer<'_>) {
-        let len = self.len();
-        writer.write_usize(len);
-        for (id, decimal) in self {
-            writer.write_u64(id.0);
-            writer.write_decimal(*decimal);
+        writer.write_usize(self.len());
+        let mut keys: Box<[_]> = self.iter().collect();
+        keys.sort_by_key(|(k, v)| *k);
+        for (key, value) in keys {
+            key.to_bytes(writer);
+            value.to_bytes(writer);
         }
     }
 
@@ -180,50 +161,88 @@ impl ToBytes for HashMap<Id, Decimal> {
         let len = reader.read_usize();
         let mut s = Self::new();
         for _ in 0..len {
-            let id = reader.read_u64();
-            let decimal = reader.read_decimal();
-            s.insert(Id(id), decimal);
+            let key = K::from_bytes(reader);
+            let value = V::from_bytes(reader);
+            s.insert(key, value);
         }
+
         s
     }
 }
 
-impl ToBytes for HashMap<Id, (Decimal, Box<[i32]>)> {
+impl ToBytes for Id {
     fn to_bytes(&self, writer: &mut Writer<'_>) {
-        writer.write_usize(self.len());
-        let Some((_, vec)) = self.values().next() else {
-            writer.write_usize(0);
-            return;
-        };
-        writer.write_usize(vec.len());
-        for (key, (mult, vector)) in self {
-            writer.write_u64(key.0);
-            writer.write_decimal(*mult);
-            writer.write_bytes(
-                &vector
-                    .iter()
-                    .flat_map(|i| i.to_be_bytes())
-                    .collect::<Box<[u8]>>(),
-            );
-        }
+        writer.write_u64(self.0);
+    }
+
+    fn from_bytes(reader: &mut Reader<'_>) -> Self {
+        Self(reader.read_u64())
+    }
+}
+
+impl ToBytes for String {
+    fn to_bytes(&self, writer: &mut Writer<'_>) {
+        writer.write_len_prefixed_str(self);
     }
 
     fn from_bytes(reader: &mut Reader<'_>) -> Self {
         let len = reader.read_usize();
-        let vector_len = reader.read_usize();
-        let mut s = HashMap::new();
-        for _ in 0..len {
-            let id = reader.read_u64();
-            let decimal = reader.read_decimal();
-            let mut vector = vec![];
-            for _ in 0..vector_len {
-                let read_bytes = reader.read_bytes(size_of::<i32>());
-                let bytes: [u8; size_of::<i32>()] = from_fn(|idx| read_bytes[idx]);
-                vector.push(i32::from_be_bytes(bytes));
-            }
-            s.insert(Id(id), (decimal, vector.into_boxed_slice()));
+        unsafe { Self::from_utf8_unchecked(reader.read_bytes(len).into()) }
+    }
+}
+
+impl ToBytes for Ident {
+    fn to_bytes(&self, writer: &mut Writer<'_>) {
+        self.to_string().to_bytes(writer);
+    }
+
+    fn from_bytes(reader: &mut Reader<'_>) -> Self {
+        format_ident!("{}", String::from_bytes(reader))
+    }
+}
+
+impl<T: ToBytes, U: ToBytes> ToBytes for (T, U) {
+    fn to_bytes(&self, writer: &mut Writer<'_>) {
+        self.0.to_bytes(writer);
+        self.1.to_bytes(writer);
+    }
+
+    fn from_bytes(reader: &mut Reader<'_>) -> Self {
+        (T::from_bytes(reader), U::from_bytes(reader))
+    }
+}
+
+impl ToBytes for Decimal {
+    fn to_bytes(&self, writer: &mut Writer<'_>) {
+        writer.write_decimal(*self);
+    }
+
+    fn from_bytes(reader: &mut Reader<'_>) -> Self {
+        reader.read_decimal()
+    }
+}
+
+impl ToBytes for i32 {
+    fn to_bytes(&self, writer: &mut Writer<'_>) {
+        writer.write_bytes(&self.to_be_bytes());
+    }
+
+    fn from_bytes(reader: &mut Reader<'_>) -> Self {
+        let bytes = reader.read_bytes(size_of::<i32>());
+
+        i32::from_be_bytes(from_fn(|idx| bytes[idx]))
+    }
+}
+
+impl ToBytes for PrefixClasses {
+    fn to_bytes(&self, writer: &mut Writer<'_>) {
+        self.allowed_groups.to_bytes(writer);
+    }
+
+    fn from_bytes(reader: &mut Reader<'_>) -> Self {
+        Self {
+            allowed_groups: ToBytes::from_bytes(reader),
         }
-        s
     }
 }
 
@@ -233,6 +252,8 @@ impl ToBytes for UnitContext {
         self.unit_data.to_bytes(writer);
         self.prefix_id_to_multiplier.to_bytes(writer);
         self.unit_id_to_vector.to_bytes(writer);
+        self.prefix_id_to_grouping.to_bytes(writer);
+        self.unit_id_to_grouping.to_bytes(writer);
         writer.write_u64(self.null_id.0);
     }
 
@@ -241,6 +262,8 @@ impl ToBytes for UnitContext {
         let unit_data: Box<[(String, Id)]> = Box::from_bytes(reader);
         let prefix_id_to_multiplier = HashMap::<Id, Decimal>::from_bytes(reader);
         let unit_id_to_vector = ToBytes::from_bytes(reader);
+        let prefix_id_to_grouping = ToBytes::from_bytes(reader);
+        let unit_id_to_grouping = ToBytes::from_bytes(reader);
         let null_id = reader.read_u64();
         let _ = reader;
         let mut unit_trie = PrefixTrie::default();
@@ -262,6 +285,8 @@ impl ToBytes for UnitContext {
             unit_id_to_vector,
             prefix_data,
             unit_data,
+            prefix_id_to_grouping,
+            unit_id_to_grouping,
         }
     }
 }

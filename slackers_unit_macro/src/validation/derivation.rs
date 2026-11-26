@@ -6,7 +6,7 @@ use syn::Ident;
 use crate::data::{
     Id,
     parser_data::{
-        Aliases, BaseDefinition, EqOpt, EqualityExpression, PrefixDefinition, PrefixGrouping,
+        Aliases, BaseDefinition, EqOpt, EqualityExpression, PrefixClasses, PrefixDefinition,
         System, UnitDefinition,
     },
     registries::NameRegistry,
@@ -72,7 +72,7 @@ impl Hash for Aliases {
     }
 }
 
-impl Hash for PrefixGrouping {
+impl Hash for PrefixClasses {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.allowed_groups.hash(state);
     }
