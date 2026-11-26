@@ -35,10 +35,6 @@ impl Parse for System {
         let null_id = unit_registry.get_id("");
         let unit_context = UnitContext::new(&units, &prefixes, null_id);
 
-        let bytes = unit_context.serialize();
-        let other = UnitContext::deserialize(&bytes);
-        assert_eq!(unit_context, other);
-
         let units: Box<[UnitDefinition<crate::data::Id>]> = units
             .into_iter()
             .map(|unit| unit.resolve_suffixes(&unit_context))
