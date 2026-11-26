@@ -4,11 +4,12 @@ use std::{
 };
 
 use proc_macro2::Span;
+use quote::format_ident;
 use syn::Error;
 
 use crate::data::{
     Decimal, Id,
-    parser_data::{PrefixClasses, PrefixDefinition, UnitDefinition},
+    parser_data::{Aliases, PrefixClasses, PrefixDefinition, UnitDefinition},
     unit_context::prefix_trie::PrefixTrie,
 };
 
@@ -43,6 +44,17 @@ impl UnitContext {
         let mut prefix_id_to_grouping = HashMap::new();
         let mut unit_id_to_grouping = HashMap::new();
 
+        let null_unit = UnitDefinition {
+            name: format_ident!("null_value"),
+            id: null_id,
+            aliases: Aliases::new_empty(),
+            prefix_groups: PrefixClasses {
+                allowed_groups: Box::default(),
+            },
+            equality: None,
+            span: Span::call_site(),
+        };
+
         for unit in units {
             for alias in &unit.aliases.aliases {
                 unit_trie.add_item(alias.to_string().as_bytes(), unit.id);
@@ -52,6 +64,7 @@ impl UnitContext {
 
         let unit_data = units
             .iter()
+            .chain(&[null_unit])
             .flat_map(|unit_def| {
                 unit_def
                     .aliases
@@ -124,7 +137,7 @@ impl UnitContext {
                     return Err(Error::new(
                         span,
                         format!(
-                            "Unit {unit_name} does not support the prefix {prefix_name}\n{unit_name} supports {unit_grouping}\nThe prefix {prefix_name} is part of {prefix_grouping}",
+                            "Unit `{unit_name}` does not support the prefix `{prefix_name}`\n`{unit_name}` supports {unit_grouping}\nThe prefix `{prefix_name}` is part of {prefix_grouping}",
                         ),
                     ));
                 }

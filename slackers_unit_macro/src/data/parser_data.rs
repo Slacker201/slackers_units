@@ -80,7 +80,6 @@ pub enum Op {
 syn::custom_keyword!(unit);
 #[derive(Clone, Debug)]
 pub struct PrefixClasses {
-    #[allow(unused)]
     pub allowed_groups: Box<[String]>,
 }
 syn::custom_keyword!(prefix_classes);

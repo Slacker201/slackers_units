@@ -106,9 +106,12 @@ impl EqOpt<Id> {
                 unit,
                 span: _,
             } => {
-                let node = nodes
-                    .get(unit)
-                    .expect("This should always be a valid id as well");
+                let Some(node) = nodes.get(unit) else {
+                    let (_, node) = nodes.iter().find(|(_, node)| node.vmult.is_some()).unwrap();
+                    let vector = node.vmult.clone().unwrap().1.clone();
+                    let v = (Ratio::ONE, vector);
+                    return Ok(v);
+                };
                 let Some((mult, vec)) = &node.vmult else {
                     return Err(node.id);
                 };
