@@ -3,7 +3,7 @@ use quote::{ToTokens, quote};
 
 use crate::compile_parser_impl::parsed_unit::ParsedUnit;
 
-mod parsed_unit;
+pub mod parsed_unit;
 
 pub fn compile_parser_impl(ts: TokenStream) -> TokenStream {
     let pu = match syn::parse2::<ParsedUnit>(ts) {

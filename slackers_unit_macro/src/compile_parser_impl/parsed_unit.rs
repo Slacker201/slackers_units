@@ -17,7 +17,7 @@ static CACHE: LazyLock<DashMap<u64, Arc<UnitContext>>> = LazyLock::new(DashMap::
 #[derive(Debug)]
 pub struct ParsedUnit {
     multiplier: Decimal,
-    unit_vector: Box<[i32]>,
+    pub unit_vector: Box<[i32]>,
 }
 
 impl Parse for ParsedUnit {
@@ -128,7 +128,7 @@ impl ToTokens for ParsedUnit {
 }
 
 struct DecimalWrapper(Decimal);
-struct UnitVectorWrapper<'a>(&'a [i32]);
+pub struct UnitVectorWrapper<'a>(pub &'a [i32]);
 
 impl ToTokens for DecimalWrapper {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {

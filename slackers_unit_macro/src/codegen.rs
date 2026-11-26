@@ -4,6 +4,7 @@ use crate::data::validated_sys::ValidatedSystem;
 
 mod unit_definition;
 mod unit_macro;
+mod ut_macro;
 
 impl ToTokens for ValidatedSystem {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
@@ -12,5 +13,6 @@ impl ToTokens for ValidatedSystem {
         tokens.extend(self.generate_new());
         tokens.extend(self.generate_unit_debug());
         tokens.extend(self.generate_unit_macro_impl());
+        tokens.extend(self.generate_ut_macro_impl());
     }
 }
