@@ -32,8 +32,8 @@ impl Parse for System {
             }
             return Err(Error::new(input.span(), "Expected eof"));
         }
-
-        let unit_context = UnitContext::new(&units, &prefixes);
+        let null_id = unit_registry.get_id("");
+        let unit_context = UnitContext::new(&units, &prefixes, null_id);
 
         let bytes = unit_context.serialize();
         let other = UnitContext::deserialize(&bytes);

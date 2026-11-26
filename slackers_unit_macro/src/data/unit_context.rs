@@ -22,10 +22,15 @@ pub struct UnitContext {
 
     pub prefix_data: Box<[(String, Id)]>,
     pub unit_data: Box<[(String, Id)]>,
+    pub null_id: Id,
 }
 
 impl UnitContext {
-    pub fn new(units: &[UnitDefinition<String>], prefixes: &[PrefixDefinition]) -> Self {
+    pub fn new(
+        units: &[UnitDefinition<String>],
+        prefixes: &[PrefixDefinition],
+        null_id: Id,
+    ) -> Self {
         let mut unit_trie = PrefixTrie::default();
         let mut prefix_trie = PrefixTrie::default();
         let mut prefix_id_to_multiplier = HashMap::new();
@@ -73,12 +78,13 @@ impl UnitContext {
             unit_id_to_vector,
             prefix_data,
             unit_data,
+            null_id,
         }
     }
 
     pub fn parse_suffix(&self, suffix: &str, span: Span) -> syn::Result<(Decimal, Id)> {
         if suffix.is_empty() {
-            return Err(Error::new(span, "Found no suffix"));
+            return Ok((Decimal::ONE, self.null_id));
         }
         if let Some((unit, remainder)) = self.unit_trie.find_longest(suffix.as_bytes())
             && remainder.is_empty()
