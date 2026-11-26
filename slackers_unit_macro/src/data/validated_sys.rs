@@ -14,6 +14,7 @@ pub struct ValidatedSystem {
     pub alias_to_id: HashMap<String, Id>,
 
     // System metadata
+    pub sys_hash: Box<[u8]>,
 
     // Unit definition
     pub unit_generic_names: Box<[Ident]>,

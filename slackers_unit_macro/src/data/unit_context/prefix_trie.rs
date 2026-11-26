@@ -1,6 +1,6 @@
-use std::{collections::HashMap, fmt::Debug};
+use std::{collections::HashMap, fmt::Debug, hash::Hash};
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Hash)]
 pub struct PrefixTrie<T> {
     root: TrieNode<T>,
 }
@@ -81,5 +81,19 @@ impl<T: Debug> Debug for TrieNode<T> {
             .field("next", &self.next)
             .field("value", &self.value)
             .finish()
+    }
+}
+
+impl<T: Hash> Hash for TrieNode<T> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        match &self.next {
+            Some(value) => {
+                let mut kv_refs: Box<[_]> = value.iter().collect();
+                kv_refs.sort_by_key(|(byte, _)| **byte);
+                kv_refs.hash(state);
+            }
+            None => None::<()>.hash(state),
+        }
+        self.value.hash(state);
     }
 }

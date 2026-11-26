@@ -233,6 +233,7 @@ impl ToBytes for UnitContext {
         self.unit_data.to_bytes(writer);
         self.prefix_id_to_multiplier.to_bytes(writer);
         self.unit_id_to_vector.to_bytes(writer);
+        writer.write_u64(self.null_id.0);
     }
 
     fn from_bytes(reader: &mut Reader<'_>) -> Self {
@@ -240,6 +241,7 @@ impl ToBytes for UnitContext {
         let unit_data: Box<[(String, Id)]> = Box::from_bytes(reader);
         let prefix_id_to_multiplier = HashMap::<Id, Decimal>::from_bytes(reader);
         let unit_id_to_vector = ToBytes::from_bytes(reader);
+        let null_id = reader.read_u64();
         let _ = reader;
         let mut unit_trie = PrefixTrie::default();
         let mut prefix_trie = PrefixTrie::default();
@@ -253,6 +255,7 @@ impl ToBytes for UnitContext {
         }
 
         Self {
+            null_id: Id(null_id),
             unit_trie,
             prefix_trie,
             prefix_id_to_multiplier,

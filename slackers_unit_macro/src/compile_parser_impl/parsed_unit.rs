@@ -1,3 +1,9 @@
+use std::{
+    array::from_fn,
+    sync::{Arc, LazyLock},
+};
+
+use dashmap::DashMap;
 use quote::{ToTokens, format_ident, quote};
 use syn::{Ident, LitByteStr, parse::Parse};
 
@@ -6,6 +12,7 @@ use crate::data::{
     parser_data::{EqOpt, Op},
     unit_context::UnitContext,
 };
+static CACHE: LazyLock<DashMap<u64, Arc<UnitContext>>> = LazyLock::new(DashMap::new);
 
 #[derive(Debug)]
 pub struct ParsedUnit {
@@ -15,15 +22,35 @@ pub struct ParsedUnit {
 
 impl Parse for ParsedUnit {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let uc = UnitContext::deserialize(&input.parse::<LitByteStr>()?.value());
+        let hash = input.parse::<Hash>()?;
+        let lit_str = &input.parse::<LitByteStr>()?;
+        let uc = if let Some(v) = CACHE.get(&hash.0) {
+            v
+        } else {
+            let uc = Arc::new(UnitContext::deserialize(&lit_str.value()));
+            CACHE.insert(hash.0, uc);
+            CACHE.get(&hash.0).unwrap()
+        };
+
+        let true_uc = uc.to_self();
         let expr = EqOpt::parse_mul(input)?;
-        let resolved_expr = expr.resolve_suffixes(&uc)?;
+        let resolved_expr = expr.resolve_suffixes(true_uc)?;
         let (multiplier, unit_vector) = resolved_expr.flatten_unit_vector(&uc)?;
 
         Ok(Self {
             multiplier,
             unit_vector,
         })
+    }
+}
+
+struct Hash(u64);
+
+impl Parse for Hash {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let value = input.parse::<LitByteStr>()?.value();
+        let bytes = from_fn(|idx| value[idx]);
+        Ok(Self(u64::from_be_bytes(bytes)))
     }
 }
 
@@ -68,11 +95,17 @@ impl EqOpt<Id> {
                 unit,
                 span: _,
             } => {
-                let (m2, uv) = uc
-                    .unit_id_to_vector
-                    .get(unit)
-                    .cloned()
-                    .expect("Should be correct");
+                let (m2, uv) = uc.unit_id_to_vector.get(unit).cloned().unwrap_or((
+                    Decimal::ONE,
+                    uc.unit_id_to_vector
+                        .values()
+                        .next()
+                        .unwrap()
+                        .1
+                        .iter()
+                        .map(|_| 0i32)
+                        .collect(),
+                ));
                 Ok((*multiplier * m2, uv))
             }
         }
@@ -105,7 +138,7 @@ impl ToTokens for DecimalWrapper {
         let denom_bytes = denom.to_be_bytes();
 
         tokens.extend(quote! {
-            {
+            const {
                 let numer = #integer::from_be_bytes([
                     #(
                         #numer_bytes,
@@ -140,5 +173,11 @@ impl ToTokens for UnitVectorWrapper<'_> {
                 ::slackers_units::typenum::#idents,
             )*
         });
+    }
+}
+
+impl UnitContext {
+    fn to_self(&self) -> &Self {
+        self
     }
 }

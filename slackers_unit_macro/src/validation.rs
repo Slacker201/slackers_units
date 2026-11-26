@@ -17,7 +17,7 @@ impl System {
         };
         let graph_context = self.validate_matched_bases(&mut vc)?;
         let (alias_to_id, unit_id_to_vector) = self.reduce_unit_equations(&graph_context)?;
-
+        let sys_hash = self.get_hash();
         let unit_generic_names = self.get_unit_generic_names();
         let unit_phantom_data_names = self.get_unit_phantom_data_names();
         let unit_arith_generic_names = self.get_unit_arith_generic_names();
@@ -27,6 +27,7 @@ impl System {
         unit_context.unit_id_to_vector = unit_id_to_vector;
 
         Ok(ValidatedSystem {
+            sys_hash: Box::new(sys_hash.to_be_bytes()),
             alias_to_id,
             unit_generic_names,
             unit_phantom_data_names,

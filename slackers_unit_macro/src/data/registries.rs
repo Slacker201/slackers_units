@@ -7,8 +7,8 @@ use crate::data::Id;
 
 #[derive(Clone, Debug, Default)]
 pub struct NameRegistry {
-    to_id: HashMap<String, Id>,
-    id_counter: u64,
+    pub to_id: HashMap<String, Id>,
+    pub id_counter: u64,
 }
 
 impl NameRegistry {
