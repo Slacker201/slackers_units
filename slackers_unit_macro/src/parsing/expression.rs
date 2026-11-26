@@ -144,7 +144,7 @@ impl Parse for EqualityExpression<String> {
         };
         let _ = input.parse::<Token![=]>()?;
 
-        let expr = EqOpt::parse_mul(input)?;
+        let expr = EqOpt::parse_mul(input, true)?;
         let end_span = input.parse::<Token![,]>()?.span;
         Ok(Self {
             inner: expr,
@@ -187,7 +187,7 @@ impl EqOpt<String> {
 }
 
 impl EqOpt<String> {
-    pub fn parse_mul(input: syn::parse::ParseStream) -> syn::Result<Self> {
+    pub fn parse_mul(input: syn::parse::ParseStream, allow_num: bool) -> syn::Result<Self> {
         /*
             number = decimal | integer | fraction
             suffixed_num = number ident
@@ -199,12 +199,12 @@ impl EqOpt<String> {
 
         */
 
-        let first = Self::parse_pow(input)?;
+        let first = Self::parse_pow(input, allow_num)?;
         let start_span = first.span();
         let mut next = vec![];
         let mut end_span = start_span;
         while let Ok(op) = Self::parse_op(input) {
-            let n = Self::parse_pow(input)?;
+            let n = Self::parse_pow(input, allow_num)?;
             end_span = n.span();
             next.push((op, n));
         }
@@ -216,8 +216,8 @@ impl EqOpt<String> {
         })
     }
 
-    fn parse_pow(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let atom = Self::parse_atom(input)?;
+    fn parse_pow(input: syn::parse::ParseStream, allow_num: bool) -> syn::Result<Self> {
+        let atom = Self::parse_atom(input, allow_num)?;
         let (pow, span) = if input.parse::<Token![^]>().is_ok() {
             let litint = input.parse::<LitInt>()?;
             let span = atom.span().join(litint.span()).unwrap_or(atom.span());
@@ -233,8 +233,8 @@ impl EqOpt<String> {
         })
     }
 
-    fn parse_atom(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        if let Some((multiplier, unit, span)) = Self::parse_atom_part(input)? {
+    fn parse_atom(input: syn::parse::ParseStream, allow_num: bool) -> syn::Result<Self> {
+        if let Some((multiplier, unit, span)) = Self::parse_atom_part(input, allow_num)? {
             Ok(Self::Atom {
                 multiplier,
                 unit,
@@ -243,7 +243,7 @@ impl EqOpt<String> {
         } else {
             let paren;
             let end_span = parenthesized!(paren in input).span.close();
-            let mut s = Self::parse_mul(&paren)?;
+            let mut s = Self::parse_mul(&paren, allow_num)?;
             s.merge_span(end_span);
             Ok(s)
         }
@@ -251,9 +251,16 @@ impl EqOpt<String> {
 
     fn parse_atom_part(
         input: syn::parse::ParseStream,
+        allow_num: bool,
     ) -> syn::Result<Option<(Decimal, String, Span)>> {
         if input.peek(LitInt) {
             let first = input.parse::<LitInt>()?;
+            if !allow_num {
+                return Err(Error::new(
+                    first.span(),
+                    format!("Expected identifier, found {first}"),
+                ));
+            }
             if first.suffix().is_empty() && input.peek(Token![/]) && input.peek2(LitInt) {
                 let _ = input.parse::<Token![/]>()?;
                 let denom = input.parse::<LitInt>()?;
@@ -273,7 +280,12 @@ impl EqOpt<String> {
             }
         } else if input.peek(LitFloat) {
             let first = input.parse::<LitFloat>()?;
-
+            if !allow_num {
+                return Err(Error::new(
+                    first.span(),
+                    format!("Expected identifier, found {first}"),
+                ));
+            }
             Ok(Some((
                 NumberHandler::handle_litfloat(&first)?,
                 first.suffix().to_string(),

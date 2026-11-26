@@ -15,12 +15,12 @@ use crate::data::{
 static CACHE: LazyLock<DashMap<u64, Arc<UnitContext>>> = LazyLock::new(DashMap::new);
 
 #[derive(Debug)]
-pub struct ParsedUnit {
+pub struct ParsedUnit<const ALLOW_NUMBER: bool> {
     multiplier: Decimal,
     pub unit_vector: Box<[i32]>,
 }
 
-impl Parse for ParsedUnit {
+impl<const ALLOW_NUMBER: bool> Parse for ParsedUnit<ALLOW_NUMBER> {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let hash = input.parse::<Hash>()?;
         let lit_str = &input.parse::<LitByteStr>()?;
@@ -33,7 +33,7 @@ impl Parse for ParsedUnit {
         };
 
         let true_uc = uc.to_self();
-        let expr = EqOpt::parse_mul(input)?;
+        let expr = EqOpt::parse_mul(input, ALLOW_NUMBER)?;
         let resolved_expr = expr.resolve_suffixes(true_uc)?;
         let (multiplier, unit_vector) = resolved_expr.flatten_unit_vector(&uc)?;
 
@@ -112,7 +112,7 @@ impl EqOpt<Id> {
     }
 }
 
-impl ToTokens for ParsedUnit {
+impl<const ALLOW_NUMBER: bool> ToTokens for ParsedUnit<ALLOW_NUMBER> {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let dw = DecimalWrapper(self.multiplier);
         let uvw = UnitVectorWrapper(&self.unit_vector);
