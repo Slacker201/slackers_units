@@ -69,6 +69,7 @@ impl ValidatedSystem {
         let ug_names = &self.unit_generic_names;
         let pd_names = &self.unit_phantom_data_names;
         quote! {
+            #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
             pub(crate) struct Unit<
                 #(
                     #ug_names,
