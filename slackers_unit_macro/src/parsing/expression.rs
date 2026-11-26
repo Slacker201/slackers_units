@@ -312,7 +312,6 @@ impl NumberHandler {
         let dec =
             str::from_utf8(ts.consume_while(u8::is_ascii_digit)).expect("Safe by construction");
         let dec_len = dec.trim_end_matches('0').len();
-        eprintln!("sci notation mult: {sci_not_mult:?}");
 
         let scale = DecimalPart::from_u8(10)
             .unwrap()
