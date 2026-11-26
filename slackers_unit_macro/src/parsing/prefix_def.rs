@@ -75,7 +75,7 @@ impl PrefixDefinition {
             id,
             multiplier,
             aliases: alia,
-            groups: p_classes.unwrap_or(PrefixClasses::new_with_all()),
+            groups: p_classes.unwrap_or_default(),
             span: start_span.join(end_span).unwrap_or(start_span),
         })
     }

@@ -62,9 +62,7 @@ impl UnitDefinition<String> {
         let id = unit_registry.get_id(name.to_string());
         let aliases = alia.unwrap_or(Aliases::new_empty());
         aliases.register_aliases(id, unit_registry)?;
-        let prefixable = prefixable.unwrap_or(PrefixClasses {
-            allowed_groups: Box::new(["All".to_string()]),
-        });
+        let prefixable = prefixable.unwrap_or_default();
 
         Ok(Self {
             name,
@@ -135,6 +133,14 @@ impl<T> EqOpt<T> {
                 unit: _,
                 span,
             } => *span = span.join(other).unwrap_or(*span),
+        }
+    }
+}
+
+impl Default for PrefixClasses {
+    fn default() -> Self {
+        Self {
+            allowed_groups: Box::from(["Default".to_string()]),
         }
     }
 }

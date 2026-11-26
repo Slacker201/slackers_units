@@ -20,11 +20,3 @@ impl Parse for PrefixClasses {
         Ok(Self { allowed_groups })
     }
 }
-
-impl PrefixClasses {
-    pub fn new_with_all() -> Self {
-        Self {
-            allowed_groups: Box::from(["All".to_string()]),
-        }
-    }
-}
