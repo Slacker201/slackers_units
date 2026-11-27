@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0](https://github.com/Slacker201/slackers_units/compare/slackers_units-v0.3.3...slackers_units-v0.4.0) - 2026-11-27
+
+### Other
+
+- bump macro crate ver
+- release 0.4.0 because release-plz didnt catch
+
 ## [0.3.3](https://github.com/Slacker201/slackers_units/compare/slackers_units-v0.3.2...slackers_units-v0.3.3) - 2026-11-27
 
 ### Added
