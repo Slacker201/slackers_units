@@ -8,7 +8,7 @@ use syn::{Error, Ident, LitFloat, LitInt, Token, parenthesized, parse::Parse};
 
 use crate::{
     data::{
-        Decimal, DecimalPart, Id,
+        RatioRepr, NumberRepr, Id,
         parser_data::{EqOpt, EqualityExpression, Op},
         unit_context::UnitContext,
     },
@@ -69,7 +69,7 @@ impl EqOpt<Id> {
             }
         }
     }
-    fn try_get_vmult(&self, nodes: &HashMap<Id, GraphNode>) -> Result<(Decimal, Box<[i32]>), Id> {
+    fn try_get_vmult(&self, nodes: &HashMap<Id, GraphNode>) -> Result<(RatioRepr, Box<[i32]>), Id> {
         match self {
             EqOpt::Multiply {
                 first,
@@ -91,7 +91,7 @@ impl EqOpt<Id> {
             }
             EqOpt::Pow { lhs, pow, span: _ } => {
                 let (o_mult, mut o_vec) = lhs.try_get_vmult(nodes)?;
-                let mut mult = Decimal::ONE;
+                let mut mult = RatioRepr::ONE;
                 if pow.is_negative() {
                 } else {
                     o_vec.iter_mut().for_each(|v| *v *= pow);
@@ -128,7 +128,7 @@ impl EqualityExpression<Id> {
     pub(crate) fn try_get_vmult(
         &self,
         nodes: &HashMap<Id, GraphNode>,
-    ) -> Result<(Decimal, Box<[i32]>), Id> {
+    ) -> Result<(RatioRepr, Box<[i32]>), Id> {
         self.inner.try_get_vmult(nodes)
     }
 }
@@ -255,7 +255,7 @@ impl EqOpt<String> {
     fn parse_atom_part(
         input: syn::parse::ParseStream,
         allow_num: bool,
-    ) -> syn::Result<Option<(Decimal, String, Span)>> {
+    ) -> syn::Result<Option<(RatioRepr, String, Span)>> {
         if input.peek(LitInt) {
             let first = input.parse::<LitInt>()?;
             if !allow_num {
@@ -267,8 +267,8 @@ impl EqOpt<String> {
             if first.suffix().is_empty() && input.peek(Token![/]) && input.peek2(LitInt) {
                 let _ = input.parse::<Token![/]>()?;
                 let denom = input.parse::<LitInt>()?;
-                let numer = first.base10_parse::<Decimal>()?;
-                let true_denom = denom.base10_parse::<Decimal>()?;
+                let numer = first.base10_parse::<RatioRepr>()?;
+                let true_denom = denom.base10_parse::<RatioRepr>()?;
                 Ok(Some((
                     numer / true_denom,
                     denom.suffix().to_string(),
@@ -296,7 +296,7 @@ impl EqOpt<String> {
             )))
         } else if input.peek(Ident) {
             let ident = input.parse::<Ident>()?;
-            Ok(Some((Decimal::ONE, ident.to_string(), ident.span())))
+            Ok(Some((RatioRepr::ONE, ident.to_string(), ident.span())))
         } else {
             Ok(None)
         }
@@ -318,7 +318,7 @@ impl EqOpt<String> {
 pub struct NumberHandler;
 
 impl NumberHandler {
-    pub fn handle_litfloat(litfloat: &LitFloat) -> syn::Result<Decimal> {
+    pub fn handle_litfloat(litfloat: &LitFloat) -> syn::Result<RatioRepr> {
         let (number_portion, sci_not_mult) = Self::split_number_and_sci_float(litfloat)?;
         let mut ts = TokenStream::new(number_portion);
         let int =
@@ -328,23 +328,23 @@ impl NumberHandler {
             str::from_utf8(ts.consume_while(u8::is_ascii_digit)).expect("Safe by construction");
         let dec_len = dec.trim_end_matches('0').len();
 
-        let scale = DecimalPart::from_u8(10)
+        let scale = NumberRepr::from_u8(10)
             .unwrap()
             .pow(u32::try_from(dec_len).unwrap());
-        let int: DecimalPart = int.parse().map_err(|e| Error::new(litfloat.span(), e))?;
+        let int: NumberRepr = int.parse().map_err(|e| Error::new(litfloat.span(), e))?;
         let dec = if dec.is_empty() {
-            DecimalPart::ZERO
+            NumberRepr::ZERO
         } else {
             dec.parse().map_err(|e| Error::new(litfloat.span(), e))?
         };
 
         let numer = int * scale + dec;
 
-        let mut d = Decimal::new_raw(numer, scale);
+        let mut d = RatioRepr::new_raw(numer, scale);
 
         if let Some(sci_not) = sci_not_mult {
             let mut ratio = Ratio::from_integer(
-                DecimalPart::from_u8(10)
+                NumberRepr::from_u8(10)
                     .unwrap()
                     .pow(sci_not.abs().cast_unsigned()),
             );

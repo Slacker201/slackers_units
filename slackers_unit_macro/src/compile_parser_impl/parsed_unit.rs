@@ -8,7 +8,7 @@ use quote::{ToTokens, format_ident, quote};
 use syn::{Ident, LitByteStr, parse::Parse};
 
 use crate::data::{
-    Decimal, Id,
+    RatioRepr, Id,
     parser_data::{EqOpt, Op},
     unit_context::UnitContext,
 };
@@ -16,7 +16,7 @@ static CACHE: LazyLock<DashMap<u64, Arc<UnitContext>>> = LazyLock::new(DashMap::
 
 #[derive(Debug)]
 pub struct ParsedUnit<const ALLOW_NUMBER: bool> {
-    multiplier: Decimal,
+    multiplier: RatioRepr,
     pub unit_vector: Box<[i32]>,
 }
 
@@ -55,7 +55,7 @@ impl Parse for Hash {
 }
 
 impl EqOpt<Id> {
-    fn flatten_unit_vector(&self, uc: &UnitContext) -> syn::Result<(Decimal, Box<[i32]>)> {
+    fn flatten_unit_vector(&self, uc: &UnitContext) -> syn::Result<(RatioRepr, Box<[i32]>)> {
         match self {
             EqOpt::Multiply {
                 first,
@@ -77,7 +77,7 @@ impl EqOpt<Id> {
             }
             EqOpt::Pow { lhs, pow, span: _ } => {
                 let (old_mult, mut uv) = lhs.flatten_unit_vector(uc)?;
-                let mut new_mult = Decimal::ONE;
+                let mut new_mult = RatioRepr::ONE;
                 uv.iter_mut().for_each(|s| *s *= *pow);
                 if pow.is_negative() {
                     for _ in 0..pow.abs() {
@@ -96,7 +96,7 @@ impl EqOpt<Id> {
                 span: _,
             } => {
                 let (m2, uv) = uc.unit_id_to_vector.get(unit).cloned().unwrap_or((
-                    Decimal::ONE,
+                    RatioRepr::ONE,
                     uc.unit_id_to_vector
                         .values()
                         .next()
@@ -127,7 +127,7 @@ impl<const ALLOW_NUMBER: bool> ToTokens for ParsedUnit<ALLOW_NUMBER> {
     }
 }
 
-struct DecimalWrapper(Decimal);
+struct DecimalWrapper(RatioRepr);
 pub struct UnitVectorWrapper<'a>(pub &'a [i32]);
 
 impl ToTokens for DecimalWrapper {

@@ -5,7 +5,7 @@ use syn::Error;
 
 use crate::{
     data::{
-        Decimal, Id,
+        RatioRepr, Id,
         parser_data::{EqualityExpression, System, UnitDefinition},
     },
     validation::unit_graph::graph_context::GraphContext,
@@ -13,7 +13,7 @@ use crate::{
 
 pub(crate) mod graph_context;
 type AliasToId = HashMap<String, Id>;
-type IdToMetadata = HashMap<Id, (Decimal, Box<[i32]>)>;
+type IdToMetadata = HashMap<Id, (RatioRepr, Box<[i32]>)>;
 impl System {
     pub(crate) fn reduce_unit_equations(
         &self,
@@ -42,7 +42,7 @@ impl<'a> Graph<'a> {
         for unit in units {
             let mut node = GraphNode::new(unit);
             if let Some(v) = gc.base_to_vector_mapping.get(&node.id) {
-                node.vmult = Some((Decimal::ONE, v.clone()));
+                node.vmult = Some((RatioRepr::ONE, v.clone()));
             }
             nodes.insert(node.id, node);
         }
@@ -89,7 +89,7 @@ impl<'a> Graph<'a> {
             }
         }
     }
-    fn reduce(self) -> HashMap<Id, (Decimal, Box<[i32]>)> {
+    fn reduce(self) -> HashMap<Id, (RatioRepr, Box<[i32]>)> {
         let mut map = HashMap::new();
         for (id, node) in self.nodes {
             map.insert(id, node.vmult.expect("All vectors should be resolved"));
@@ -103,7 +103,7 @@ pub struct GraphNode<'a> {
     pub id: Id,
     pub eq: Option<&'a EqualityExpression<Id>>,
     pub edges: Box<[Id]>,
-    pub vmult: Option<(Decimal, Box<[i32]>)>,
+    pub vmult: Option<(RatioRepr, Box<[i32]>)>,
 
     pub span: Span,
 }
@@ -154,7 +154,7 @@ impl<'a> GraphNode<'a> {
             }
         }
     }
-    fn try_flatten(&self, nodes: &HashMap<Id, GraphNode>) -> Result<(Decimal, Box<[i32]>), Id> {
+    fn try_flatten(&self, nodes: &HashMap<Id, GraphNode>) -> Result<(RatioRepr, Box<[i32]>), Id> {
         let Some(eq) = self.eq else {
             return Ok(self.vmult.clone().expect("UNREACHABLE"));
         };

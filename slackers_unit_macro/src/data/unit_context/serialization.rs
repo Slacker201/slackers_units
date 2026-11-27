@@ -7,7 +7,7 @@ use quote::format_ident;
 use syn::Ident;
 
 use crate::data::{
-    Decimal, DecimalPart, Id,
+    RatioRepr, NumberRepr, Id,
     parser_data::{Aliases, PrefixClasses, PrefixDefinition, UnitDefinition},
     unit_context::{UnitContext, prefix_trie::PrefixTrie},
 };
@@ -54,12 +54,12 @@ impl<'a> Writer<'a> {
         }
         self.idx += data.len();
     }
-    fn write_decimal(&mut self, data: Decimal) {
+    fn write_decimal(&mut self, data: RatioRepr) {
         let (numer, denom) = data.into_raw();
         self.write_decimal_part(numer);
         self.write_decimal_part(denom);
     }
-    fn write_decimal_part(&mut self, part: DecimalPart) {
+    fn write_decimal_part(&mut self, part: NumberRepr) {
         self.write_bytes(&part.to_be_bytes());
     }
     fn write_len_prefixed_str(&mut self, s: &str) {
@@ -106,15 +106,15 @@ impl<'a> Reader<'a> {
         self.idx += size_of::<u64>();
         u64::from_be_bytes(bytes)
     }
-    fn read_decimal_part(&mut self) -> DecimalPart {
-        let bytes: [u8; size_of::<DecimalPart>()] = from_fn(|idx| self.buffer[self.idx + idx]);
-        self.idx += size_of::<DecimalPart>();
-        DecimalPart::from_be_bytes(bytes)
+    fn read_decimal_part(&mut self) -> NumberRepr {
+        let bytes: [u8; size_of::<NumberRepr>()] = from_fn(|idx| self.buffer[self.idx + idx]);
+        self.idx += size_of::<NumberRepr>();
+        NumberRepr::from_be_bytes(bytes)
     }
-    fn read_decimal(&mut self) -> Decimal {
+    fn read_decimal(&mut self) -> RatioRepr {
         let numer = self.read_decimal_part();
         let denom = self.read_decimal_part();
-        Decimal::new(numer, denom)
+        RatioRepr::new(numer, denom)
     }
     fn read_bytes(&mut self, len: usize) -> &[u8] {
         let bytes = &self.buffer[self.idx..self.idx + len];
@@ -212,7 +212,7 @@ impl<T: ToBytes, U: ToBytes> ToBytes for (T, U) {
     }
 }
 
-impl ToBytes for Decimal {
+impl ToBytes for RatioRepr {
     fn to_bytes(&self, writer: &mut Writer<'_>) {
         writer.write_decimal(*self);
     }
@@ -260,7 +260,7 @@ impl ToBytes for UnitContext {
     fn from_bytes(reader: &mut Reader<'_>) -> Self {
         let prefix_data: Box<[(String, Id)]> = Box::from_bytes(reader);
         let unit_data: Box<[(String, Id)]> = Box::from_bytes(reader);
-        let prefix_id_to_multiplier = HashMap::<Id, Decimal>::from_bytes(reader);
+        let prefix_id_to_multiplier = HashMap::<Id, RatioRepr>::from_bytes(reader);
         let unit_id_to_vector = ToBytes::from_bytes(reader);
         let prefix_id_to_grouping = ToBytes::from_bytes(reader);
         let unit_id_to_grouping = ToBytes::from_bytes(reader);

@@ -1,7 +1,7 @@
 use proc_macro2::Span;
 use syn::Ident;
 
-use crate::data::{Decimal, Id, registries::NameRegistry, unit_context::UnitContext};
+use crate::data::{RatioRepr, Id, registries::NameRegistry, unit_context::UnitContext};
 
 #[derive(Clone, Debug)]
 pub(crate) struct System {
@@ -27,7 +27,7 @@ pub(crate) struct PrefixDefinition {
     #[allow(unused)]
     pub name: Ident,
     pub id: Id,
-    pub multiplier: Decimal,
+    pub multiplier: RatioRepr,
     pub aliases: Aliases,
     #[allow(unused)]
     pub groups: PrefixClasses,
@@ -66,7 +66,7 @@ pub enum EqOpt<T> {
         span: Span,
     },
     Atom {
-        multiplier: Decimal,
+        multiplier: RatioRepr,
         unit: T,
         span: Span,
     },

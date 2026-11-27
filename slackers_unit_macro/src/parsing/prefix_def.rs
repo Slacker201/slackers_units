@@ -2,7 +2,7 @@ use syn::{Error, Ident, LitFloat, LitInt, Token, braced, parse::Parse};
 
 use crate::{
     data::{
-        Decimal,
+        RatioRepr,
         parser_data::{
             Aliases, PrefixClasses, PrefixDefinition, aliases, mult, multiplier, prefix,
             prefix_classes,
@@ -82,7 +82,7 @@ impl PrefixDefinition {
 }
 
 impl PrefixDefinition {
-    fn parse_number(input: syn::parse::ParseStream) -> syn::Result<Decimal> {
+    fn parse_number(input: syn::parse::ParseStream) -> syn::Result<RatioRepr> {
         if input.peek(LitInt) {
             let first = input.parse::<LitInt>()?;
 
@@ -91,7 +91,7 @@ impl PrefixDefinition {
                 let second = input.parse::<LitInt>()?;
 
                 if first.suffix().is_empty() && second.suffix().is_empty() {
-                    Ok(first.base10_parse::<Decimal>()? / second.base10_parse::<Decimal>()?)
+                    Ok(first.base10_parse::<RatioRepr>()? / second.base10_parse::<RatioRepr>()?)
                 } else {
                     Err(Error::new(
                         first.span().join(second.span()).unwrap_or(first.span()),

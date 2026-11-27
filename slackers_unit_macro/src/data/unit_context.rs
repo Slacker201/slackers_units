@@ -8,7 +8,7 @@ use quote::format_ident;
 use syn::Error;
 
 use crate::data::{
-    Decimal, Id,
+    RatioRepr, Id,
     parser_data::{Aliases, PrefixClasses, PrefixDefinition, UnitDefinition},
     unit_context::prefix_trie::PrefixTrie,
 };
@@ -21,9 +21,9 @@ pub struct UnitContext {
     pub unit_trie: PrefixTrie<Id>,
     pub prefix_trie: PrefixTrie<Id>,
 
-    pub prefix_id_to_multiplier: HashMap<Id, Decimal>,
+    pub prefix_id_to_multiplier: HashMap<Id, RatioRepr>,
     pub prefix_id_to_grouping: HashMap<Id, PrefixClasses>,
-    pub unit_id_to_vector: HashMap<Id, (Decimal, Box<[i32]>)>,
+    pub unit_id_to_vector: HashMap<Id, (RatioRepr, Box<[i32]>)>,
     pub unit_id_to_grouping: HashMap<Id, PrefixClasses>,
 
     pub prefix_data: Box<[(String, Id)]>,
@@ -106,14 +106,14 @@ impl UnitContext {
         }
     }
 
-    pub fn parse_suffix(&self, suffix: &str, span: Span) -> syn::Result<(Decimal, Id)> {
+    pub fn parse_suffix(&self, suffix: &str, span: Span) -> syn::Result<(RatioRepr, Id)> {
         if suffix.is_empty() {
-            return Ok((Decimal::ONE, self.null_id));
+            return Ok((RatioRepr::ONE, self.null_id));
         }
         if let Some((unit, remainder)) = self.unit_trie.find_longest(suffix.as_bytes())
             && remainder.is_empty()
         {
-            return Ok((Decimal::ONE, *unit));
+            return Ok((RatioRepr::ONE, *unit));
         }
         if let Some((prefix, prefix_remainder)) = self.prefix_trie.find_longest(suffix.as_bytes()) {
             if let Some((unit, unit_remainder)) = self.unit_trie.find_longest(prefix_remainder) {
