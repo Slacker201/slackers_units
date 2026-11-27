@@ -8,7 +8,7 @@ use quote::{ToTokens, format_ident, quote};
 use syn::{Ident, LitByteStr, parse::Parse};
 
 use crate::data::{
-    RatioRepr, Id,
+    Id, RatioRepr,
     parser_data::{EqOpt, Op},
     unit_context::UnitContext,
 };
@@ -121,7 +121,7 @@ impl<const ALLOW_NUMBER: bool> ToTokens for ParsedUnit<ALLOW_NUMBER> {
             {
                 let value = #dw;
 
-                Unit::<#uvw f64>::new(value)
+                Unit::<#uvw f64>::new(::slackers_units::conversion::Conversion::convert(value))
             }
         });
     }

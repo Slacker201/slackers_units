@@ -1,7 +1,7 @@
 use proc_macro2::Span;
 use syn::Ident;
 
-use crate::data::{RatioRepr, Id, registries::NameRegistry, unit_context::UnitContext};
+use crate::data::{Id, RatioRepr, registries::NameRegistry, unit_context::UnitContext};
 
 #[derive(Clone, Debug)]
 pub(crate) struct System {

@@ -17,8 +17,9 @@ type Operand2 = Box<[Ident]>;
 type Result = Box<[Ident]>;
 impl System {
     pub fn get_unit_generic_names(&self) -> Box<[Ident]> {
-        (0..self.bases.len())
-            .map(|idx| format_ident!("V{idx}"))
+        self.bases
+            .iter()
+            .map(|bd| format_ident!("Generic{}", &bd.unit))
             .collect()
     }
     pub fn get_unit_phantom_data_names(&self) -> Box<[Ident]> {

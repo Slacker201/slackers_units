@@ -8,7 +8,7 @@ use quote::format_ident;
 use syn::Error;
 
 use crate::data::{
-    RatioRepr, Id,
+    Id, RatioRepr,
     parser_data::{Aliases, PrefixClasses, PrefixDefinition, UnitDefinition},
     unit_context::prefix_trie::PrefixTrie,
 };
