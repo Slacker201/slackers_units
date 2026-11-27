@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.11...slackers_unit_macro-v0.2.0) - 2026-11-27
+
+### Added
+
+- implement support for prefix classes
+- deny numbers inside `ut` macro
+- feat! implement `ut!` parser for types
+- implement PartialEq, Eq, PartialOrd, Ord, and Hash for Unit
+- implement support for dimensionless units
+- *(parser)* implement support for scientific notation
+- *(compile parsing)* implement basic compile time parsing
+- *(compile time parser)* implement system context transfer
+- *(parsing)* implement prefix parsing in equality resolution
+- *(parser)* require multiplier for prefixes
+- *(codegen)* implement codegen for `Unit` definition, and all 4 arith ops
+- *(parsing)* implement duplicate prefix alias warning
+- implement basic validation pipeline
+- implement full dsl parser
+- *(compile parser)* implement power and `1m` notation in unit! macro
+- *(number parsing)* add support for fractions for unit! macro
+
+### Fixed
+
+- make fully no-std
+- fix dimensionless units being a compile error
+- *(serializer)* fix off by 25 bug
+- bubble alias errors
+
+### Other
+
+- refactor new_with_all to use Default::default
+- remove serialization check
+- debug round trip assertion for context transfer
+- remove debug logging
+- implement caching for unit context across `unit!` invocations
+- *(cleanup)* appy fmt and clippy
+- apply fmt and clippy
+- *(cleanup)* apply clippy and fmt
+- make prefix def use `Aliases` method to add aliases to registry
+- implement default for `PrefixTrie`
+- apply fmt
+- [**breaking**] start rewrite
+- implement caching for unit! macro
+- implement bytestring context transfer
+- *(macro)* implement more efficient context transfer architecture
+- fmt
+- expand `UnitContext` for later optimisations
+- reorganize unit! macro parsing
+
 ## [0.1.11](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.10...slackers_unit_macro-v0.1.11) - 2026-11-11
 
 ### Fixed
