@@ -12,7 +12,7 @@ cfg-if = "1.0.5"
 num-rational = "0.4.2"
 num-traits = "0.2.19"
 phf = {version="0.14.0", features=["macros"]}
-slackers_unit_macro = { version = "0.1.11", path = "./slackers_unit_macro" }
+slackers_unit_macro = { version = "0.2.0", path = "./slackers_unit_macro" }
 slk-tokenstream = "0.6.0"
 typenum = "1.20.1"
 [dev-dependencies]
