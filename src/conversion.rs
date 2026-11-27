@@ -1,5 +1,5 @@
 use num_rational::Ratio;
-use num_traits::{Signed, ToPrimitive};
+use num_traits::ToPrimitive;
 mod number_repr;
 use number_repr::NumberRepr;
 
@@ -16,7 +16,7 @@ impl Conversion for f64 {
         } else {
             f64::INFINITY
         });
-        let denom = denom.to_f64().unwrap_or(if numer.is_negative() {
+        let denom = denom.to_f64().unwrap_or(if denom.is_negative() {
             f64::NEG_INFINITY
         } else {
             f64::INFINITY
