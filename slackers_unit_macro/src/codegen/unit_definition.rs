@@ -151,16 +151,19 @@ impl ValidatedSystem {
         // TODO incorporate unit vector
         let constrained = UnitVector::<true>(&self.unit_generic_names);
         let ud_names = UnitVector::<false>(&self.unit_generic_names);
+        let ud_names_iter = &self.unit_generic_names;
         quote! {
             impl<
                 #constrained
                 B: core::fmt::Debug,
-            > core::fmt::Debug for Unit<
-                #ud_names
-                B,
-            > {
-                fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-                    f.debug_struct("Unit").field("value", &self.value).finish()
+            > core::fmt::Debug for Unit<#ud_names B> {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    let vector = [
+                        #(
+                            #ud_names_iter::to_i32(),
+                        )*
+                    ];
+                    write!(f, "{:?} {vector:?}", self.value)
                 }
             }
         }
