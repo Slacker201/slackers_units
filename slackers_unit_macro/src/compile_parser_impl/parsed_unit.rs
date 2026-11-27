@@ -8,7 +8,7 @@ use quote::{ToTokens, format_ident, quote};
 use syn::{Ident, LitByteStr, parse::Parse};
 
 use crate::data::{
-    RatioRepr, Id,
+    Id, RatioRepr,
     parser_data::{EqOpt, Op},
     unit_context::UnitContext,
 };

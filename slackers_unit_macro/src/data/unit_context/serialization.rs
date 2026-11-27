@@ -7,7 +7,7 @@ use quote::format_ident;
 use syn::Ident;
 
 use crate::data::{
-    RatioRepr, NumberRepr, Id,
+    Id, NumberRepr, RatioRepr,
     parser_data::{Aliases, PrefixClasses, PrefixDefinition, UnitDefinition},
     unit_context::{UnitContext, prefix_trie::PrefixTrie},
 };

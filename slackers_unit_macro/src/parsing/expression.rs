@@ -8,7 +8,7 @@ use syn::{Error, Ident, LitFloat, LitInt, Token, parenthesized, parse::Parse};
 
 use crate::{
     data::{
-        RatioRepr, NumberRepr, Id,
+        Id, NumberRepr, RatioRepr,
         parser_data::{EqOpt, EqualityExpression, Op},
         unit_context::UnitContext,
     },

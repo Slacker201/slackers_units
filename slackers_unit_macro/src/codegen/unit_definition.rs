@@ -169,7 +169,7 @@ impl ValidatedSystem {
 
 struct UnitVector<'a, const SHOULD_CONSTRAIN: bool>(&'a [Ident]);
 
-impl<'a, const SHOULD_CONSTRAIN: bool> ToTokens for UnitVector<'a, SHOULD_CONSTRAIN> {
+impl<const SHOULD_CONSTRAIN: bool> ToTokens for UnitVector<'_, SHOULD_CONSTRAIN> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let data = &self.0;
         if SHOULD_CONSTRAIN {

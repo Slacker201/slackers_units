@@ -1,10 +1,10 @@
 use num_rational::Ratio;
 
+mod decimal_type;
 pub(crate) mod parser_data;
 pub(crate) mod registries;
 pub(crate) mod unit_context;
 pub(crate) mod validated_sys;
-mod decimal_type;
 
 pub type RatioRepr = Ratio<NumberRepr>;
 pub type NumberRepr = decimal_type::NumberRepr;

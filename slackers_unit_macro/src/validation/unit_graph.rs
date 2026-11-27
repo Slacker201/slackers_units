@@ -5,7 +5,7 @@ use syn::Error;
 
 use crate::{
     data::{
-        RatioRepr, Id,
+        Id, RatioRepr,
         parser_data::{EqualityExpression, System, UnitDefinition},
     },
     validation::unit_graph::graph_context::GraphContext,
