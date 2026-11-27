@@ -10,6 +10,29 @@ impl ValidatedSystem {
         let byte_str = LitByteStr::new(&self.unit_context.serialize(), Span::call_site());
 
         quote! {
+            /// Generates the type for the provided expression
+            ///
+            /// # Examples
+            ///
+            /// ```rust,ignore
+            /// slackers_units::system! {
+            ///     base Meter;
+            ///     unit Meter {
+            ///         aliases = [m],
+            ///     }
+            ///
+            ///     prefix Milli {
+            ///         aliases = [m, milli],
+            ///         mult = 1e-3,
+            ///     }
+            /// }
+            ///
+            /// let meter: ut!(m) = unit!(1m);
+            /// let millimeter: ut!(m) = unit!(1m);
+            /// let scale /* TODO implement support for dimensionless types */ = unit!(1e3);
+            ///
+            /// assert_eq!(meter, millimeter * scale);
+            /// ```
             macro_rules! ut {
                 ($($data: tt)*) => {
                     ::slackers_units::__ut_impl!(#sys_hash #byte_str $($data)*)
