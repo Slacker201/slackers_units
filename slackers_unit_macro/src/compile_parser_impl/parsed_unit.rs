@@ -121,7 +121,7 @@ impl<const ALLOW_NUMBER: bool> ToTokens for ParsedUnit<ALLOW_NUMBER> {
             {
                 let value = #dw;
 
-                Unit::<#uvw f64>::new(value)
+                Unit::<#uvw f64>::new(::slackers_units::conversion::Conversion::convert(value))
             }
         });
     }
