@@ -16,7 +16,7 @@ use crate::data::{
 pub mod prefix_trie;
 pub mod serialization;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct UnitContext {
     pub unit_trie: PrefixTrie<Id>,
     pub prefix_trie: PrefixTrie<Id>,
@@ -29,6 +29,7 @@ pub struct UnitContext {
     pub prefix_data: Box<[(String, Id)]>,
     pub unit_data: Box<[(String, Id)]>,
     pub null_id: Id,
+    pub path: String,
 }
 
 impl UnitContext {
@@ -36,6 +37,7 @@ impl UnitContext {
         units: &[UnitDefinition<String>],
         prefixes: &[PrefixDefinition],
         null_id: Id,
+        path: String,
     ) -> Self {
         let mut unit_trie = PrefixTrie::default();
         let mut prefix_trie = PrefixTrie::default();
@@ -103,6 +105,7 @@ impl UnitContext {
             prefix_data,
             unit_data,
             null_id,
+            path,
         }
     }
 

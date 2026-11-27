@@ -13,6 +13,7 @@ impl Parse for System {
         let mut bases = vec![];
         let mut unit_registry = NameRegistry::new();
         let mut prefix_registry = NameRegistry::new();
+        let path = module_path_extractor::get_pseudo_module_path();
         loop {
             if input.peek(unit) {
                 units.push(UnitDefinition::<String>::parse(input, &mut unit_registry)?);
@@ -33,7 +34,7 @@ impl Parse for System {
             return Err(Error::new(input.span(), "Expected eof"));
         }
         let null_id = unit_registry.get_id("");
-        let unit_context = UnitContext::new(&units, &prefixes, null_id);
+        let unit_context = UnitContext::new(&units, &prefixes, null_id, path);
 
         let units: Box<[UnitDefinition<crate::data::Id>]> = units
             .into_iter()

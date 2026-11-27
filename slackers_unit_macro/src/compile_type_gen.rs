@@ -11,8 +11,9 @@ pub fn compile_type_gen(ts: TokenStream) -> TokenStream {
         }
     };
     let vec = pu.to_uv();
+    let path = pu.get_path();
     quote! {
-        Unit::<#vec f64>
+        #path::Unit::<#vec f64>
     }
 }
 

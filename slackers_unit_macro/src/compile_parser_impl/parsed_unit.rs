@@ -4,6 +4,7 @@ use std::{
 };
 
 use dashmap::DashMap;
+use proc_macro2::TokenStream;
 use quote::{ToTokens, format_ident, quote};
 use syn::{Ident, LitByteStr, parse::Parse};
 
@@ -17,6 +18,7 @@ static CACHE: LazyLock<DashMap<u64, Arc<UnitContext>>> = LazyLock::new(DashMap::
 #[derive(Debug)]
 pub struct ParsedUnit<const ALLOW_NUMBER: bool> {
     multiplier: RatioRepr,
+    path: String,
     pub unit_vector: Box<[i32]>,
 }
 
@@ -38,6 +40,7 @@ impl<const ALLOW_NUMBER: bool> Parse for ParsedUnit<ALLOW_NUMBER> {
         let (multiplier, unit_vector) = resolved_expr.flatten_unit_vector(&uc)?;
 
         Ok(Self {
+            path: uc.path.clone(),
             multiplier,
             unit_vector,
         })
@@ -116,12 +119,17 @@ impl<const ALLOW_NUMBER: bool> ToTokens for ParsedUnit<ALLOW_NUMBER> {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let dw = DecimalWrapper(self.multiplier);
         let uvw = UnitVectorWrapper(&self.unit_vector);
+        let mut path = self.path.clone();
+        if path != "crate" {
+            path = format!("crate::{path}");
+        }
+        let path = path.parse::<TokenStream>().unwrap();
 
         tokens.extend(quote! {
             {
                 let value = #dw;
 
-                Unit::<#uvw f64>::new(::slackers_units::conversion::Conversion::convert(value))
+                #path::Unit::<#uvw f64>::new(::slackers_units::conversion::Conversion::convert(value))
             }
         });
     }
@@ -179,5 +187,11 @@ impl ToTokens for UnitVectorWrapper<'_> {
 impl UnitContext {
     fn to_self(&self) -> &Self {
         self
+    }
+}
+
+impl<const V: bool> ParsedUnit<V> {
+    pub fn get_path(&self) -> TokenStream {
+        self.path.parse().unwrap()
     }
 }
