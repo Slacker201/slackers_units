@@ -15,6 +15,8 @@ impl ValidatedSystem {
                     ::slackers_units::__ut_impl!(#sys_hash #byte_str $($data)*)
                 }
             }
+
+            pub(crate) use ut;
         }
     }
 }

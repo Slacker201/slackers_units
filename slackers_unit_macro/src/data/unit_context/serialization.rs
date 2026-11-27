@@ -2,9 +2,9 @@
 use std::{array::from_fn, collections::HashMap, hash::Hash, ptr, sync::Arc};
 
 use num_rational::Ratio;
-use proc_macro2::Span;
-use quote::format_ident;
-use syn::Ident;
+use proc_macro2::{Span, TokenStream};
+use quote::{ToTokens, format_ident};
+use syn::{Ident, Path};
 
 use crate::data::{
     Id, NumberRepr, RatioRepr,
@@ -246,6 +246,18 @@ impl ToBytes for PrefixClasses {
     }
 }
 
+impl ToBytes for TokenStream {
+    fn to_bytes(&self, writer: &mut Writer<'_>) {
+        let path = self.into_token_stream().to_string();
+        writer.write_len_prefixed_str(&path);
+    }
+
+    fn from_bytes(reader: &mut Reader<'_>) -> Self {
+        let s = reader.read_str().to_string();
+        s.parse().unwrap()
+    }
+}
+
 impl ToBytes for UnitContext {
     fn to_bytes(&self, writer: &mut Writer<'_>) {
         self.prefix_data.to_bytes(writer);
@@ -255,6 +267,7 @@ impl ToBytes for UnitContext {
         self.prefix_id_to_grouping.to_bytes(writer);
         self.unit_id_to_grouping.to_bytes(writer);
         writer.write_u64(self.null_id.0);
+        self.path.to_bytes(writer);
     }
 
     fn from_bytes(reader: &mut Reader<'_>) -> Self {
@@ -265,7 +278,8 @@ impl ToBytes for UnitContext {
         let prefix_id_to_grouping = ToBytes::from_bytes(reader);
         let unit_id_to_grouping = ToBytes::from_bytes(reader);
         let null_id = reader.read_u64();
-        let _ = reader;
+        let path = String::from_bytes(reader);
+
         let mut unit_trie = PrefixTrie::default();
         let mut prefix_trie = PrefixTrie::default();
 
@@ -287,6 +301,7 @@ impl ToBytes for UnitContext {
             unit_data,
             prefix_id_to_grouping,
             unit_id_to_grouping,
+            path,
         }
     }
 }

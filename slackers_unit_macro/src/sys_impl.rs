@@ -18,6 +18,14 @@ pub(crate) fn system_impl(ts: TokenStream) -> TokenStream {
         }
     };
     quote! {
-        #validated_system
+        macro_rules! __identity__ {
+            ($($data: tt)*) => {
+                $($data)*
+            }
+        }
+
+        __identity__! {
+            #validated_system
+        }
     }
 }
