@@ -338,13 +338,13 @@ dependencies = [
  "phf_codegen",
  "proc-macro2",
  "quote",
- "slk-tokenstream 0.6.0",
+ "slk-tokenstream",
  "syn 3.0.9",
 ]
 
 [[package]]
 name = "slackers_units"
-version = "0.3.3"
+version = "0.4.0"
 dependencies = [
  "bnum",
  "cfg-if",
@@ -352,16 +352,10 @@ dependencies = [
  "num-traits",
  "phf",
  "slackers_unit_macro",
- "slk-tokenstream 0.5.3",
+ "slk-tokenstream",
  "trybuild",
  "typenum",
 ]
-
-[[package]]
-name = "slk-tokenstream"
-version = "0.5.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "287c844758684be78661428b2bf09e00643e1497473dc947fd9158f2915666db"
 
 [[package]]
 name = "slk-tokenstream"
@@ -453,9 +447,9 @@ checksum = "009dbb7700f11c55ef83aebbe4c0e9cf1f1ac0844bd8d6f00dc38f302026e13a"
 
 [[package]]
 name = "trybuild"
-version = "1.0.122"
+version = "1.0.125"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62db9c92d704393fbf2132041720cc80b689f2d3f28521015c2ac866223c11b8"
+checksum = "9838b494ee14d28f1eeea490e8f4f10248fa6dd371d4bc874b635de499408245"
 dependencies = [
  "glob",
  "serde",
