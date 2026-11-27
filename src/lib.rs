@@ -1,10 +1,9 @@
-pub use bnum;
-pub use num_rational;
-pub use num_traits;
+pub use bnum::Integer as Bint;
+pub use num_rational::Ratio;
 pub use phf::Map;
-pub use slackers_unit_macro::{__unit_impl__, system};
+pub use slackers_unit_macro::{__unit_impl, system, __ut_impl};
 pub use slk_tokenstream;
 pub use typenum::Integer;
-pub use typenum::consts::*;
+pub use typenum;
 
 pub mod conversion;
