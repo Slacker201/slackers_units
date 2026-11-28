@@ -10,11 +10,13 @@ pub mod unit_graph;
 
 impl System {
     pub fn validate(self) -> syn::Result<ValidatedSystem> {
+        self.minimum_one_base()?;
         self.no_colliding_aliases()?;
 
         let mut vc = ValidationContext {
             unit_to_id: Some(&self.unit_registry),
         };
+        self.no_bases_are_derived(&vc)?;
         let graph_context = self.validate_matched_bases(&mut vc)?;
         let (alias_to_id, unit_id_to_vector) = self.reduce_unit_equations(&graph_context)?;
         let sys_hash = self.get_hash();
