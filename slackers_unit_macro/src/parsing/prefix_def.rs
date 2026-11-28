@@ -38,11 +38,11 @@ impl PrefixDefinition {
             }
             if body.peek(aliases) {
                 alia = Aliases::parse(&body)?;
-
                 continue;
             }
             if body.peek(prefix_classes) {
                 p_classes = Some(PrefixClasses::parse(&body)?);
+                continue;
             }
 
             if body.is_empty() {
