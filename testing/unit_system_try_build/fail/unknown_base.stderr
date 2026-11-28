@@ -1,0 +1,5 @@
+error: Please define Unknown to use it as a base unit
+ --> unit_system_try_build/fail/unknown_base.rs:2:10
+  |
+2 |     base Unknown;
+  |          ^^^^^^^

@@ -1,0 +1,5 @@
+error: Found cyclic dependancy
+  --> unit_system_try_build/fail/cyclic_unit_dependency.rs:12:5
+   |
+12 |     unit A {
+   |     ^^^^

@@ -140,7 +140,7 @@ pub struct UnitVectorWrapper<'a>(pub &'a [i32]);
 
 impl ToTokens for DecimalWrapper {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let integer = quote! { ::slackers_units::Bint::<true, 8, 0, 0> };
+        let integer = Self::get_integer();
         let (numer, denom) = self.0.into_raw();
         let numer_bytes = numer.to_be_bytes();
         let denom_bytes = denom.to_be_bytes();
@@ -193,5 +193,42 @@ impl UnitContext {
 impl<const V: bool> ParsedUnit<V> {
     pub fn get_path(&self) -> TokenStream {
         self.path.parse().unwrap()
+    }
+}
+
+impl DecimalWrapper {
+    fn get_integer() -> TokenStream {
+        cfg_select! {
+            feature = "converter_256" => {
+                quote! { ::slackers_units::Bint::<true, 256, 0, 0> }
+            }
+            feature = "converter_128" => {
+                quote! { ::slackers_units::Bint::<true, 128, 0, 0> }
+            }
+            feature = "converter_64" => {
+                quote! { ::slackers_units::Bint::<true, 64, 0, 0> }
+            }
+            feature = "converter_32" => {
+                quote! { ::slackers_units::Bint::<true, 32, 0, 0> }
+            }
+            feature = "converter_16" => {
+                quote! { ::slackers_units::Bint::<true, 16, 0, 0> }
+            }
+            feature = "converter_8" => {
+                quote! { ::slackers_units::Bint::<true, 8, 0, 0> }
+            }
+            feature = "converter_4" => {
+                quote! { ::slackers_units::Bint::<true, 4, 0, 0> }
+            }
+            feature = "converter_2" => {
+                quote!{ ::slackers_units::Bint::<true, 2, 0, 0> }
+            }
+            feature = "converter_1" => {
+                quote!{ ::slackers_units::Bint::<true, 1, 0, 0> }
+            }
+            _ => {
+                quote! { ::slackers_units::Bint::<true, 8, 0, 0> }
+            }
+        }
     }
 }

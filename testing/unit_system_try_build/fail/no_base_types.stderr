@@ -1,0 +1,12 @@
+error: Declare at minimum 1 base type
+       For example: `base = Meter`
+  --> unit_system_try_build/fail/no_base_types.rs:1:1
+   |
+ 1 | / slackers_units::system! {
+ 2 | |     unit Meter {
+ 3 | |         aliases = [m, meter],
+...  |
+10 | | }
+   | |_^
+   |
+   = note: this error originates in the macro `slackers_units::system` (in Nightly builds, run with -Z macro-backtrace for more info)

@@ -1,0 +1,5 @@
+error: Could not parse 'yd'
+ --> unit_system_try_build/fail/unknown_value_in_eq.rs:9:14
+  |
+9 |         eq = 1yd,
+  |              ^^^

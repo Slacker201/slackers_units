@@ -9,9 +9,9 @@ macro_rules! gen_vec_change_op {
         quote! {
             impl<
                 #(
-                    #$operand_1: ::typenum::Integer + core::ops::$typenum_op<#$operand_2, Output = #$result>,
-                    #$operand_2: ::typenum::Integer,
-                    #$result: ::typenum::Integer,
+                    #$operand_1: ::slackers_units::typenum::Integer + core::ops::$typenum_op<#$operand_2, Output = #$result>,
+                    #$operand_2: ::slackers_units::typenum::Integer,
+                    #$result: ::slackers_units::typenum::Integer,
                 )*
                 B: core::ops::$value_op<B, Output=B>,
             > core::ops::$value_op<Unit<

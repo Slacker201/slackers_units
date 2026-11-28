@@ -1,0 +1,7 @@
+error: Unit `m` does not support the prefix `m`
+       `m` supports `Default`
+       The prefix `m` is part of `Test`
+ --> unit_system_try_build/fail/invalid_prefix.rs:9:14
+  |
+9 |         eq = 304.8mm,
+  |              ^^^^^^^

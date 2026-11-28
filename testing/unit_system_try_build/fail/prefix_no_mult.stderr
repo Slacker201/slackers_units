@@ -1,0 +1,5 @@
+error: Please provide a multiplication factor: `mult = 1.3`, `multiplier = 1/10`
+ --> unit_system_try_build/fail/prefix_no_mult.rs:9:5
+  |
+9 |     }
+  |     ^
