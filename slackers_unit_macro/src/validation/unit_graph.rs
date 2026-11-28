@@ -53,7 +53,9 @@ impl<'a> Graph<'a> {
         Ok(s)
     }
     fn assert_acylic(&self) -> syn::Result<()> {
-        for node in self.nodes.values() {
+        let mut nodes: Box<[_]> = self.nodes.values().collect();
+        nodes.sort_by_key(|k| k.id.0);
+        for node in nodes {
             let dependees = node.get_dependees(&self.nodes);
             if dependees.contains(&node.id) {
                 return Err(Error::new(node.span, "Found cyclic dependancy"));
