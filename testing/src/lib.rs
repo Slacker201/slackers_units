@@ -9,3 +9,4 @@ slackers_units::system! {
     }
 }
 mod arith;
+mod try_build;

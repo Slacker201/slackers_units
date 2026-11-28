@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 slackers_units = { path = "./../", features=["converter_8"]}
+trybuild = "1.0.125"

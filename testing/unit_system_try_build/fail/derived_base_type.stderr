@@ -1,0 +1,5 @@
+error: Base units cannot be relative
+  --> unit_system_try_build/fail/derived_base_type.rs:10:14
+   |
+10 |         eq = 1yd/3,
+   |              ^^^

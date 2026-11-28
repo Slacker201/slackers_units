@@ -1,0 +1,5 @@
+error: Found trailing characters 'k'
+ --> unit_system_try_build/fail/trailing_tokens_on_eq_parse.rs:9:14
+  |
+9 |         eq = 304.8mmk,
+  |              ^^^^^^^^
