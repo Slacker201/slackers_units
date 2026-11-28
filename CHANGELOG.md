@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1](https://github.com/Slacker201/slackers_units/compare/slackers_units-v0.4.0...slackers_units-v0.4.1) - 2026-11-28
+
+### Fixed
+
+- fix denom sign on overflow being based on numer sign
+
+### Other
+
+- update todo
+- make testing crate tests run on `cargo test`
+- implement basic compile fail/succeed tests
+- basic tests
+
 ## [0.4.0](https://github.com/Slacker201/slackers_units/compare/slackers_units-v0.3.3...slackers_units-v0.4.0) - 2026-11-27
 
 ### Other
