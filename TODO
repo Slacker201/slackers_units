@@ -1,2 +1,3 @@
-- Bring runtime parser to parity with `unit`
-- Implement conversions
+- implement runtime parser
+- implement make_runtime macro
+- implement pretty printer
