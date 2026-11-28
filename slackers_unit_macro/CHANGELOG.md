@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.2.0...slackers_unit_macro-v0.2.1) - 2026-11-28
+
+### Added
+
+- *(validation)* implement minimum base count, no derived base checks
+- improve macro hygiene
+- implement better debug print
+
+### Fixed
+
+- *(validation)* make graph cycle detection ordering deterministic
+- make feature flags affect `Unit` macro construction
+- fix typenum hardcoded
+- fix the `Unit` constructor requiring a Ratio
+- make precision features set precision
+
+### Other
+
+- basic docs for `unit` and `ut`
+- implement better generic names
+- *(cleanup)* clippy + fmt
+- deduplicate unit vector code
+
 ## [0.2.0](https://github.com/Slacker201/slackers_units/compare/slackers_unit_macro-v0.1.11...slackers_unit_macro-v0.2.0) - 2026-11-27
 
 ### Added
